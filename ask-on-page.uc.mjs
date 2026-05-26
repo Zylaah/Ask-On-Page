@@ -22,6 +22,7 @@ import {
   streamChatText,
   completeChatText,
   formatLlmError,
+  resolveExcerptHighlightSearchText,
 } from "./llm-core.uc.mjs";
 
 function setPref(key, value) {
@@ -1791,20 +1792,34 @@ const browseBotFindbar = {
   },
 
   /**
-   * Highlight a word using native findbar
-   * @param {string} word - Word to highlight.
+   * Highlight a passage using native findbar. Resolves the best on-page match when
+   * the model quoted text merged from separate elements.
+   * @param {string} word - Excerpt plain text from data-excerpt-quote.
    */
-  highlight(word) {
+  async highlight(word) {
     if (!this.findbar) return;
 
-    // clear any existing timeout before starting a new one
     if (this._highlightTimeout) clearTimeout(this._highlightTimeout);
 
-    this.findbar._find(word);
+    let searchText = word;
+    try {
+      const page = await messageManagerAPI.getPageTextContent(false);
+      const pageText = page?.textContent;
+      if (pageText) {
+        searchText = resolveExcerptHighlightSearchText(word, pageText);
+        if (searchText !== word) {
+          PREFS.debugLog("Excerpt highlight: using resolved substring:", searchText);
+        }
+      }
+    } catch (err) {
+      PREFS.debugError("Excerpt highlight resolve failed:", err);
+    }
+
+    this.findbar._find(searchText);
 
     this._highlightTimeout = setTimeout(() => {
       this.findbar.browser.finder.highlight(false);
-      this._highlightTimeout = null; // cleanup
+      this._highlightTimeout = null;
     }, 2000);
   },
 
@@ -2728,7 +2743,7 @@ ${content}
 RULES:
 1. Stay in your role throughout the dialogue.
 2. When asked a question, decide if you can answer based on information on the page. If the page answers the question, directly quote the relevant sentence on the page using an <excerpt> tag on its own line. Then, summarize the answer in 10 words on the next line.
-3. <excerpt> tags must be on their own line, not inline.
+3. <excerpt> tags must be on their own line, not inline. Each <excerpt> must be one contiguous verbatim quote from a single place on the page (one sentence or clause). Never join text from separate paragraphs, list items, headings, or UI elements into one excerpt.
 4. If you can't provide a direct quote to support your answer, make it clear that it's just a guess.
 5. Use Markdown, not HTML, to format your answer. Always **bold** the term that answers the question.
 6. Be extremely concise. (1-sentence answers if possible).

@@ -152,6 +152,88 @@ function excerptQuotePlainText(text) {
 }
 
 /**
+ * Collapse whitespace for fuzzy page matching.
+ * @param {string} text
+ */
+function normalizeTextForMatch(text) {
+  return String(text).replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Find phrase in page text, allowing flexible whitespace between words.
+ * @param {string} pageText
+ * @param {string} phrase
+ * @returns {string|null}
+ */
+function findFlexibleInPage(pageText, phrase) {
+  const trimmed = normalizeTextForMatch(phrase);
+  if (!trimmed || trimmed.length < 4) return null;
+
+  const attempts = [trimmed, trimmed.replace(/\s+/g, " ")];
+  for (const attempt of attempts) {
+    const escaped = attempt
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace(/\s+/g, "\\s+");
+    const match = pageText.match(new RegExp(escaped, "i"));
+    if (match) {
+      return normalizeTextForMatch(match[0]);
+    }
+  }
+  return null;
+}
+
+/**
+ * When the model merges text from two DOM nodes, the full quote may not exist on the page.
+ * Pick the longest substring that does match (prefer whole sentences).
+ * @param {string} quote - Raw or markdown excerpt body.
+ * @param {string} pageText - Extracted page text (same pipeline as page context).
+ * @returns {string}
+ */
+export function resolveExcerptHighlightSearchText(quote, pageText) {
+  const plain = excerptQuotePlainText(quote);
+  const page = normalizeTextForMatch(pageText);
+  if (!plain || !page) return plain;
+
+  const direct = findFlexibleInPage(page, plain);
+  if (direct) return direct;
+
+  const words = plain.split(/\s+/).filter(Boolean);
+  let best = "";
+  const minWords = 3;
+
+  const sentenceParts = plain
+    .split(/(?<=[.!?…])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 12)
+    .sort((a, b) => b.length - a.length);
+
+  for (const sentence of sentenceParts) {
+    const hit = findFlexibleInPage(page, sentence);
+    if (hit && hit.length > best.length) {
+      best = hit;
+    }
+  }
+
+  if (best.length >= plain.length * 0.45) {
+    return best;
+  }
+
+  const maxLen = Math.min(words.length, 80);
+  for (let len = maxLen; len >= minWords; len--) {
+    for (let i = 0; i <= words.length - len; i++) {
+      const phrase = words.slice(i, i + len).join(" ");
+      const hit = findFlexibleInPage(page, phrase);
+      if (hit && hit.length > best.length) {
+        best = hit;
+      }
+    }
+    if (best.length >= plain.length * 0.55) break;
+  }
+
+  return best || plain;
+}
+
+/**
  * Turn excerpt placeholders into clickable citation blocks.
  * @param {string} html
  * @param {string[]} excerpts
