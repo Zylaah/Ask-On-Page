@@ -63,8 +63,9 @@
     overflow-x: hidden !important;
     height: unset !important;
     border-radius: var(--acrylic-radius) !important;
-    outline: 1px solid rgba(0, 0, 0, 1) !important;
-    border: 1px solid light-dark(rgba(20, 20, 20, 0.2), rgba(235, 235, 235, 0.3)) !important;
+    outline: 1px solid var(--browse-bot-findbar-outline) !important;
+    border: 1px solid var(--browse-bot-findbar-border) !important;
+    color: var(--browse-bot-fg);
     z-index: 9999;
     opacity: 1;
     background: var(--browse-bot-dialog-bg) !important;
@@ -109,7 +110,7 @@
       background-image: none !important;
       box-shadow: none !important;
       -moz-context-properties: fill !important;
-      fill: light-dark(black, white) !important;
+      fill: var(--browse-bot-icon-fill) !important;
       position: absolute !important;
       top: 50% !important;
       right: 6px !important;
@@ -333,7 +334,7 @@
         line-height: 1 !important;
         cursor: pointer;
         background: var(--browse-bot-primary-bg) !important;
-        color: light-dark(rgb(24, 24, 27), white) !important;
+        color: var(--browse-bot-action-fg) !important;
         transition: opacity 0.15s ease;
 
         &[data-show-ask="true"] {
@@ -610,7 +611,7 @@
         position: relative;
         flex-shrink: 0;
         width: auto;
-        height: 24px;
+        height: 25px;
         align-self: flex-end;
         overflow: visible;
         border-radius: 6px;
@@ -665,7 +666,7 @@
         line-height: 1 !important;
         white-space: nowrap !important;
         background: var(--browse-bot-primary-bg) !important;
-        color: light-dark(rgb(24, 24, 27), white) !important;
+        color: var(--browse-bot-action-fg) !important;
       }
 
       .stop-btn {
