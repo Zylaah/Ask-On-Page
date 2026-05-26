@@ -87,6 +87,89 @@ function removePrefListener(listener) {
 /** Fixed findbar width (not user-resizable). */
 const FINDBAR_WIDTH = 400;
 const FINDBAR_PLACEHOLDER = "Find or Ask...";
+const ZEN_WINDOW_SCHEME_PREF = "zen.view.window.scheme";
+const BROWSE_BOT_THEME_ATTR = "data-browse-bot-theme";
+
+/**
+ * Mirrors ZenGradientGenerator: private → dark; scheme 0/1/2 = dark/light/auto.
+ * @returns {boolean}
+ */
+function isZenPrivateWindow() {
+  try {
+    return PrivateBrowsingUtils?.isWindowPrivate?.(window) === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {number} scheme
+ * @returns {boolean}
+ */
+function isZenDarkFromScheme(scheme) {
+  if (scheme === 0) return true;
+  if (scheme === 1) return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+/**
+ * Resolve dark/light the same way Zen's theme picker does.
+ * @returns {boolean}
+ */
+function resolveZenShouldBeDark() {
+  if (isZenPrivateWindow()) return true;
+
+  const root = document.documentElement;
+
+  const zenAttr = root.getAttribute("zen-should-be-dark-mode");
+  if (zenAttr === "true") return true;
+  if (zenAttr === "false") return false;
+
+  const toolbarScheme = getComputedStyle(root).getPropertyValue("--toolbar-color-scheme").trim();
+  if (toolbarScheme === "dark") return true;
+  if (toolbarScheme === "light") return false;
+
+  let scheme = 2;
+  try {
+    scheme = Services.prefs.getIntPref(ZEN_WINDOW_SCHEME_PREF, 2);
+  } catch {
+    // ignore
+  }
+  return isZenDarkFromScheme(scheme);
+}
+
+/** Sync `data-browse-bot-theme` for styles/theme.css and markdown. */
+function syncBrowseBotTheme() {
+  const theme = resolveZenShouldBeDark() ? "dark" : "light";
+  document.documentElement.setAttribute(BROWSE_BOT_THEME_ATTR, theme);
+  document.documentElement.style.colorScheme = theme;
+}
+
+/** Watch Zen scheme pref, gradient updates, and zen-should-be-dark-mode on <html>. */
+function installZenThemeSync() {
+  syncBrowseBotTheme();
+
+  const root = document.documentElement;
+  const attrObserver = new MutationObserver(() => syncBrowseBotTheme());
+  attrObserver.observe(root, {
+    attributes: true,
+    attributeFilter: ["zen-should-be-dark-mode", "style"],
+  });
+
+  try {
+    Services.prefs.addObserver(ZEN_WINDOW_SCHEME_PREF, syncBrowseBotTheme);
+  } catch (err) {
+    console.warn("[Browse Bot]: Could not observe zen.view.window.scheme:", err);
+  }
+
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncBrowseBotTheme);
+
+  try {
+    Services.obs.addObserver(syncBrowseBotTheme, "zen-space-gradient-update");
+  } catch {
+    // Zen observer optional
+  }
+}
 
 let PREFS$1 = class PREFS {
   static MOD_NAME = "BasePrefs";
@@ -1429,10 +1512,14 @@ const SettingsModal = {
  * @param {HTMLElement} target
  */
 function renderMarkdown(markdown, target) {
+  target.classList.add("markdown-body");
+  const theme = document.documentElement.getAttribute(BROWSE_BOT_THEME_ATTR);
+  target.dataset.theme = theme === "light" ? "light" : "dark";
   renderMarkdownToElement(markdown, target);
 }
 
 PREFS.setInitialPrefs();
+installZenThemeSync();
 document.documentElement.style.setProperty("--browse-bot-findbar-width", `${FINDBAR_WIDTH}px`);
 document.documentElement.style.setProperty("--browse-bot-findbar-max-width", `${FINDBAR_WIDTH}px`);
 
