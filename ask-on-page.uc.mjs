@@ -1619,7 +1619,6 @@ const browseBotFindbar = {
         this._prepareFoundMatchesElement(matches);
         matches.hidden = true;
         matches.value = "";
-        matches.textContent = "";
       }
       if (status) status.hidden = true;
       this.findbar.querySelector(".findbar-find-next")?.setAttribute("disabled", "true");
@@ -1682,9 +1681,8 @@ const browseBotFindbar = {
 
   _applyFoundMatchesLabel(matchesEl, result) {
     this._prepareFoundMatchesElement(matchesEl);
-    const label = this._formatMatchCountLabel(result);
-    matchesEl.value = label;
-    matchesEl.textContent = label;
+    // XUL <label> renders value + textContent together; set only .value to avoid "1/61/6".
+    matchesEl.value = this._formatMatchCountLabel(result);
   },
 
   /**
@@ -2005,7 +2003,6 @@ const browseBotFindbar = {
     if (!hasMatches) {
       foundMatchesElement.hidden = true;
       foundMatchesElement.value = "";
-      foundMatchesElement.textContent = "";
       this._updateAskButtonVisibility(findbarEl, result);
       return;
     }
