@@ -1611,12 +1611,15 @@ const browseBotFindbar = {
       }
       setTimeout(() => this._updateFindbarDimensions(), 0);
 
-      const matches = this.findbar.querySelector(".found-matches");
+      const matches =
+        this.findbar._foundMatches || this.findbar.querySelector(".found-matches");
       const status = this.findbar.querySelector(".findbar-find-status");
 
       if (matches) {
+        this._prepareFoundMatchesElement(matches);
         matches.hidden = true;
-        matches.setAttribute("value", "");
+        matches.value = "";
+        matches.textContent = "";
       }
       if (status) status.hidden = true;
       this.findbar.querySelector(".findbar-find-next")?.setAttribute("disabled", "true");
@@ -1633,8 +1636,7 @@ const browseBotFindbar = {
   },
 
   /**
-   * Minimal findbar row: [textbox wrapper] [n/m matches] [Ask when no matches]
-   * Native DOM: wrapper, checkboxes, .found-matches are siblings under .findbar-container.
+   * Minimal findbar row: [input] [n/m] [prev] [next] inside wrapper; [Ask] after wrapper.
    */
   _layoutMinimalFindbarRow() {
     if (!this.findbar) return;
@@ -1644,18 +1646,45 @@ const browseBotFindbar = {
     const matches =
       this.findbar._foundMatches || this.findbar.querySelector(".found-matches");
     const askBtn = this.askButton || container?.querySelector("#findbar-ask");
+    const prev = wrapper?.querySelector(".findbar-find-previous");
 
     if (!container || !wrapper || !matches) return;
 
-    if (askBtn?.parentElement === wrapper) {
-      wrapper.insertAdjacentElement("afterend", askBtn);
+    if (prev) {
+      if (matches.parentElement !== wrapper || matches.nextElementSibling !== prev) {
+        wrapper.insertBefore(matches, prev);
+      }
+    } else if (matches.parentElement !== wrapper) {
+      wrapper.appendChild(matches);
     }
 
-    if (askBtn) {
-      askBtn.insertAdjacentElement("beforebegin", matches);
-    } else {
-      wrapper.insertAdjacentElement("afterend", matches);
+    if (askBtn?.parentElement === wrapper) {
+      wrapper.insertAdjacentElement("afterend", askBtn);
+    } else if (askBtn && askBtn.parentElement === container && wrapper.nextElementSibling !== askBtn) {
+      wrapper.insertAdjacentElement("afterend", askBtn);
     }
+  },
+
+  _prepareFoundMatchesElement(matchesEl) {
+    if (!matchesEl || matchesEl._browseBotMatchesPrepared) return;
+    matchesEl._browseBotMatchesPrepared = true;
+    delete matchesEl.dataset.l10nId;
+    matchesEl.removeAttribute("data-l10n-id");
+    matchesEl.removeAttribute("data-l10n-args");
+  },
+
+  _formatMatchCountLabel(result) {
+    if (result.total === -1) {
+      return `${result.current}/${result.limit}+`;
+    }
+    return `${result.current}/${result.total}`;
+  },
+
+  _applyFoundMatchesLabel(matchesEl, result) {
+    this._prepareFoundMatchesElement(matchesEl);
+    const label = this._formatMatchCountLabel(result);
+    matchesEl.value = label;
+    matchesEl.textContent = label;
   },
 
   /**
@@ -1975,13 +2004,14 @@ const browseBotFindbar = {
 
     if (!hasMatches) {
       foundMatchesElement.hidden = true;
-      foundMatchesElement.setAttribute("value", "");
+      foundMatchesElement.value = "";
+      foundMatchesElement.textContent = "";
       this._updateAskButtonVisibility(findbarEl, result);
       return;
     }
 
     foundMatchesElement.hidden = false;
-    foundMatchesElement.setAttribute("value", `${result.current}/${result.total}`);
+    this._applyFoundMatchesLabel(foundMatchesElement, result);
 
     this._updateAskButtonVisibility(findbarEl, result);
     this._layoutMinimalFindbarRow();
@@ -2045,17 +2075,12 @@ const browseBotFindbar = {
 
     const self = this;
     findbarClass.onMatchesCountResult = function (result) {
-      const original = self._originalOnMatchesCountResult;
-      let ret;
-      if (original) {
-        ret = original.call(this, result);
-      }
-
       if (PREFS.enabled) {
         self._syncFindMatchChrome(this, result);
+        return;
       }
-
-      return ret;
+      const original = self._originalOnMatchesCountResult;
+      return original ? original.call(this, result) : undefined;
     };
     PREFS.debugLog("onMatchesCountResult successfully overridden.");
   },

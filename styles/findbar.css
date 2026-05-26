@@ -226,17 +226,46 @@
 
         .findbar-textbox,
         input[anonid="findbar-textbox"] {
+          flex: 1 1 auto !important;
+          min-width: 0 !important;
+          order: 1 !important;
           background: none !important;
           padding: 0 !important;
           font-size: 14px !important;
           font-weight: 500 !important;
           box-shadow: none !important;
-          width: 100% !important;
+          width: auto !important;
           border: none !important;
 
           &:focus {
             outline: none !important;
           }
+        }
+
+        .found-matches {
+          flex: 0 0 auto !important;
+          order: 2 !important;
+          display: none !important;
+          margin: 0 6px 0 4px !important;
+          padding: 0 !important;
+          line-height: 1 !important;
+          font-size: 12px !important;
+          white-space: nowrap !important;
+          font-weight: 500 !important;
+
+          &:not([hidden]) {
+            display: inline-flex !important;
+            align-items: center !important;
+            height: 24px !important;
+          }
+        }
+
+        .findbar-find-previous {
+          order: 3 !important;
+        }
+
+        .findbar-find-next {
+          order: 4 !important;
         }
 
         toolbarbutton {
@@ -274,24 +303,6 @@
 
         &:not([disabled]) {
           display: inline-flex !important;
-        }
-      }
-
-      .found-matches {
-        flex: 0 0 auto !important;
-        order: 2 !important;
-        display: none !important;
-        margin: 0 8px 0 8px !important;
-        padding: 0 !important;
-        line-height: 1 !important;
-        font-size: 12px !important;
-        white-space: nowrap !important;
-        font-weight: 500 !important;
-
-        &:not([hidden]) {
-          display: inline-flex !important;
-          align-items: center !important;
-          height: 24px !important;
         }
       }
 
