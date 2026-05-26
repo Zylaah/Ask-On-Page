@@ -518,7 +518,7 @@
           mask-image: linear-gradient(
             to bottom,
             #000 0,
-            #000 calc(100% - 28px),
+            #000 calc(100% - 15px),
             transparent 100%
           );
         }
