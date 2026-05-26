@@ -1,0 +1,29 @@
+{
+  "id": "browse-bot",
+  "homepage": "https://github.com/Vertex-Mods/Browse-Bot",
+  "name": "Ask On Page",
+  "description": "Findbar-only AI chat for Zen Browser — page-aware Q&A on the current tab. No URL bar AI or agentic browser tools.",
+  "author": "Bibek Bhusal",
+  "version": "3.0.0-findbar-only",
+  "updatedAt": "2026-05-26",
+  "tags": [
+    "ai",
+    "findbar",
+  ],
+  "fork": [
+    "zen"
+  ],
+  "preferences": "preferences.json",
+  "style": {
+    "chrome": "style.css"
+  },
+  "scripts": {
+    "browse-bot.uc.mjs": {
+      "include": [
+        "chrome://browser/content/browser.xhtml"
+      ]
+    }
+  },
+  "readme": "https://raw.githubusercontent.com/Vertex-Mods/Browse-Bot/main/README.md",
+  "createdAt": "2024-05-22"
+}
