@@ -514,6 +514,15 @@
         gap: 10px;
         scrollbar-width: none;
 
+        &:not(:empty) {
+          mask-image: linear-gradient(
+            to bottom,
+            #000 0,
+            #000 calc(100% - 28px),
+            transparent 100%
+          );
+        }
+
         &:empty {
           display: none !important;
 
@@ -524,7 +533,7 @@
         }
 
         &:not(:empty) ~ .ai-chat-input-group {
-          border: 1px solid var(--browse-bot-divider) !important;
+          border: none !important;
           margin: 5px !important;
           background: #2C2C2C;
           border-radius: 6px;
