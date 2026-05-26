@@ -1,31 +1,22 @@
 {
-    "id": "ask-on-page",
-    "homepage": "https://github.com/Zylaah/Ask-On-Page",
-    "name": "Ask On Page",
-    "description": "Arc styled ask on page + findbar.",
-    "author": "Zylaah",
-    "version": "1.0.0",
-    "updatedAt": "2026-05-26",
-    "tags": [
-      "ai",
-      "findbar",
-    ],
-    "fork": [
-      "zen"
-    ],
-    "preferences": "preferences.json",
-    "style": {
-      "chrome": "style.css"
-    },
-    "scripts": {
-      "ask-on-page.uc.mjs": {
-        "include": [
-          "chrome://browser/content/browser.xhtml"
-        ]
-      }
-    },
-    "readme": "https://raw.githubusercontent.com/Zylaah/Ask-On-Page/main/README.md",
-    "createdAt": "2026-05-26"
-  }
-  
-  
+  "id": "ask-on-page",
+  "homepage": "https://github.com/Zylaah/Ask-On-Page",
+  "name": "Ask On Page",
+  "description": "Arc styled ask on page + findbar.",
+  "author": "Zylaah",
+  "version": "1.0.0",
+  "updatedAt": "2026-05-26",
+  "tags": ["ai", "findbar"],
+  "fork": ["zen"],
+  "preferences": "preferences.json",
+  "style": {
+    "chrome": "style.css"
+  },
+  "scripts": {
+    "ask-on-page.uc.mjs": {
+      "include": ["chrome://browser/content/browser.xhtml"]
+    }
+  },
+  "readme": "https://raw.githubusercontent.com/Zylaah/Ask-On-Page/main/README.md",
+  "createdAt": "2026-05-26"
+}

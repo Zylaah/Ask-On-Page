@@ -1,4 +1,4 @@
-<h1 align="center">BrowseBot (Findbar Only)</h1>
+<h1 align="center">Ask On Page</h1>
 <div align="center">
     <a href="https://zen-browser.app/">
         <img width="240" alt="zen-badge-dark" src="https://raw.githubusercontent.com/heyitszenithyt/zen-browser-badges/fb14dcd72694b7176d141c774629df76af87514e/light/zen-badge-light.png" />
@@ -27,8 +27,10 @@ A **fork** of [Vertex-Mods/Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot
 ## Installation (Sine)
 
 1. Install [Sine](https://github.com/CosmoCreeper/Sine) on Zen Browser.
-2. Install this mod from your fork or a Sine catalog entry pointing at `Zylaah/Browse-Bot` (branch `findbar-only`).
-3. Restart Zen when prompted.
+2. In Sine settings, enable **Enable installing JS from unofficial sources** (`sine.allow-unsafe-js`). Required for this mod’s user script.
+3. In Sine → add mod, enter `Zylaah/Ask-On-Page` (or `https://github.com/Zylaah/Ask-On-Page`).
+4. Restart Zen when prompted.
+5. If you previously installed a broken copy (random mod id, no script), remove it and install again after pushing the fixed `theme.json`.
 
 ## Usage
 
