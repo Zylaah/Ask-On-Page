@@ -564,7 +564,7 @@
       .chat-message-user {
         align-self: flex-start;
         background: var(--browse-bot-primary-bg);
-        color: var(--tab-selected-textcolor);
+        color: var(--browse-bot-action-fg) !important;
         border-bottom-left-radius: 4px;
         padding: 4px 8px !important;
         font-weight: 500;
