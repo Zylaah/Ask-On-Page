@@ -12,8 +12,9 @@
     ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
   --fgColor-accent: Highlight;
 }
-:root[data-browse-bot-theme="dark"] .markdown-body,
-.markdown-body[data-theme="dark"] {
+@media (-moz-system-dark-theme) {
+  .markdown-body,
+  [data-theme="dark"] {
     /* dark */
     color-scheme: dark;
     --focus-outlineColor: #1f6feb;
@@ -66,10 +67,11 @@
     --color-prettylights-syntax-markup-ignored-bg: #1158c7;
     --color-prettylights-syntax-meta-diff-range: #d2a8ff;
     --color-prettylights-syntax-sublimelinter-gutter-mark: #3d444d;
+  }
 }
-
-:root[data-browse-bot-theme="light"] .markdown-body,
-.markdown-body[data-theme="light"] {
+@media not (-moz-system-dark-theme) {
+  .markdown-body,
+  [data-theme="light"] {
     /* light */
     color-scheme: light;
     --focus-outlineColor: #0969da;
@@ -122,6 +124,7 @@
     --color-prettylights-syntax-markup-ignored-bg: #0550ae;
     --color-prettylights-syntax-meta-diff-range: #8250df;
     --color-prettylights-syntax-sublimelinter-gutter-mark: #818b98;
+  }
 }
 
 .markdown-body {
