@@ -1,3 +1,23 @@
+browser {
+  will-change: transform;
+}
+
+@keyframes initial-animation {
+  from {
+    top: 0;
+    opacity: 0;
+    filter: blur(5px);
+    transform: translateY(-10px);
+  }
+
+  to {
+    top: 20px;
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
 @keyframes glass-disappear {
   0% {
     backdrop-filter: blur(10px);
@@ -39,6 +59,16 @@
   }
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media -moz-pref("extension.browse-bot.findbar-ai.enabled") {
   @media -moz-pref("extension.browse-bot.findbar-ai.context-menu-enabled") {
     #browse-bot-context-menu-item {
@@ -48,19 +78,19 @@
 
   findbar {
     padding-inline-start: 0px !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    padding-inline-end: 5px !important;
+    padding-top: 1px !important;
+    padding-bottom: 2px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     box-sizing: border-box;
     position: fixed;
-    top: 15px;
-    left: calc(100% - 15px - var(--findbar-width, 400px));
-    width: 400px !important;
-    max-width: 400px !important;
-    min-width: 400px !important;
-    overflow-x: hidden !important;
+    top: 35px;
+    right: 15px;
+    width: 500px;
+    max-width: 800px !important;
+    min-width: 300px !important;
     height: unset !important;
     border-radius: var(--acrylic-radius) !important;
     outline: 1px solid rgba(0, 0, 0, 1) !important;
@@ -81,69 +111,96 @@
       transform: translateY(-10px);
     }
 
-    min-height: 36px !important;
-    align-items: stretch !important;
-    overflow: visible !important;
+    .findbar-resize-handle {
+      /* background: red; */
+      width: 3px;
+      height: calc(100% - 1px);
+      position: absolute;
+      right: 0;
 
-    .close-icon.findbar-closebutton {
-      margin: 0 !important;
+      @media not -moz-pref("extension.browse-bot.findbar-ai.dnd-enabled") {
+        display: none !important;
+      }
     }
 
-    .findbar-closebutton {
-      width: 18px !important;
-      height: 18px !important;
-      min-width: 18px !important;
-      min-height: 18px !important;
-      padding: 0 !important;
+    @media -moz-pref("extension.browse-bot.findbar-ai.position", "top-right") {
+      top: 35px;
+      left: calc(100% - 15px - var(--findbar-width));
+
+      .findbar-resize-handle {
+        left: 0;
+        cursor: w-resize;
+      }
+    }
+
+    @media -moz-pref("extension.browse-bot.findbar-ai.position", "top-left") {
+      top: 35px;
+      left: 15px;
+
+      .findbar-resize-handle {
+        right: 0;
+        cursor: e-resize;
+      }
+    }
+
+    @media -moz-pref("extension.browse-bot.findbar-ai.position", "bottom-right") {
+      top: calc(100% - 15px - var(--findbar-height));
+      left: calc(100% - 15px - var(--findbar-width));
+
+      .findbar-resize-handle {
+        left: 0;
+        cursor: w-resize;
+      }
+    }
+
+    @media -moz-pref("extension.browse-bot.findbar-ai.position", "bottom-left") {
+      top: calc(100% - 15px - var(--findbar-height));
+      left: 15px;
+
+      .findbar-resize-handle {
+        right: 0;
+        cursor: e-resize;
+      }
+    }
+
+    .findbar-closebutton,
+    .clear-chat-btn,
+    .settings-btn,
+    .findbar-collapse-btn {
+      width: 28px !important;
+      height: 28px !important;
       appearance: none !important;
       outline: none !important;
       border: none !important;
-      border-radius: 4px !important;
-      transition:
-        opacity 0.15s ease,
-        scale 0.15s ease !important;
+      border-radius: 5px !important;
+      transition: all 0.2s ease !important;
       display: inline-flex !important;
-      align-items: center !important;
       justify-content: center !important;
+      align-content: center !important;
       background-color: transparent !important;
-      background-image: none !important;
-      box-shadow: none !important;
       -moz-context-properties: fill !important;
       fill: light-dark(black, white) !important;
-      position: absolute !important;
-      top: 50% !important;
-      right: 6px !important;
-      z-index: 20 !important;
-      pointer-events: auto !important;
-      transform: translateY(-50%) !important;
-      opacity: 0.55 !important;
+      /* border: 1px solid red !important; */
 
       label {
         display: none !important;
       }
 
       &:hover {
-        opacity: 0.95 !important;
-        background-color: transparent !important;
-        background-image: none !important;
-        box-shadow: none !important;
+        background: var(--tab-hover-background-color) !important;
+        border: none !important;
       }
 
       &:active {
-        scale: 0.92 !important;
-        transform: translateY(-50%) !important;
+        scale: 0.9 !important;
       }
     }
 
-    &:not(.ai-expanded) {
-      .findbar-closebutton {
-        display: inline-flex !important;
-        opacity: 0.72 !important;
-      }
-
-      .findbar-container {
-        padding: 0 28px 0 10px !important;
-      }
+    .findbar-closebutton {
+      position: absolute !important;
+      top: 7px !important;
+      right: 0 !important;
+      transition: background-color 0.2s ease !important;
     }
 
     &.ai-expanded {
@@ -151,199 +208,141 @@
         display: none !important;
       }
 
-      .findbar-closebutton {
-        top: 8px !important;
-        right: 6px !important;
-        transform: none !important;
-        width: 20px !important;
-        height: 20px !important;
-        min-width: 20px !important;
-        min-height: 20px !important;
-        z-index: 30 !important;
-        pointer-events: auto !important;
-        opacity: 0.72 !important;
+      @media not -moz-pref("extension.browse-bot.findbar-ai.minimal") {
+        .findbar-closebutton {
+          top: 0px !important;
+        }
 
-        &:active {
-          transform: none !important;
+        .ai-chat-header {
+          margin-right: 34px !important;
+          position: relative !important;
+
+          .findbar-collapse-btn {
+            position: absolute !important;
+            right: 0 !important;
+            top: 50% !important;
+            transform: translateY(-50%);
+          }
+
+          &::before {
+            width: calc(100% + 90px) !important;
+          }
         }
       }
 
-      .ai-chat-input-group {
-        padding: 6px 8px 8px 8px !important;
-      }
-
-      .ai-chat-input-shell {
-        padding: 6px 6px 6px 10px;
-        border-radius: 12px;
-      }
-
-      .ai-chat-input-actions {
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
+      #findbar-expand {
+        display: none;
       }
     }
 
     .findbar-container {
       display: flex !important;
       flex-direction: row !important;
-      flex-wrap: nowrap !important;
-      align-items: center !important;
       justify-content: center !important;
-      margin-bottom: 0 !important;
-      margin-inline-start: 0 !important;
-      row-gap: 0 !important;
-      height: 36px !important;
-      min-height: 36px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
+      margin-bottom: 5px !important;
+      flex-wrap: wrap;
+      height: auto !important;
+      row-gap: 10px;
 
       & > :first-child {
-        width: auto !important;
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        margin-top: 0 !important;
-        padding-bottom: 0 !important;
-        padding-right: 0 !important;
-        position: static !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        padding-bottom: 10px !important;
+        position: relative;
+        padding-right: 30px !important;
 
-        &::before,
-        hbox[anonid="findbar-textbox-wrapper"]::before {
-          display: none !important;
-          content: none !important;
+        &::before {
+          width: 18px !important;
+          min-width: 18px !important;
+          content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M10.5 2c.58 0 1.15.058 1.699.17a1 1 0 1 1-.398 1.96a6.5 6.5 0 1 0 5.069 7.671a1 1 0 1 1 1.96.398a8.5 8.5 0 0 1-1.457 3.303l-.197.26l3.652 3.652a1 1 0 0 1-1.32 1.498l-.094-.084l-3.652-3.652A8.5 8.5 0 1 1 10.5 2M19 1a1 1 0 0 1 .898.56l.048.117l.13.378a3 3 0 0 0 1.684 1.8l.185.07l.378.129a1 1 0 0 1 .118 1.844l-.118.048l-.378.13a3 3 0 0 0-1.8 1.684l-.07.185l-.129.378a1 1 0 0 1-1.844.117l-.048-.117l-.13-.378a3 3 0 0 0-1.684-1.8l-.185-.07l-.378-.129a1 1 0 0 1-.118-1.844l.118-.048l.378-.13a3 3 0 0 0 1.8-1.684l.07-.185l.129-.378A1 1 0 0 1 19 1m0 3.196a5 5 0 0 1-.804.804q.448.355.804.804q.355-.448.804-.804A5 5 0 0 1 19 4.196" /></svg>') !important;
+          background-repeat: no-repeat;
+          margin-top: 6px;
+          margin-right: 15px;
         }
 
-        hbox[anonid="findbar-textbox-wrapper"] {
-          display: flex !important;
-          flex: 1 1 auto !important;
-          flex-direction: row !important;
-          flex-wrap: nowrap !important;
-          align-items: center !important;
-          order: 1 !important;
-          min-width: 0 !important;
-          width: auto !important;
-          height: 100% !important;
-          margin: 0 !important;
+        .findbar-textbox {
+          background: none !important;
           padding: 0 !important;
-          border-bottom: 0 !important;
-          position: relative !important;
-          z-index: 2 !important;
-          pointer-events: auto !important;
+          font-size: 14px !important;
+          font-weight: 500 !important;
+          box-shadow: none !important;
+          width: 100% !important;
+          border: none !important;
 
-          .findbar-textbox {
-            background: none !important;
-            padding: 0 !important;
-            font-size: 14px !important;
-            font-weight: 500 !important;
-            box-shadow: none !important;
-            width: 100% !important;
-            border: none !important;
-
-            &:focus {
-              outline: none !important;
-            }
-          }
-
-          toolbarbutton {
-            width: 22px !important;
-            height: 22px !important;
-            min-width: 22px !important;
-            min-height: 22px !important;
-            margin-left: 4px !important;
-            border-radius: 4px !important;
-            font-weight: 600 !important;
-            transition: scale 0.2s ease !important;
-            opacity: 1 !important;
-
-            label {
-              display: none !important;
-            }
-
-            &:hover {
-              background: var(--tab-hover-background-color) !important;
-            }
-
-            &:active {
-              scale: 0.9 !important;
-            }
+          &:focus {
+            outline: none !important;
           }
         }
-      }
 
-      .findbar-label {
-        display: none !important;
-      }
+        toolbarbutton {
+          width: 28px !important;
+          height: 28px !important;
+          justify-content: center !important;
+          align-content: center !important;
+          margin-left: 6px !important;
+          border-radius: 4px !important;
+          font-weight: 600 !important;
+          transition: scale 0.2s ease !important;
+          opacity: 1 !important;
 
-      .findbar-find-next,
-      .findbar-find-previous {
-        display: none !important;
+          &[disabled="true"] {
+            display: none !important;
+          }
 
-        &:not([disabled]) {
-          display: inline-flex !important;
-        }
-      }
+          label {
+            display: none !important;
+          }
 
-      .found-matches {
-        flex: 0 0 auto !important;
-        order: 2 !important;
-        display: none !important;
-        margin: 0 8px 0 8px !important;
-        padding: 0 !important;
-        line-height: 1 !important;
-        font-size: 12px !important;
-        white-space: nowrap !important;
-        font-weight: 500 !important;
+          &:hover {
+            background: var(--tab-hover-background-color) !important;
+          }
 
-        &:not([hidden]) {
-          display: inline-flex !important;
-          align-items: center !important;
-          height: 24px !important;
-        }
-      }
-
-      .findbar-find-status {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-      }
-
-      #findbar-ask {
-        appearance: none !important;
-        outline: none !important;
-        border: none !important;
-        box-shadow: none !important;
-        flex: 0 0 auto !important;
-        order: 3 !important;
-        align-self: center !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        height: 24px !important;
-        min-height: 24px !important;
-        margin: 0 0 0 2px !important;
-        padding: 0 10px !important;
-        border-radius: 6px !important;
-        font-size: 12px !important;
-        font-weight: 600 !important;
-        line-height: 1 !important;
-        cursor: pointer;
-        background: var(--browse-bot-primary-bg) !important;
-        color: light-dark(rgb(24, 24, 27), white) !important;
-        transition: opacity 0.15s ease;
-
-        &:hover {
-          opacity: 0.9;
-        }
-
-        &:active {
-          opacity: 0.78;
+          &:active {
+            scale: 0.9 !important;
+          }
         }
       }
 
       checkbox,
       label,
       description {
+        margin-left: 8px !important;
+        margin-right: 8px !important;
+      }
+
+      .findbar-label {
         display: none !important;
+        flex-basis: 100% !important;
+      }
+
+      .found-matches {
+        display: block !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        margin-top: 12px !important;
+        flex-basis: 0 !important;
+        margin: auto !important;
+        padding-right: 12px !important;
+
+        &[hidden="true"] {
+          display: none !important;
+        }
+      }
+
+      .findbar-find-status:is([data-l10n-id]) {
+        display: flex;
+      }
+
+      .checkbox-label {
+        font-size: 12px !important;
+        font-weight: 500 !important;
+      }
+
+      #findbar-ask {
+        margin-right: 5px !important;
+        min-width: 20px !important;
+        font-size: 12px !important;
+        overflow: visible !important;
       }
     }
 
@@ -354,6 +353,41 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+    }
+
+    .ai-chat-header {
+      height: 30px;
+      display: flex;
+      flex-direction: row;
+      align-items: center !important;
+      gap: 4px !important;
+      padding-left: 8px !important;
+
+      * {
+        z-index: 2 !important;
+      }
+
+      .findbar-drag-handle {
+        position: absolute !important;
+        width: 100% !important;
+        height: 30px !important;
+        cursor: move !important;
+        /* background-color: green !important; */
+        z-index: 1 !important;
+
+        @media not -moz-pref("extension.browse-bot.findbar-ai.dnd-enabled") {
+          display: none !important;
+        }
+      }
+
+      &::before {
+        content: "";
+        position: absolute !important;
+        top: 34px !important;
+        left: 0 !important;
+        width: 100% !important;
+        border-top: 1px solid rgba(127, 127, 127, 0.3) !important;
+      }
     }
 
     .browse-bot-setup {
@@ -457,64 +491,27 @@
     }
 
     .browse-bot-chat {
-      gap: 0 !important;
-
-      .markdown-body {
-        overflow-wrap: anywhere;
-        word-break: break-word;
-        max-width: 100%;
-      }
-
-      .chat-message-ai .markdown-body {
-        font-size: 12px !important;
-        line-height: 1.45 !important;
-
-        h1 {
-          font-size: 1.35em !important;
-        }
-        h2 {
-          font-size: 1.25em !important;
-        }
-        h3 {
-          font-size: 1.15em !important;
-        }
-        h4,
-        h5,
-        h6 {
-          font-size: 1.05em !important;
-        }
-        pre,
-        code {
-          font-size: 11px !important;
-        }
-      }
-
-      .ai-chat-messages,
-      .ai-chat-input-group {
-        position: relative;
-        z-index: 2;
-      }
-
       .ai-chat-messages {
         max-height: 320px;
-        padding: 12px 12px 8px 12px !important;
+        padding: 10px 2px 0 2px !important;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        scrollbar-width: none;
+        gap: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: inherit transparent;
 
         &:empty {
           display: none !important;
 
           & ~ .ai-chat-input-group {
-            padding-top: 10px !important;
-            border-top: none !important;
-          }
-        }
+            padding-top: 4px !important;
 
-        &:not(:empty) ~ .ai-chat-input-group {
-          border-top: 1px solid var(--browse-bot-divider) !important;
+            /* When there are no messages, the parent .browse-bot-chat should not have a header or separator line */
+            &::after {
+              display: none;
+            }
+          }
         }
       }
 
@@ -530,7 +527,7 @@
       }
 
       .chat-message-user {
-        align-self: flex-start;
+        align-self: flex-end;
         background: var(--browse-bot-primary-bg);
         color: var(--tab-selected-textcolor);
         border-bottom-right-radius: 4px;
@@ -539,7 +536,7 @@
       }
 
       .chat-message-ai {
-        max-width: calc(100% - 35px) !important;
+        max-width: calc(100% - 15px) !important;
         align-self: flex-start;
       }
 
@@ -551,137 +548,70 @@
 
       .ai-chat-input-group {
         display: flex;
-        flex-direction: column;
-        /* no horizontal padding — shell uses its own internal spacing */
-        padding: 8px 10px 10px 10px !important;
-        box-sizing: border-box;
-      }
+        gap: 10px;
+        align-items: center !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+        padding-bottom: 3px !important;
 
-      .ai-chat-input-shell {
-        display: flex;
-        align-items: flex-end;
-        gap: 8px;
-        /* box-sizing so that width:100% + border don't cause overflow */
-        box-sizing: border-box !important;
-        width: 100%;
-        /* left padding is 10px; textarea adds its own 2px cursor clearance */
-        padding: 9px 8px 9px 10px;
-        border-radius: 14px;
-        /* ensure children are never clipped */
-        overflow: visible !important;
+        &:after {
+          content: "";
+          position: absolute !important;
+          bottom: 57px !important;
+
+          @media -moz-pref("extension.browse-bot.findbar-ai.minimal") {
+            bottom: 32px !important;
+          }
+
+          left: 0% !important;
+          width: 100% !important;
+          border-top: 1px solid rgba(127, 127, 127, 0.3) !important;
+        }
 
         textarea {
-          flex: 1 1 0% !important;
-          min-width: 0 !important;
-          min-height: 22px !important;
-          max-height: 140px !important;
-          height: auto !important;
-          /* 2px left padding keeps the blinking caret visible */
-          padding: 2px 0 2px 2px !important;
-          margin: 0 !important;
+          flex-grow: 1 !important;
+          display: flex !important;
+          align-items: center !important;
+          border-radius: 8 !important;
+          padding: 0 !important;
+          min-height: 20px !important;
+          max-height: 160px !important;
+          height: 50px !important;
           resize: none !important;
           border: none !important;
-          background: transparent !important;
-          box-shadow: none !important;
+          background: none !important;
+          /* color: var(--tab-selected-textcolor) !important; */
           font-size: 14px !important;
-          line-height: 1.5 !important;
-          color: inherit !important;
+          transition: all 0.2s ease !important;
           --focus-outline: none !important;
           --focus-outline-inset: 0 !important;
-          outline: none !important;
 
-          &::placeholder {
-            color: var(--browse-bot-muted) !important;
-            opacity: 0.8;
-          }
-        }
-      }
-
-      .ai-chat-input-actions {
-        position: relative;
-        flex-shrink: 0;
-        width: 32px;
-        height: 32px;
-        align-self: flex-end;
-        overflow: hidden;
-        border-radius: 8px;
-        isolation: isolate;
-      }
-
-      .send-btn,
-      .stop-btn {
-        appearance: none !important;
-        outline: none !important;
-        border: none !important;
-        box-shadow: none !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer;
-        border-radius: inherit;
-        box-sizing: border-box !important;
-        line-height: 0 !important;
-        transition:
-          opacity 0.15s ease,
-          background-color 0.15s ease;
-
-        &[hidden] {
-          display: none !important;
-          visibility: hidden !important;
-          pointer-events: none !important;
+          /* &::placeholder { */
+          /*   color: var(--toolbox-textcolor-inactive) !important; */
+          /* } */
         }
 
-        svg {
-          display: block !important;
-          width: 16px !important;
-          height: 16px !important;
-          flex-shrink: 0;
-          -moz-context-properties: fill;
-          fill: currentColor;
-        }
-
-        &:hover:not(:disabled) {
-          opacity: 0.92;
-        }
-
-        &:active:not(:disabled) {
-          opacity: 0.82;
-        }
-
-        &:disabled {
-          cursor: not-allowed;
-          opacity: 0.45;
-        }
-      }
-
-      .send-btn {
-        z-index: 1;
-        background: var(--browse-bot-primary-bg) !important;
-        color: light-dark(rgb(24, 24, 27), white) !important;
-      }
-
-      .stop-btn {
-        z-index: 2;
-        background: var(--browse-bot-error-bg) !important;
-        color: var(--browse-bot-error) !important;
-      }
-
-      .ai-chat-input-actions[data-streaming="true"] {
-        .send-btn {
-          display: none !important;
-        }
-
+        .send-btn,
         .stop-btn {
-          display: inline-flex !important;
+          margin-left: auto !important;
+          border: none !important;
+          background-color: var(--browse-bot-primary-bg) !important;
+          padding: 3px !important;
+          color: var(--browse-bot-primary) !important;
+          align-self: end !important;
+          min-width: 30px !important;
+          min-height: 30px !important;
+          display: flex;
+
+          &:active:not(:disabled) {
+            transform: translateY(0);
+          }
+
+          &:disabled {
+            background: color-mix(in srgb, var(--browse-bot-primary-bg) 30%, black 70%);
+            cursor: not-allowed;
+            opacity: 0.6;
+          }
         }
       }
 
@@ -705,37 +635,336 @@
       }
     }
 
-    .page-excerpt {
-      border-left: 3px solid var(--browser-primary-color) !important;
-      background: color-mix(in srgb, var(--browser-primary-color) 14%, transparent 86%) !important;
-      padding: 8px 12px !important;
-      margin: 8px 0 !important;
+    .citation-link {
+      /* To-do: Style This*/
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.7em !important;
+      height: 1.7em !important;
+      font-size: 0.75em !important;
+      font-weight: 700 !important;
       cursor: pointer;
-      border-radius: 0 6px 6px 0;
-      color: inherit !important;
-      transition: background 0.15s ease;
+      margin: 1px 3px;
+      vertical-align: middle;
+      padding: 0.3px !important;
+      background: color-mix(in srgb, var(--browse-bot-primary-bg) 40%, transparent 60%) !important;
+    }
 
-      &:hover,
-      &:focus-visible {
-        background: color-mix(in srgb, var(--browser-primary-color) 24%, transparent 76%) !important;
-        outline: none;
+    .tool-calls-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 2px;
+
+      .tool-call-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+
+        &[data-status="loading"] {
+          /* FIX: hiding loading indicator from css unelss i figure out a way to hide it correctly*/
+          display: none !important;
+          background-color: var(--browse-bot-muted-bg);
+          color: var(--browse-bot-muted);
+
+          .tool-call-icon {
+            animation: spin 0.7s linear infinite;
+          }
+        }
+
+        &[data-status="success"] {
+          background-color: var(--browse-bot-success-bg);
+          color: var(--browse-bot-success);
+        }
+
+        &[data-status="error"] {
+          background-color: var(--browse-bot-error-bg);
+          color: var(--browse-bot-error);
+        }
+
+        &[data-status="declined"] {
+          background-color: var(--browse-bot-warning-bg);
+          color: var(--browse-bot-warning);
+          opacity: 0.7;
+        }
+
+        .tool-call-icon {
+          width: 16px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+    }
+
+    #findbar-expand {
+      padding: 4px !important;
+      position: relative;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      border-radius: 4px;
+      font-weight: 600;
+      border: none !important;
+      width: 100% !important;
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    @media -moz-pref("extension.browse-bot.findbar-ai.minimal") {
+      width: 420px;
+      min-height: 36px !important;
+      align-items: center !important;
+      flex-direction: column !important;
+      overflow: visible !important;
+
+      #findbar-expand {
+        display: none !important;
       }
 
-      &.page-excerpt-streaming {
-        cursor: progress;
-        opacity: 0.92;
+      .findbar-closebutton {
+        top: 1px !important;
       }
 
-      p:last-child {
-        margin-bottom: 0;
+      .findbar-container {
+        margin-bottom: 0 !important;
+        margin-inline-start: 0 !important;
+        height: 32px !important;
+        width: 100% !important;
+
+        & > :first-child {
+          border-bottom: 0 !important;
+          width: calc(100% - 35px) !important;
+          padding-right: 3px !important;
+
+          &::before {
+            margin-top: 5px !important;
+            margin-right: 10px;
+            margin-left: -5px;
+          }
+        }
+
+        hbox[anonid="findbar-textbox-wrapper"] {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        checkbox {
+          display: none !important;
+        }
+      }
+
+      .findbar-closebutton {
+        top: -30px !important;
+        opacity: 0 !important;
+
+        &:hover {
+          opacity: 1 !important;
+        }
+      }
+
+      .ai-chat-header {
+        width: 100% !important;
+        top: -30px !important;
+        position: absolute !important;
+        transition: all 0.2s ease !important;
+
+        &::after {
+          content: "";
+          position: absolute !important;
+          border-radius: var(--acrylic-radius) !important;
+          opacity: 0 !important;
+          top: 0px !important;
+          width: 140px !important;
+          height: 100% !important;
+          position: absolute !important;
+          right: 10px !important;
+          transition: all 0.2s ease !important;
+          /*border: 1px red solid !important; */
+          background: var(--browse-bot-dialog-bg) !important;
+          backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+          outline: 1px solid rgba(0, 0, 0, 1) !important;
+
+          @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
+            background: var(--acrylic-bg) !important;
+          }
+
+          border: 1px solid light-dark(rgba(20, 20, 20, 0.2), rgba(235, 235, 235, 0.3)) !important;
+          padding-bottom: 4px !important;
+          margin-bottom: -2px !important;
+          clip-path: inset(0 0 15% 0);
+        }
+
+        &::before {
+          display: none !important;
+        }
+
+        .findbar-drag-handle {
+          width: 20px !important;
+          opacity: 0 !important;
+          background: var(--browse-bot-dialog-bg) !important;
+          backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+          outline: 1px solid rgba(0, 0, 0, 1) !important;
+
+          @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
+            background: var(--acrylic-bg) !important;
+          }
+
+          border: 1px solid light-dark(rgba(20, 20, 20, 0.2), rgba(235, 235, 235, 0.3)) !important;
+          border-bottom: none !important;
+          padding-bottom: 4px !important;
+          margin-bottom: -2px !important;
+          clip-path: inset(0 0 15% 0);
+          border-radius: 4px !important;
+          display: flex !important;
+          justify-content: center !important;
+          align-content: center !important;
+          position: relative !important;
+
+          &::after {
+            content: url("chrome://browser/skin/zen-icons/drag-indicator.svg") !important;
+            -moz-context-properties: fill !important;
+            fill: light-dark(black, white) !important;
+            padding-top: 6px !important;
+          }
+
+          @media not -moz-pref("extension.browse-bot.findbar-ai.dnd-enabled") {
+            display: none !important;
+          }
+        }
+
+        .clear-chat-btn,
+        .settings-btn,
+        .findbar-collapse-btn {
+          position: absolute !important;
+          z-index: 2 !important;
+          opacity: 0 !important;
+        }
+
+        .findbar-collapse-btn {
+          right: 50px !important;
+        }
+
+        .clear-chat-btn {
+          right: 84px !important;
+        }
+
+        .settings-btn {
+          right: 116px !important;
+        }
+      }
+
+      &:has(.findbar-closebutton:hover),
+      &:has(.findbar-drag-handle:active),
+      &:has(.ai-chat-header:hover) {
+        .clear-chat-btn,
+        .settings-btn,
+        .findbar-collapse-btn,
+        .findbar-closebutton,
+        .findbar-drag-handle,
+        .ai-chat-header::after {
+          opacity: 1 !important;
+        }
+      }
+
+      &:not(.ai-expanded) {
+        .ai-chat-header {
+          display: none !important;
+        }
+
+        .findbar-closebutton {
+          display: inline-flex !important;
+          top: 1px !important;
+          opacity: 1 !important;
+        }
+
+        .findbar-container {
+          padding: 0 35px 0 10px !important;
+        }
+      }
+
+      &.ai-expanded {
+        .ai-chat-input-group {
+          padding-left: 3px !important;
+
+          &::before {
+            width: 18px !important;
+            min-width: 18px !important;
+            content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23fff" d="M9.107 5.448c.598-1.75 3.016-1.803 3.725-.159l.06.16l.807 2.36a4 4 0 0 0 2.276 2.411l.217.081l2.36.806c1.75.598 1.803 3.016.16 3.725l-.16.06l-2.36.807a4 4 0 0 0-2.412 2.276l-.081.216l-.806 2.361c-.598 1.75-3.016 1.803-3.724.16l-.062-.16l-.806-2.36a4 4 0 0 0-2.276-2.412l-.216-.081l-2.36-.806c-1.751-.598-1.804-3.016-.16-3.724l.16-.062l2.36-.806A4 4 0 0 0 8.22 8.025l.081-.216zM11 6.094l-.806 2.36a6 6 0 0 1-3.49 3.649l-.25.091l-2.36.806l2.36.806a6 6 0 0 1 3.649 3.49l.091.25l.806 2.36l.806-2.36a6 6 0 0 1 3.49-3.649l.25-.09l2.36-.807l-2.36-.806a6 6 0 0 1-3.649-3.49l-.09-.25zM19 2a1 1 0 0 1 .898.56l.048.117l.35 1.026l1.027.35a1 1 0 0 1 .118 1.845l-.118.048l-1.026.35l-.35 1.027a1 1 0 0 1-1.845.117l-.048-.117l-.35-1.026l-1.027-.35a1 1 0 0 1-.118-1.845l.118-.048l1.026-.35l.35-1.027A1 1 0 0 1 19 2" /></svg>') !important;
+            margin-left: 5px;
+          }
+
+          textarea {
+            height: 20px !important;
+            position: relative !important;
+          }
+
+          .send-btn,
+          .stop-btn {
+            padding: 1px !important;
+            min-width: 24px !important;
+            min-height: 24px !important;
+          }
+        }
       }
     }
   }
-}
 
-.findbar-find-previous {
-  margin-inline: 0 !important;
-}
-.findbar-find-next {
-  margin-inline: 0 !important;
+  .tool-confirmation-content {
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    width: 300px;
+    height: 100px;
+    min-width: 200px;
+    max-width: 90vw;
+    border-radius: var(--acrylic-radius) !important;
+    outline: 1px solid rgba(0, 0, 0, 1) !important;
+    border: 1px solid light-dark(rgba(20, 20, 20, 0.2), rgba(235, 235, 235, 0.3)) !important;
+    background: var(--browse-bot-dialog-bg) !important;
+    backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+
+    p {
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+
+      .right-side-buttons {
+        display: flex !important;
+        gap: 10px !important;
+      }
+
+      button {
+        padding: 7px 14px;
+        margin: 0 !important;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        appearance: none;
+
+        &.confirm-tool {
+          background-color: var(--browse-bot-success);
+          color: white;
+        }
+
+        &.cancel-tool {
+          color: white;
+          background-color: var(--browse-bot-error);
+        }
+      }
+    }
+  }
 }
