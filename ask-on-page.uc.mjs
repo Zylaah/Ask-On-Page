@@ -1686,6 +1686,44 @@ const browseBotFindbar = {
   },
 
   /**
+   * Clear find query, match UI, and Ask — minimal row back to default.
+   */
+  _resetMinimalFindbarState() {
+    if (!this.findbar) return;
+
+    this._lastMatchResult = null;
+
+    const field = this.findbar._findField;
+    if (field) {
+      field.value = "";
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    try {
+      this.findbar.toggleHighlight(false);
+    } catch {
+      // ignore
+    }
+
+    const matches =
+      this.findbar._foundMatches || this.findbar.querySelector(".found-matches");
+    if (matches) {
+      matches.hidden = true;
+      matches.value = "";
+    }
+
+    const status = this.findbar.querySelector(".findbar-find-status");
+    if (status) status.hidden = true;
+
+    this.findbar.querySelector(".findbar-find-next")?.setAttribute("disabled", "true");
+    this.findbar.querySelector(".findbar-find-previous")?.setAttribute("disabled", "true");
+
+    this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
+    this._layoutMinimalFindbarRow();
+    setTimeout(() => this._updateFindbarDimensions(), 0);
+  },
+
+  /**
    * Highlight a word using native findbar
    * @param {string} word - Word to highlight.
    */
@@ -2452,6 +2490,7 @@ const browseBotFindbar = {
         e.preventDefault();
         e.stopPropagation();
         this.expanded = false;
+        this._resetMinimalFindbarState();
         this.focusInput();
       }
     }
