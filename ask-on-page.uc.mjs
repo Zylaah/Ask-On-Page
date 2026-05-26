@@ -1554,6 +1554,9 @@ const browseBotFindbar = {
     }
     gBrowser.getFindBar().then((findbar) => {
       this.findbar = findbar;
+      if (this.findbar._findField) {
+        this.findbar._findField.placeholder = "Find or Ask";
+      }
       this._applyFindbarDimensions();
       this.addAskButton();
       if (PREFS.persistChat) {
@@ -2442,7 +2445,7 @@ const browseBotFindbar = {
   handleFindbarOpenEvent: function () {
     if (this.enabled) {
       PREFS.debugLog("Findbar is being opened");
-      setTimeout(() => (this.findbar._findField.placeholder = "Press Alt + Enter to ask AI"), 100);
+      setTimeout(() => (this.findbar._findField.placeholder = "Find or Ask"), 100);
       setTimeout(() => this._updateFindbarDimensions(), 1);
     }
   },
