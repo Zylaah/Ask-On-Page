@@ -535,7 +535,7 @@
         &:not(:empty) ~ .ai-chat-input-group {
           border: none !important;
           margin: 5px !important;
-          background: #2C2C2C;
+          background: #252525;
           border-radius: 6px;
         }
       }
