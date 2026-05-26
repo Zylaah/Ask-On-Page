@@ -524,7 +524,10 @@
         }
 
         &:not(:empty) ~ .ai-chat-input-group {
-          border-top: 1px solid var(--browse-bot-divider) !important;
+          border: 1px solid var(--browse-bot-divider) !important;
+          margin: 5px !important;
+          background: #2C2C2C;
+          border-radius: 6px;
         }
       }
 
