@@ -86,6 +86,7 @@ function removePrefListener(listener) {
 
 /** Fixed findbar width (not user-resizable). */
 const FINDBAR_WIDTH = 400;
+const FINDBAR_PLACEHOLDER = "Find or Ask";
 
 let PREFS$1 = class PREFS {
   static MOD_NAME = "BasePrefs";
@@ -1458,6 +1459,41 @@ const browseBotFindbar = {
   _lastMatchResult: null,
   _currentAIMessageDiv: null,
 
+  _placeholderObserver: null,
+  _placeholderField: null,
+  _placeholderFocusHandler: null,
+
+  _applyFindFieldPlaceholder(findbar = this.findbar) {
+    const field = findbar?._findField;
+    if (!field) return;
+    if (field.placeholder !== FINDBAR_PLACEHOLDER) {
+      field.placeholder = FINDBAR_PLACEHOLDER;
+    }
+  },
+
+  _removeFindFieldPlaceholderGuard() {
+    this._placeholderObserver?.disconnect();
+    this._placeholderObserver = null;
+    if (this._placeholderField && this._placeholderFocusHandler) {
+      this._placeholderField.removeEventListener("focus", this._placeholderFocusHandler, true);
+    }
+    this._placeholderField = null;
+    this._placeholderFocusHandler = null;
+  },
+
+  _installFindFieldPlaceholderGuard(findbar) {
+    const field = findbar?._findField;
+    if (!field) return;
+    this._removeFindFieldPlaceholderGuard();
+    this._applyFindFieldPlaceholder(findbar);
+    const apply = () => this._applyFindFieldPlaceholder(findbar);
+    this._placeholderObserver = new MutationObserver(apply);
+    this._placeholderObserver.observe(field, { attributes: true, attributeFilter: ["placeholder"] });
+    this._placeholderField = field;
+    this._placeholderFocusHandler = apply;
+    field.addEventListener("focus", apply, true);
+  },
+
   /**
    * Save findbar dimensions in css variables
    */
@@ -1546,6 +1582,7 @@ const browseBotFindbar = {
 
   updateFindbar() {
     SettingsModal.hide();
+    this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
     this.removeAIInterface();
     if (!PREFS.persistChat) {
@@ -1555,9 +1592,7 @@ const browseBotFindbar = {
     }
     gBrowser.getFindBar().then((findbar) => {
       this.findbar = findbar;
-      if (this.findbar._findField) {
-        this.findbar._findField.placeholder = "Find or Ask";
-      }
+      this._installFindFieldPlaceholderGuard(findbar);
       this._applyFindbarDimensions();
       this.addAskButton();
       if (PREFS.persistChat) {
@@ -2049,11 +2084,7 @@ const browseBotFindbar = {
           <div class="ai-chat-input-shell">
             <textarea id="ai-prompt" placeholder="Ask anything about this page…" rows="1"></textarea>
             <div class="ai-chat-input-actions">
-              <button id="send-prompt" class="send-btn" type="button" title="Send" aria-label="Send message">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fill="currentColor" d="M3.4 20.4l17.45-7.48c.81-.35.81-1.49 0-1.84L3.4 3.6c-.66-.29-1.39.2-1.39.91L2 9.12c0 .5.37.93.87.99L17 12L2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
-                </svg>
-              </button>
+              <button id="send-prompt" class="send-btn" type="button" title="Ask" aria-label="Ask">Ask</button>
               <button id="stop-generation" class="stop-btn" type="button" title="Stop" aria-label="Stop generation" hidden>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d="M6 6h12v12H6z"/>
@@ -2192,7 +2223,11 @@ const browseBotFindbar = {
   },
 
   focusInput() {
-    if (this.findbar) setTimeout(() => this.findbar._findField.focus(), 10);
+    if (!this.findbar) return;
+    setTimeout(() => {
+      this._applyFindFieldPlaceholder(this.findbar);
+      this.findbar._findField.focus();
+    }, 10);
   },
   focusPrompt() {
     const promptInput = this.chatContainer?.querySelector("#ai-prompt");
@@ -2231,6 +2266,7 @@ const browseBotFindbar = {
     this._overrideFindbarMatchesDisplay();
   },
   destroy() {
+    this._removeFindFieldPlaceholderGuard();
     this.findbar = null;
     setTimeout(() => this._updateFindbarDimensions(), 10);
     this.expanded = false;
@@ -2454,9 +2490,7 @@ const browseBotFindbar = {
     PREFS.debugLog("Findbar is being opened");
     void gBrowser.getFindBar().then((findbar) => {
       this.findbar = findbar;
-      if (findbar._findField) {
-        findbar._findField.placeholder = "Find or Ask";
-      }
+      this._installFindFieldPlaceholderGuard(findbar);
       // Hidden until onMatchesCountResult reports zero matches for a non-empty query.
       this._updateAskButtonVisibility(findbar, { searchString: "", total: 1 });
       setTimeout(() => this._updateFindbarDimensions(), 1);
