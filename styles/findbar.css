@@ -302,6 +302,7 @@
       }
 
       #findbar-ask {
+        display: none !important;
         appearance: none !important;
         outline: none !important;
         border: none !important;
@@ -309,7 +310,6 @@
         flex: 0 0 auto !important;
         order: 3 !important;
         align-self: center !important;
-        display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         height: 24px !important;
@@ -325,16 +325,16 @@
         color: light-dark(rgb(24, 24, 27), white) !important;
         transition: opacity 0.15s ease;
 
+        &[data-show-ask="true"] {
+          display: inline-flex !important;
+        }
+
         &:hover {
           opacity: 0.9;
         }
 
         &:active {
           opacity: 0.78;
-        }
-
-        &[hidden] {
-          display: none !important;
         }
       }
 

@@ -1525,10 +1525,11 @@ const browseBotFindbar = {
       this.findbar.classList.remove("ai-expanded");
       this.removeAIInterface();
       if (isChanged) this.focusInput();
-      this._updateAskButtonVisibility(
-        this.findbar,
-        this._lastMatchResult ?? { searchString: this.findbar._findField?.value ?? "", total: 0 }
-      );
+      if (this._lastMatchResult && typeof this._lastMatchResult.total === "number") {
+        this._updateAskButtonVisibility(this.findbar, this._lastMatchResult);
+      } else {
+        this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
+      }
     }
   },
 
@@ -1592,7 +1593,7 @@ const browseBotFindbar = {
       this.findbar._findField.addEventListener("input", this._handleFindFieldInput);
 
       this._layoutMinimalFindbarRow();
-      this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 0 });
+      this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
     });
   },
 
@@ -1877,12 +1878,7 @@ const browseBotFindbar = {
   },
 
   /**
-   * Hide match counter and nav arrows unless there are 2+ matches.
-   * @param {Element} findbarEl
-   * @param {object} result
-   */
-  /**
-   * Show Ask in minimal mode only when the user searched and nothing was found.
+   * Show Ask in minimal mode only when find reported a query with zero matches.
    * @param {Element} findbarEl
    * @param {{ searchString?: string, total?: number }} result
    */
@@ -1891,14 +1887,19 @@ const browseBotFindbar = {
     if (!askBtn) return;
 
     if (this.expanded) {
-      askBtn.hidden = true;
+      askBtn.removeAttribute("data-show-ask");
       return;
     }
 
-    const searchString = (result?.searchString ?? findbarEl?._findField?.value ?? "").trim();
-    const total = typeof result?.total === "number" ? result.total : 0;
-    const showAsk = searchString !== "" && total === 0;
-    askBtn.hidden = !showAsk;
+    const searchString = (result?.searchString ?? "").trim();
+    const hasTotal = typeof result?.total === "number";
+    const showAsk = hasTotal && searchString !== "" && result.total === 0;
+
+    if (showAsk) {
+      askBtn.setAttribute("data-show-ask", "true");
+    } else {
+      askBtn.removeAttribute("data-show-ask");
+    }
   },
 
   _syncFindMatchChrome(findbarEl, result) {
@@ -1932,7 +1933,10 @@ const browseBotFindbar = {
     }
 
     const foundMatchesElement = findbarEl._foundMatches;
-    if (!foundMatchesElement) return;
+    if (!foundMatchesElement) {
+      this._updateAskButtonVisibility(findbarEl, result);
+      return;
+    }
 
     if (!hasMatches) {
       foundMatchesElement.hidden = true;
@@ -2260,10 +2264,13 @@ const browseBotFindbar = {
       } else {
         container.appendChild(askBtn);
       }
-      askBtn.hidden = true;
       this.askButton = askBtn;
       this._layoutMinimalFindbarRow();
-      this._updateAskButtonVisibility(this.findbar, this._lastMatchResult ?? { searchString: "", total: 0 });
+      if (this._lastMatchResult && typeof this._lastMatchResult.total === "number") {
+        this._updateAskButtonVisibility(this.findbar, this._lastMatchResult);
+      } else {
+        this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
+      }
     }
     return true;
   },
@@ -2443,11 +2450,17 @@ const browseBotFindbar = {
   },
 
   handleFindbarOpenEvent: function () {
-    if (this.enabled) {
-      PREFS.debugLog("Findbar is being opened");
-      setTimeout(() => (this.findbar._findField.placeholder = "Find or Ask"), 100);
+    if (!this.enabled) return;
+    PREFS.debugLog("Findbar is being opened");
+    void gBrowser.getFindBar().then((findbar) => {
+      this.findbar = findbar;
+      if (findbar._findField) {
+        findbar._findField.placeholder = "Find or Ask";
+      }
+      // Hidden until onMatchesCountResult reports zero matches for a non-empty query.
+      this._updateAskButtonVisibility(findbar, { searchString: "", total: 1 });
       setTimeout(() => this._updateFindbarDimensions(), 1);
-    }
+    });
   },
 
   handleFindbarCloseEvent: function () {
