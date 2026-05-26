@@ -87,37 +87,6 @@ function removePrefListener(listener) {
 /** Fixed findbar width (not user-resizable). */
 const FINDBAR_WIDTH = 400;
 const FINDBAR_PLACEHOLDER = "Find or Ask...";
-const ZEN_DARK_MODE_ATTR = "zen-should-be-dark-mode";
-
-/**
- * @param {HTMLElement} [root]
- * @returns {boolean}
- */
-function isZenLightMode(root = document.documentElement) {
-  return root.getAttribute(ZEN_DARK_MODE_ATTR) === "false";
-}
-
-/**
- * @param {HTMLElement} [root]
- */
-function syncBrowseBotTheme(root = document.documentElement) {
-  const theme = isZenLightMode(root) ? "light" : "dark";
-  root.dataset.browseBotTheme = theme;
-  root.style.colorScheme = theme;
-}
-
-/**
- * @returns {MutationObserver}
- */
-function installZenThemeObserver() {
-  syncBrowseBotTheme();
-  const observer = new MutationObserver(() => syncBrowseBotTheme());
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: [ZEN_DARK_MODE_ATTR],
-  });
-  return observer;
-}
 
 let PREFS$1 = class PREFS {
   static MOD_NAME = "BasePrefs";
@@ -1460,13 +1429,10 @@ const SettingsModal = {
  * @param {HTMLElement} target
  */
 function renderMarkdown(markdown, target) {
-  target.classList.add("markdown-body");
-  target.dataset.theme = isZenLightMode() ? "light" : "dark";
   renderMarkdownToElement(markdown, target);
 }
 
 PREFS.setInitialPrefs();
-installZenThemeObserver();
 document.documentElement.style.setProperty("--browse-bot-findbar-width", `${FINDBAR_WIDTH}px`);
 document.documentElement.style.setProperty("--browse-bot-findbar-max-width", `${FINDBAR_WIDTH}px`);
 
