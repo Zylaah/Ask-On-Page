@@ -113,21 +113,42 @@ function isZenDarkFromScheme(scheme) {
 }
 
 /**
- * Resolve dark/light the same way Zen's theme picker does.
+ * Zen attaches the theme picker to the active browser element.
+ * @returns {object | null}
+ */
+function getZenThemePicker() {
+  try {
+    const browser =
+      window.gBrowser?.selectedBrowser ??
+      window.gBrowser?.browsers?.[0] ??
+      document.querySelector("browser");
+    return browser?.gZenThemePicker ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve dark/light like Zen: scheme pref (theme picker) wins over stale inline CSS vars.
  * @returns {boolean}
  */
 function resolveZenShouldBeDark() {
   if (isZenPrivateWindow()) return true;
 
   const root = document.documentElement;
+  const isDefaultTheme = root.hasAttribute("zen-default-theme");
 
-  const zenAttr = root.getAttribute("zen-should-be-dark-mode");
-  if (zenAttr === "true") return true;
-  if (zenAttr === "false") return false;
+  // Custom gradient only — not used on default theme (Zen removes the attribute there).
+  if (!isDefaultTheme) {
+    const zenAttr = root.getAttribute("zen-should-be-dark-mode");
+    if (zenAttr === "true") return true;
+    if (zenAttr === "false") return false;
+  }
 
-  const toolbarScheme = getComputedStyle(root).getPropertyValue("--toolbar-color-scheme").trim();
-  if (toolbarScheme === "dark") return true;
-  if (toolbarScheme === "light") return false;
+  const picker = getZenThemePicker();
+  if (picker && typeof picker.isDarkMode === "boolean") {
+    return picker.isDarkMode;
+  }
 
   let scheme = 2;
   try {
@@ -143,29 +164,55 @@ function syncBrowseBotTheme() {
   const theme = resolveZenShouldBeDark() ? "dark" : "light";
   document.documentElement.setAttribute(BROWSE_BOT_THEME_ATTR, theme);
   document.documentElement.style.colorScheme = theme;
+
+  for (const el of document.querySelectorAll(".markdown-body[data-theme]")) {
+    el.dataset.theme = theme;
+  }
+}
+
+/** Re-sync after Zen applies gradient / scheme (pref can fire before DOM updates). */
+function scheduleBrowseBotThemeSync() {
+  syncBrowseBotTheme();
+  requestAnimationFrame(() => syncBrowseBotTheme());
 }
 
 /** Watch Zen scheme pref, gradient updates, and zen-should-be-dark-mode on <html>. */
 function installZenThemeSync() {
-  syncBrowseBotTheme();
+  scheduleBrowseBotThemeSync();
 
   const root = document.documentElement;
-  const attrObserver = new MutationObserver(() => syncBrowseBotTheme());
+  const attrObserver = new MutationObserver(() => scheduleBrowseBotThemeSync());
   attrObserver.observe(root, {
     attributes: true,
-    attributeFilter: ["zen-should-be-dark-mode", "style"],
+    attributeFilter: ["zen-should-be-dark-mode", "zen-default-theme"],
   });
 
+  const schemePrefObserver = {
+    observe(_subject, topic) {
+      if (topic === "nsPref:changed") {
+        scheduleBrowseBotThemeSync();
+      }
+    },
+  };
   try {
-    Services.prefs.addObserver(ZEN_WINDOW_SCHEME_PREF, syncBrowseBotTheme);
+    Services.prefs.addObserver(ZEN_WINDOW_SCHEME_PREF, schemePrefObserver);
   } catch (err) {
     console.warn("[Browse Bot]: Could not observe zen.view.window.scheme:", err);
   }
 
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncBrowseBotTheme);
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", scheduleBrowseBotThemeSync);
 
+  const gradientObserver = {
+    observe(_subject, topic) {
+      if (topic === "zen-space-gradient-update") {
+        scheduleBrowseBotThemeSync();
+      }
+    },
+  };
   try {
-    Services.obs.addObserver(syncBrowseBotTheme, "zen-space-gradient-update");
+    Services.obs.addObserver(gradientObserver, "zen-space-gradient-update");
   } catch {
     // Zen observer optional
   }
