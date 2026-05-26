@@ -2229,8 +2229,8 @@ const browseBotFindbar = {
               <button id="send-prompt" class="send-btn" type="button" title="Ask" aria-label="Ask">Ask</button>
               <button id="stop-generation" class="stop-btn" type="button" title="Stop" aria-label="Stop generation" hidden>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                  <rect class="stop-icon-outer" x="4" y="4" width="16" height="16" rx="3"/>
-                  <rect class="stop-icon-inner" x="8.5" y="8.5" width="7" height="7" rx="1"/>
+                  <rect class="stop-icon-outer" x="1" y="1" width="22" height="22" rx="4"/>
+                  <rect class="stop-icon-inner" x="8" y="8" width="8" height="8" rx="1.5"/>
                 </svg>
               </button>
             </div>
