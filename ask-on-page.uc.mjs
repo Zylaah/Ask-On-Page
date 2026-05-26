@@ -1455,6 +1455,7 @@ const browseBotFindbar = {
   _matchesObserver: null,
   _highlightTimeout: null,
   _originalOnMatchesCountResult: null,
+  _lastMatchResult: null,
   _currentAIMessageDiv: null,
 
   /**
@@ -1524,6 +1525,10 @@ const browseBotFindbar = {
       this.findbar.classList.remove("ai-expanded");
       this.removeAIInterface();
       if (isChanged) this.focusInput();
+      this._updateAskButtonVisibility(
+        this.findbar,
+        this._lastMatchResult ?? { searchString: this.findbar._findField?.value ?? "", total: 0 }
+      );
     }
   },
 
@@ -1584,11 +1589,12 @@ const browseBotFindbar = {
       this.findbar._findField.addEventListener("input", this._handleFindFieldInput);
 
       this._layoutMinimalFindbarRow();
+      this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 0 });
     });
   },
 
   /**
-   * Minimal findbar row: [textbox wrapper] [n/m matches] [Ask]
+   * Minimal findbar row: [textbox wrapper] [n/m matches] [Ask when no matches]
    * Native DOM: wrapper, checkboxes, .found-matches are siblings under .findbar-container.
    */
   _layoutMinimalFindbarRow() {
@@ -1872,9 +1878,30 @@ const browseBotFindbar = {
    * @param {Element} findbarEl
    * @param {object} result
    */
+  /**
+   * Show Ask in minimal mode only when the user searched and nothing was found.
+   * @param {Element} findbarEl
+   * @param {{ searchString?: string, total?: number }} result
+   */
+  _updateAskButtonVisibility(findbarEl, result) {
+    const askBtn = this.askButton || findbarEl?.querySelector("#findbar-ask");
+    if (!askBtn) return;
+
+    if (this.expanded) {
+      askBtn.hidden = true;
+      return;
+    }
+
+    const searchString = (result?.searchString ?? findbarEl?._findField?.value ?? "").trim();
+    const total = typeof result?.total === "number" ? result.total : 0;
+    const showAsk = searchString !== "" && total === 0;
+    askBtn.hidden = !showAsk;
+  },
+
   _syncFindMatchChrome(findbarEl, result) {
     if (typeof result?.current !== "number" || typeof result?.total !== "number") return;
 
+    this._lastMatchResult = result;
     const hasSearch = result.searchString.trim() !== "";
     const hasMatches = hasSearch && result.total > 0;
 
@@ -1907,12 +1934,14 @@ const browseBotFindbar = {
     if (!hasMatches) {
       foundMatchesElement.hidden = true;
       foundMatchesElement.setAttribute("value", "");
+      this._updateAskButtonVisibility(findbarEl, result);
       return;
     }
 
     foundMatchesElement.hidden = false;
     foundMatchesElement.setAttribute("value", `${result.current}/${result.total}`);
 
+    this._updateAskButtonVisibility(findbarEl, result);
     this._layoutMinimalFindbarRow();
   },
 
@@ -2228,8 +2257,10 @@ const browseBotFindbar = {
       } else {
         container.appendChild(askBtn);
       }
+      askBtn.hidden = true;
       this.askButton = askBtn;
       this._layoutMinimalFindbarRow();
+      this._updateAskButtonVisibility(this.findbar, this._lastMatchResult ?? { searchString: "", total: 0 });
     }
     return true;
   },

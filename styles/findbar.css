@@ -332,6 +332,10 @@
         &:active {
           opacity: 0.78;
         }
+
+        &[hidden] {
+          display: none !important;
+        }
       }
 
       checkbox,
