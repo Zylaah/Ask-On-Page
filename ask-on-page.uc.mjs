@@ -86,7 +86,7 @@ function removePrefListener(listener) {
 
 /** Fixed findbar width (not user-resizable). */
 const FINDBAR_WIDTH = 400;
-const FINDBAR_PLACEHOLDER = "Find or Ask";
+const FINDBAR_PLACEHOLDER = "Find or Ask...";
 
 let PREFS$1 = class PREFS {
   static MOD_NAME = "BasePrefs";
