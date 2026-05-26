@@ -1,6 +1,7 @@
 @import "styles/findbar.css";
 @import "styles/markdown.css";
 @import "styles/pseudo-bg.css";
+@import "styles/settings.css";
 
 :root {
   /*using fallback colors for zen colors*/
