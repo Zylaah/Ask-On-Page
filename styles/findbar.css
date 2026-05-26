@@ -723,16 +723,22 @@
         border-radius: 6px !important;
         line-height: 0 !important;
         z-index: 2;
-        background: var(--browse-bot-error-bg) !important;
-        color: var(--browse-bot-error) !important;
+        background: transparent !important;
+        color: inherit !important;
 
         svg {
           display: block !important;
           width: 14px !important;
           height: 14px !important;
           flex-shrink: 0;
-          -moz-context-properties: fill;
-          fill: currentColor;
+        }
+
+        .stop-icon-outer {
+          fill: var(--zen-primary-color, var(--browser-primary-color)) !important;
+        }
+
+        .stop-icon-inner {
+          fill: white !important;
         }
       }
 
