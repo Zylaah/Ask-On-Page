@@ -547,7 +547,7 @@
         display: flex;
         flex-direction: column;
         /* no horizontal padding — shell uses its own internal spacing */
-        padding: 8px 10px 10px 10px !important;
+        padding: 0 !important;
         box-sizing: border-box;
       }
 
@@ -572,7 +572,7 @@
           height: auto !important;
           /* 2px left padding keeps the blinking caret visible */
           padding: 2px 0 2px 2px !important;
-          margin: 0 !important;
+          margin: 0 0 5px 0 !important;
           resize: none !important;
           border: none !important;
           background: transparent !important;
