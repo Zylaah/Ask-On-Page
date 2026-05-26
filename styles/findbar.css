@@ -231,12 +231,18 @@
           min-width: 0 !important;
           order: 1 !important;
           background: none !important;
+          color: var(--browse-bot-fg) !important;
           padding: 0 !important;
           font-size: 14px !important;
           font-weight: 500 !important;
           box-shadow: none !important;
           width: auto !important;
           border: none !important;
+
+          &::placeholder {
+            color: var(--browse-bot-muted) !important;
+            opacity: 1 !important;
+          }
 
           &:focus {
             outline: none !important;
@@ -253,6 +259,7 @@
           font-size: 12px !important;
           white-space: nowrap !important;
           font-weight: 500 !important;
+          color: var(--browse-bot-muted) !important;
 
           &:not([hidden]) {
             display: inline-flex !important;
@@ -279,6 +286,9 @@
           font-weight: 600 !important;
           transition: scale 0.2s ease !important;
           opacity: 1 !important;
+          color: var(--browse-bot-fg) !important;
+          -moz-context-properties: fill !important;
+          fill: var(--browse-bot-icon-fill) !important;
 
           label {
             display: none !important;
