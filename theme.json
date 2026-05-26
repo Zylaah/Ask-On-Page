@@ -4,7 +4,7 @@
   "name": "Ask On Page",
   "description": "Arc styled ask on page + findbar.",
   "author": "Zylaah",
-  "version": "1.0",
+  "version": "1.0.0",
   "updatedAt": "2026-05-26",
   "tags": [
     "ai",
@@ -27,3 +27,4 @@
   "readme": "https://raw.githubusercontent.com/Zylaah/Ask-On-Page/main/README.md",
   "createdAt": "2026-05-26"
 }
+
