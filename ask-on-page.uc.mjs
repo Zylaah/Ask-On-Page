@@ -88,6 +88,70 @@ function removePrefListener(listener) {
 const FINDBAR_WIDTH = 400;
 const FINDBAR_PLACEHOLDER = "Find or Ask...";
 
+const ZEN_WINDOW_SCHEME_PREF = "zen.view.window.scheme";
+const BROWSE_BOT_THEME_ATTR = "data-browse-bot-theme";
+
+/**
+ * gZenThemePicker is a window-level global in Zen.
+ * Its isDarkMode getter is the authoritative source: handles private window,
+ * zen.view.window.scheme (0=dark, 1=light, 2=auto+prefers-color-scheme).
+ * @returns {"dark"|"light"}
+ */
+function resolveBrowseBotTheme() {
+  try {
+    if (typeof gZenThemePicker !== "undefined" && gZenThemePicker !== null) {
+      return gZenThemePicker.isDarkMode ? "dark" : "light";
+    }
+  } catch {
+    // gZenThemePicker not available (non-Zen Firefox)
+  }
+
+  // Fallback for non-Zen: use prefers-color-scheme
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+/** Apply data-browse-bot-theme to <html> and update any rendered markdown. */
+function syncBrowseBotTheme() {
+  const theme = resolveBrowseBotTheme();
+  document.documentElement.setAttribute(BROWSE_BOT_THEME_ATTR, theme);
+  for (const el of document.querySelectorAll(".markdown-body[data-theme]")) {
+    el.dataset.theme = theme;
+  }
+}
+
+/** Watch everything that can change Zen's light/dark decision. */
+function installZenThemeSync() {
+  syncBrowseBotTheme();
+
+  // zen.view.window.scheme pref (scheme picker buttons & menubar)
+  const prefObserver = { observe() { scheduleBrowseBotThemeSync(); } };
+  try {
+    Services.prefs.addObserver(ZEN_WINDOW_SCHEME_PREF, prefObserver);
+  } catch {
+    // Services not available outside Zen/Firefox chrome
+  }
+
+  // Auto mode depends on OS preference
+  window.matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", scheduleBrowseBotThemeSync);
+
+  // Custom gradients update zen-should-be-dark-mode via this observer topic
+  try {
+    Services.obs.addObserver(
+      { observe() { scheduleBrowseBotThemeSync(); } },
+      "zen-space-gradient-update"
+    );
+  } catch {
+    // Optional
+  }
+}
+
+/** Double-sync: once now, once after Zen finishes updating the DOM. */
+function scheduleBrowseBotThemeSync() {
+  syncBrowseBotTheme();
+  requestAnimationFrame(syncBrowseBotTheme);
+}
+
 let PREFS$1 = class PREFS {
   static MOD_NAME = "BasePrefs";
   static DEBUG_MODE = "";
@@ -1429,10 +1493,13 @@ const SettingsModal = {
  * @param {HTMLElement} target
  */
 function renderMarkdown(markdown, target) {
+  target.classList.add("markdown-body");
+  target.dataset.theme = resolveBrowseBotTheme();
   renderMarkdownToElement(markdown, target);
 }
 
 PREFS.setInitialPrefs();
+installZenThemeSync();
 document.documentElement.style.setProperty("--browse-bot-findbar-width", `${FINDBAR_WIDTH}px`);
 document.documentElement.style.setProperty("--browse-bot-findbar-max-width", `${FINDBAR_WIDTH}px`);
 
