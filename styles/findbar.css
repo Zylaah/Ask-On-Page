@@ -188,11 +188,13 @@
     }
 
     .findbar-container {
+      --browse-bot-findbar-control-height: 24px;
+
       display: flex !important;
       flex-direction: row !important;
       flex-wrap: nowrap !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       margin-bottom: 0 !important;
       margin-inline-start: 0 !important;
       row-gap: 0 !important;
@@ -200,6 +202,7 @@
       min-height: 36px !important;
       width: 100% !important;
       box-sizing: border-box !important;
+      gap: 4px !important;
 
       /* Wrapper is the first child of .findbar-container (not nested inside another hbox). */
       & > hbox[anonid="findbar-textbox-wrapper"] {
@@ -214,10 +217,13 @@
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
+        align-content: center !important;
         order: 1 !important;
         height: 100% !important;
+        min-height: var(--browse-bot-findbar-control-height) !important;
         margin: 0 !important;
         padding: 0 !important;
+        gap: 4px !important;
         border-bottom: 0 !important;
         z-index: 2 !important;
         pointer-events: auto !important;
@@ -232,9 +238,16 @@
           flex: 1 1 auto !important;
           min-width: 0 !important;
           order: 1 !important;
+          align-self: center !important;
+          height: var(--browse-bot-findbar-control-height) !important;
+          min-height: var(--browse-bot-findbar-control-height) !important;
+          max-height: var(--browse-bot-findbar-control-height) !important;
+          line-height: var(--browse-bot-findbar-control-height) !important;
+          box-sizing: border-box !important;
           background: none !important;
           color: var(--browse-bot-fg) !important;
           padding: 0 !important;
+          margin: 0 !important;
           font-size: 14px !important;
           font-weight: 500 !important;
           box-shadow: none !important;
@@ -253,19 +266,23 @@
         .found-matches {
           flex: 0 0 auto !important;
           order: 2 !important;
+          align-self: center !important;
           display: none !important;
-          margin: 0 6px 0 4px !important;
+          margin: 0 !important;
           padding: 0 !important;
           line-height: 1 !important;
           font-size: 12px !important;
           white-space: nowrap !important;
           font-weight: 500 !important;
           color: var(--browse-bot-muted) !important;
+          box-sizing: border-box !important;
 
           &:not([hidden]) {
             display: inline-flex !important;
             align-items: center !important;
-            height: 24px !important;
+            justify-content: center !important;
+            height: var(--browse-bot-findbar-control-height) !important;
+            min-height: var(--browse-bot-findbar-control-height) !important;
           }
         }
 
@@ -278,11 +295,18 @@
         }
 
         toolbarbutton {
-          width: 22px !important;
-          height: 22px !important;
-          min-width: 22px !important;
-          min-height: 22px !important;
-          margin-left: 4px !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          align-self: center !important;
+          width: var(--browse-bot-findbar-control-height) !important;
+          height: var(--browse-bot-findbar-control-height) !important;
+          min-width: var(--browse-bot-findbar-control-height) !important;
+          min-height: var(--browse-bot-findbar-control-height) !important;
+          max-width: var(--browse-bot-findbar-control-height) !important;
+          max-height: var(--browse-bot-findbar-control-height) !important;
+          margin: 0 !important;
+          padding: 0 !important;
           border-radius: 4px !important;
           font-weight: 600 !important;
           transition: scale 0.2s ease !important;
@@ -290,6 +314,7 @@
           color: var(--browse-bot-fg) !important;
           -moz-context-properties: fill !important;
           fill: var(--browse-bot-icon-fill) !important;
+          box-sizing: border-box !important;
 
           label {
             display: none !important;
@@ -309,12 +334,17 @@
       .findbar-find-next,
       .findbar-find-previous {
         display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        align-self: center !important;
         appearance: none !important;
         background-repeat: no-repeat !important;
         background-position: center !important;
         background-size: 16px 16px !important;
         list-style-image: none !important;
         opacity: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
 
         &[disabled] {
           display: none !important;
@@ -343,14 +373,16 @@
         border: none !important;
         box-shadow: none !important;
         flex: 0 0 auto !important;
-        order: 3 !important;
+        order: 2 !important;
         align-self: center !important;
         align-items: center !important;
         justify-content: center !important;
-        height: 24px !important;
-        min-height: 24px !important;
-        margin: 0 5px 0 2px !important;
+        height: var(--browse-bot-findbar-control-height) !important;
+        min-height: var(--browse-bot-findbar-control-height) !important;
+        max-height: var(--browse-bot-findbar-control-height) !important;
+        margin: 0 !important;
         padding: 0 10px !important;
+        box-sizing: border-box !important;
         border-radius: 6px !important;
         font-size: 12px !important;
         font-weight: 600 !important;
