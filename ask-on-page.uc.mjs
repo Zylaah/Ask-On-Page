@@ -2070,6 +2070,7 @@ const browseBotFindbar = {
 
     if (this.expanded) {
       askBtn.removeAttribute("data-show-ask");
+      findbarEl?.removeAttribute("data-show-ask");
       return;
     }
 
@@ -2079,8 +2080,10 @@ const browseBotFindbar = {
 
     if (showAsk) {
       askBtn.setAttribute("data-show-ask", "true");
+      findbarEl?.setAttribute("data-show-ask", "true");
     } else {
       askBtn.removeAttribute("data-show-ask");
+      findbarEl?.removeAttribute("data-show-ask");
     }
   },
 
