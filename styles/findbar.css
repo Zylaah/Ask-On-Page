@@ -625,6 +625,18 @@
         box-sizing: border-box;
       }
 
+      @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "acrylic") {
+        .ai-chat-input-group {
+          background: var(--browse-bot-dialog-bg) !important;
+          backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+        }
+
+        .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
+          background: var(--browse-bot-dialog-bg) !important;
+          backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+        }
+      }
+
       .ai-chat-input-shell {
         display: flex;
         align-items: flex-end;
