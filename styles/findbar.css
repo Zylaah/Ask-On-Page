@@ -596,10 +596,6 @@
         }
       }
 
-      :root[data-browse-bot-theme="light"] .browse-bot-chat .ai-chat-input-shell textarea {
-        caret-color: var(--browse-bot-fg) !important;
-      }
-
       :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .markdown-body,
       :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .message-content,
       :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .markdown-body,
@@ -669,7 +665,8 @@
           box-shadow: none !important;
           font-size: 14px !important;
           line-height: 1.5 !important;
-          color: inherit !important;
+          color: var(--browse-bot-fg) !important;
+          caret-color: var(--browse-bot-fg) !important;
           --focus-outline: none !important;
           --focus-outline-inset: 0 !important;
           outline: none !important;
