@@ -584,6 +584,7 @@
         border-bottom-left-radius: 4px;
         padding: 4px 8px !important;
         font-weight: 500;
+        margin-inline-start: 5px;
 
         /* markdown-body sets --fgColor-default / color; must beat theme selectors */
         .message-content,
