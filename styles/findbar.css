@@ -586,22 +586,20 @@
         /* markdown-body sets --fgColor-default / color; must beat theme selectors */
         .message-content,
         .markdown-body {
-          color: var(--zen-primary-color) !important;
-          --fgColor-default: var(--browse-bot-action-fg);
-          --fgColor-muted: color-mix(in srgb, var(--browse-bot-action-fg) 80%, transparent);
-          --fgColor-accent: var(--browse-bot-action-fg);
           font-size: 14px;
         }
       }
 
-      :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .markdown-body,
+      :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .message-content,
+      :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .markdown-body {
+        color: color-mix(in srgb, var(--zen-primary-color) 40%, white) !important;
+        --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 40%, white);
+      }
+
       :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .message-content,
-      :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .markdown-body,
-      :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .message-content {
-        color: var(--browse-bot-action-fg) !important;
-        --fgColor-default: var(--browse-bot-action-fg);
-        --fgColor-muted: color-mix(in srgb, var(--browse-bot-action-fg) 80%, transparent);
-        --fgColor-accent: var(--browse-bot-action-fg);
+      :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .markdown-body {
+        color: color-mix(in srgb, var(--zen-primary-color) 80%, black) !important;
+        --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 80%, black);
       }
 
       .chat-message-ai {
