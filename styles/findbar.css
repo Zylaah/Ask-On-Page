@@ -689,7 +689,7 @@
         box-sizing: border-box !important;
         width: 100%;
         /* left padding is 10px; textarea adds its own 2px cursor clearance */
-        padding: 0;
+        padding: 2px 2px 2px 2px;
         border-radius: 14px;
         /* ensure children are never clipped */
         overflow: visible !important;
