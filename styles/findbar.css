@@ -590,18 +590,6 @@
         }
       }
 
-      :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .message-content,
-      :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .markdown-body {
-        color: color-mix(in srgb, var(--zen-primary-color) 40%, white) !important;
-        --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 40%, white);
-      }
-
-      :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .message-content,
-      :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .markdown-body {
-        color: color-mix(in srgb, var(--zen-primary-color) 80%, black) !important;
-        --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 80%, black);
-      }
-
       .chat-message-ai {
         max-width: calc(100% - 35px) !important;
         align-self: flex-start;
