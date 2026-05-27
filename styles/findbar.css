@@ -699,8 +699,8 @@
       .send-btn {
         position: relative !important;
         z-index: 1;
-        height: 24px !important;
-        min-height: 24px !important;
+        height: 30px !important;
+        min-height: 30px !important;
         padding: 0 10px !important;
         margin: 0 !important;
         border-radius: 6px !important;
