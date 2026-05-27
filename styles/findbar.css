@@ -295,9 +295,6 @@
             display: none !important;
           }
 
-          &:hover {
-            background: var(--tab-hover-background-color) !important;
-          }
 
           &:active {
             scale: 0.9 !important;
