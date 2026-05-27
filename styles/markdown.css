@@ -1266,10 +1266,10 @@
 /* User bubbles — override github-markdown theme tokens (higher specificity + after theme blocks) */
 :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .message-content,
 :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .markdown-body {
-  color: color-mix(in srgb, var(--zen-primary-color) 40%, white) !important;
-  --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 40%, white);
-  --fgColor-muted: color-mix(in srgb, var(--zen-primary-color) 40%, white);
-  --fgColor-accent: color-mix(in srgb, var(--zen-primary-color) 40%, white);
+  color: color-mix(in srgb, var(--zen-primary-color) 95%, white) !important;
+  --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 95%, white);
+  --fgColor-muted: color-mix(in srgb, var(--zen-primary-color) 95%, white);
+  --fgColor-accent: color-mix(in srgb, var(--zen-primary-color) 95%, white);
 }
 
 :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .message-content,
