@@ -5,7 +5,7 @@
     </a>
 </div>
 
-A **fork** of [Vertex-Mods/Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot) scoped to **Findbar AI only**: a floating, page-aware chat on the native findbar in **Zen Browser**. URL bar AI and agentic browser tools are removed.
+A **fork** of [Vertex-Mods/Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot) scoped to **Findbar AI only**: a floating, Arc-like page-aware chat on the native findbar in **Zen Browser**.
 
 ## Features
 
@@ -18,12 +18,6 @@ A **fork** of [Vertex-Mods/Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot
 - **Context menu** — Ask AI / summarize with selection templates
 - **Zen Command Palette** — Summarize page, expand findbar, open settings
 - **Customizable** via Sine settings or `about:config`
-
-## Removed (vs upstream Browse-Bot)
-
-- URL bar AI (`Ctrl+Space` command mode)
-- Agentic mode and all browser tool calls (tabs, search, workspaces, etc.)
-- Agentic YouTube tools (description/comments scraping from upstream Browse-Bot)
 
 ## Installation (Sine)
 
