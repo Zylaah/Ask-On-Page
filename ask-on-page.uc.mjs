@@ -2094,19 +2094,11 @@ const browseBotFindbar = {
     const next = findbarEl.querySelector(".findbar-find-next");
     const previous = findbarEl.querySelector(".findbar-find-previous");
     if (next && previous) {
-      if (!hasMatches || result.total <= 1) {
-        next.disabled = true;
-        previous.disabled = true;
-      } else if (result.current <= 1) {
-        next.disabled = false;
-        previous.disabled = true;
-      } else if (result.current >= result.total) {
-        next.disabled = true;
-        previous.disabled = false;
-      } else {
-        next.disabled = false;
-        previous.disabled = false;
-      }
+      const showNav = hasMatches;
+      next.disabled = !showNav;
+      previous.disabled = !showNav;
+      next.removeAttribute("hidden");
+      previous.removeAttribute("hidden");
     }
 
     const status = findbarEl.querySelector(".findbar-find-status");
