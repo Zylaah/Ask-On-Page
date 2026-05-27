@@ -64,7 +64,8 @@
     height: unset !important;
     border-radius: var(--acrylic-radius) !important;
     border: none !important;
-    outline: 1px solid var(--browse-bot-findbar-outline) !important;
+    outline: var(--browse-bot-findbar-outline-width, 1px) solid
+      var(--browse-bot-findbar-outline) !important;
     color: var(--browse-bot-fg);
     z-index: 9999;
     opacity: 1;
