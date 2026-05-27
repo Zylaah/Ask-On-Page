@@ -616,7 +616,7 @@
         }
 
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
-          background: var(--browse-bot-dialog-bg) !important;
+          background: var(--browse-bot-chat-input-acrylic-bg, var(--acrylic-input-glass-bg)) !important;
           backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
         }
       }

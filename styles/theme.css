@@ -6,6 +6,7 @@
   color-scheme: dark;
 
   --acrylic-bg: rgb(24, 24, 27);
+  --acrylic-input-bg: rgb(18, 18, 20);
   --acrylic-background: rgba(36, 37, 39, 0.6) !important;
   --acrylic-border: 0.5px solid rgba(127, 127, 127, 0.3);
 
@@ -42,6 +43,7 @@
   @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "acrylic") {
     --browse-bot-dialog-bg: var(--acrylic-glass-bg) !important;
     --browse-bot-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
+    --browse-bot-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
   }
   @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
     --browse-bot-dialog-bg: transparent !important;
@@ -54,6 +56,7 @@
   color-scheme: light;
 
   --acrylic-bg: rgb(250, 250, 250);
+  --acrylic-input-bg: rgb(230, 230, 230);
   --acrylic-background: rgba(255, 255, 255, 0.82) !important;
   --acrylic-border: 0.5px solid rgba(0, 0, 0, 0.12);
 
@@ -90,6 +93,7 @@
   @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "acrylic") {
     --browse-bot-dialog-bg: var(--acrylic-glass-bg) !important;
     --browse-bot-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
+    --browse-bot-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
   }
   @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
     --browse-bot-dialog-bg: transparent !important;

@@ -9,6 +9,7 @@
   --browser-themed-toolbar-bg: var(--zen-themed-toolbar-bg, #333333);
   --acrylic-radius: 8px;
   --acrylic-glass-bg: color-mix(in srgb, var(--acrylic-bg) 40%, transparent 60%);
+  --acrylic-input-glass-bg: color-mix(in srgb, var(--acrylic-input-bg) 40%, transparent 60%);
   --acrylic-glass-border: 1.5px solid
     color-mix(in srgb, var(--browser-primary-color) 20%, transparent 80%);
   --browse-bot-input-focus-ring: color-mix(
