@@ -15,6 +15,8 @@
   --browse-bot-findbar-outline-width: 1px;
   --browse-bot-findbar-border: rgba(235, 235, 235, 0.3);
   --browse-bot-icon-fill: white;
+  --browse-bot-close-bg: color-mix(in srgb, white 10%, transparent);
+  --browse-bot-close-bg-hover: color-mix(in srgb, white 16%, transparent);
   --browse-bot-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
   --browse-bot-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
   --browse-bot-action-fg: white;
@@ -67,6 +69,8 @@
   --browse-bot-findbar-outline-width: 1px;
   --browse-bot-findbar-border: rgba(20, 20, 20, 0.14);
   --browse-bot-icon-fill: black;
+  --browse-bot-close-bg: color-mix(in srgb, black 6%, transparent);
+  --browse-bot-close-bg-hover: color-mix(in srgb, black 10%, transparent);
   --browse-bot-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
   --browse-bot-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
   --browse-bot-action-fg: white;

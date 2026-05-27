@@ -107,6 +107,7 @@
       border-radius: 4px !important;
       transition:
         opacity 0.15s ease,
+        background-color 0.15s ease,
         scale 0.15s ease !important;
       display: inline-flex !important;
       align-items: center !important;
@@ -128,13 +129,14 @@
 
       &:hover {
         opacity: 0.95 !important;
-        background-color: transparent !important;
+        background-color: var(--browse-bot-close-bg-hover) !important;
         background-image: none !important;
         box-shadow: none !important;
       }
 
       &:active {
         scale: 0.92 !important;
+        background-color: var(--browse-bot-close-bg-hover) !important;
       }
     }
 
@@ -157,6 +159,11 @@
         transform: none !important;
         margin-inline-end: 6px !important;
         opacity: 0.72 !important;
+        background-color: transparent !important;
+
+        &:hover {
+          background-color: var(--browse-bot-close-bg-hover) !important;
+        }
 
         &:active {
           transform: none !important;
@@ -183,9 +190,16 @@
         opacity: 0.72 !important;
         margin: 0 !important;
         order: unset !important;
+        background-color: var(--browse-bot-close-bg) !important;
+
+        &:hover {
+          background-color: var(--browse-bot-close-bg-hover) !important;
+          opacity: 0.88 !important;
+        }
 
         &:active {
           transform: none !important;
+          opacity: 0.95 !important;
         }
       }
 
