@@ -622,6 +622,52 @@ const messageManagerAPI = {
       return this.getUrlAndTitle();
     });
   },
+
+  async getPageContext(trimWhiteSpace = false) {
+    const page = await this.getPageTextContent(trimWhiteSpace);
+    const videoId = getYouTubeVideoId(page?.url);
+
+    if (!videoId) {
+      return { ...page, contentSource: "page" };
+    }
+
+    if (_youtubeTranscriptCache.url === page.url && _youtubeTranscriptCache.transcript) {
+      return {
+        url: page.url,
+        title: page.title,
+        textContent: _youtubeTranscriptCache.transcript,
+        contentSource: "youtube-transcript",
+        videoId,
+      };
+    }
+
+    let locale = "en";
+    try {
+      locale = Services.locale.appLocaleAsBCP47 || navigator.language || "en";
+    } catch {
+      locale = navigator.language || "en";
+    }
+
+    try {
+      const transcript = await fetchYouTubeTranscript(videoId, locale);
+      _youtubeTranscriptCache = { url: page.url, transcript };
+      PREFS.debugLog("Using YouTube transcript for page context:", videoId);
+      return {
+        url: page.url,
+        title: page.title,
+        textContent: transcript,
+        contentSource: "youtube-transcript",
+        videoId,
+      };
+    } catch (error) {
+      PREFS.debugError("YouTube transcript fetch failed:", error);
+      return {
+        ...page,
+        contentSource: "page",
+        transcriptUnavailable: true,
+      };
+    }
+  },
 };
 
 const parseElement = (elementString, type = "html") => {
@@ -644,6 +690,167 @@ const escapeXmlAttribute = (str) => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 };
+
+const YOUTUBE_PLAYER_URL = "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
+const YOUTUBE_ANDROID_CLIENT_VERSION = "20.10.38";
+const YOUTUBE_ANDROID_USER_AGENT = `com.google.android.youtube/${YOUTUBE_ANDROID_CLIENT_VERSION} (Linux; U; Android 14)`;
+
+/**
+ * Extracts a YouTube video ID from a URL, bare ID, or URL embedded in text.
+ * @param {string | undefined | null} input
+ * @returns {string | null}
+ */
+function getYouTubeVideoId(input) {
+  if (!input) return null;
+
+  const trimmed = String(input).trim().replace(/[.,;:!?]+$/, "");
+
+  try {
+    const url = new URL(trimmed, "https://www.youtube.com");
+    const host = url.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = url.pathname.slice(1).split("/")[0];
+      return id || null;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+      if (url.pathname === "/watch") {
+        return url.searchParams.get("v");
+      }
+
+      const embedMatch = url.pathname.match(/^\/embed\/([^/?]+)/);
+      if (embedMatch) return embedMatch[1];
+
+      const shortsMatch = url.pathname.match(/^\/shorts\/([^/?]+)/);
+      if (shortsMatch) return shortsMatch[1];
+    }
+  } catch {
+    // Fall through to bare ID check.
+  }
+
+  return /^[\w-]{11}$/.test(trimmed) ? trimmed : null;
+}
+
+/**
+ * @param {string} locale BCP47 locale from the browser.
+ * @returns {string[]}
+ */
+function getPreferredCaptionLanguages(locale) {
+  const languages = [];
+  if (locale) {
+    const base = locale.split("-")[0];
+    if (base) languages.push(base);
+    if (locale.includes("-")) {
+      languages.push(locale.replace("-", "_"));
+    }
+  }
+  languages.push("en");
+  return [...new Set(languages.filter(Boolean))];
+}
+
+/**
+ * @param {string} xml
+ * @returns {string}
+ */
+function parseYouTubeTranscriptXml(xml) {
+  const pSegments = xml.match(/<p[^>]*>[\s\S]*?<\/p>/g);
+  const textSegments = xml.match(/<text[^>]*>[\s\S]*?<\/text>/g);
+  const segments = pSegments?.length ? pSegments : textSegments ?? [];
+
+  return segments
+    .map((segment) =>
+      segment
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+    .filter(Boolean)
+    .join(" ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Fetches a YouTube video transcript via the internal ANDROID player API.
+ * @param {string} videoIdOrUrl
+ * @param {string} [locale]
+ * @returns {Promise<string>}
+ */
+async function fetchYouTubeTranscript(videoIdOrUrl, locale) {
+  const videoId = getYouTubeVideoId(videoIdOrUrl) || videoIdOrUrl;
+  if (!videoId) {
+    throw new Error("Invalid YouTube video URL or ID.");
+  }
+
+  const playerResponse = await fetch(YOUTUBE_PLAYER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": YOUTUBE_ANDROID_USER_AGENT,
+    },
+    body: JSON.stringify({
+      context: {
+        client: {
+          clientName: "ANDROID",
+          clientVersion: YOUTUBE_ANDROID_CLIENT_VERSION,
+        },
+      },
+      videoId,
+    }),
+  });
+
+  if (!playerResponse.ok) {
+    throw new Error(`YouTube player API returned ${playerResponse.status}`);
+  }
+
+  const playerData = await playerResponse.json();
+  const captionTracks =
+    playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+  if (!captionTracks?.length) {
+    throw new Error("No caption tracks available for this video.");
+  }
+
+  const preferredLanguages = getPreferredCaptionLanguages(locale);
+  let track = null;
+  for (const language of preferredLanguages) {
+    track = captionTracks.find(
+      (candidate) =>
+        candidate.languageCode === language || candidate.languageCode.startsWith(`${language}-`)
+    );
+    if (track) break;
+  }
+  track = track || captionTracks[0];
+
+  const captionResponse = await fetch(track.baseUrl, {
+    headers: { "User-Agent": YOUTUBE_ANDROID_USER_AGENT },
+  });
+
+  if (!captionResponse.ok) {
+    throw new Error(`Caption fetch returned ${captionResponse.status}`);
+  }
+
+  const xml = await captionResponse.text();
+  if (!xml) {
+    throw new Error("Empty caption response");
+  }
+
+  const transcriptText = parseYouTubeTranscriptXml(xml);
+  if (!transcriptText) {
+    throw new Error("Transcript text is empty after parsing");
+  }
+
+  return transcriptText;
+}
+
+let _youtubeTranscriptCache = { url: null, transcript: null };
 
 /**
  * Creates a unique signature for a keyboard shortcut.
@@ -2717,20 +2924,28 @@ class BrowseBotLLM {
     const url = escapeXmlAttribute(pageContext.url ?? "");
     const title = escapeXmlAttribute(pageContext.title ?? "");
     const maxContentChars = 120000;
+    const isTranscript = pageContext.contentSource === "youtube-transcript";
     let content = String(pageContext.textContent ?? pageContext.content ?? "");
+
+    if (pageContext.transcriptUnavailable) {
+      content =
+        `[No YouTube transcript was available for this video. Using visible page text instead.]\n\n${content}`;
+    }
+
     if (content.length > maxContentChars) {
       content =
         content.slice(0, maxContentChars) +
-        "\n\n[Page content truncated due to length. Answer using the content above.]";
+        `\n\n[${isTranscript ? "Transcript" : "Page content"} truncated due to length. Answer using the content above.]`;
     }
     const currentDate = new Date().toLocaleString(this.getUserLocale());
+    const contentTag = isTranscript ? "transcript" : "content";
 
     return `<url>${url}</url>
 <current-date>${escapeXmlAttribute(currentDate)}</current-date>
 <title>${title}</title>
-<content>
+<${contentTag}>
 ${content}
-</content>`;
+</${contentTag}>`;
   }
 
   buildAskOnPagePrompt(locale, pageContextBlock) {
@@ -2769,6 +2984,23 @@ WEBPAGE CONTEXT FOR OUR DIALOGUE:
 ${pageContextBlock}`;
   }
 
+  buildYouTubeVideoPrompt(locale, pageContextBlock) {
+    return `You are a research assistant helping the user understand a YouTube video from its transcript. Answer questions using information from the transcript below.
+
+RULES:
+1. Stay in your role throughout the dialogue.
+2. Answer from the transcript. If the transcript does not contain enough information, say so clearly. Do not invent facts or use outside knowledge.
+3. Ignore sponsor segments and promotional content when summarizing.
+4. Use Markdown, not HTML, to format your answer. Use **bold** for key terms and takeaways.
+5. Be concise but complete. For summaries, use clear bullet points; emoji headlines are fine when they help scanability.
+6. Respond in ${locale}. Keep short quoted phrases in the original language of the transcript when it differs from ${locale}, but write your answers in ${locale}.
+7. Do NOT use <excerpt> tags. Quote short phrases inline with Markdown when useful.
+8. You may perform translations, summaries, or other textual transformations for the user if asked.
+
+VIDEO TRANSCRIPT CONTEXT FOR OUR DIALOGUE:
+${pageContextBlock}`;
+  }
+
   async getSystemPrompt() {
     let systemPrompt = "";
 
@@ -2776,11 +3008,15 @@ ${pageContextBlock}`;
       systemPrompt = PREFS.customSystemPrompt + "\n\n";
     }
 
-    const pageContext = await messageManagerAPI.getPageTextContent(false);
+    const pageContext = await messageManagerAPI.getPageContext(false);
     const pageContextBlock = this.formatPageContextBlock(pageContext);
     const locale = this.getUserLocale();
 
-    systemPrompt += this.buildAskOnPagePrompt(locale, pageContextBlock);
+    if (pageContext.contentSource === "youtube-transcript") {
+      systemPrompt += this.buildYouTubeVideoPrompt(locale, pageContextBlock);
+    } else {
+      systemPrompt += this.buildAskOnPagePrompt(locale, pageContextBlock);
+    }
     return systemPrompt;
   }
 
