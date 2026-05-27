@@ -596,6 +596,10 @@
         }
       }
 
+      :root[data-browse-bot-theme="light"] .browse-bot-chat .ai-chat-input-shell textarea {
+        caret-color: var(--browse-bot-fg) !important;
+      }
+
       :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .markdown-body,
       :root[data-browse-bot-theme="light"] .browse-bot-chat .chat-message-user .message-content,
       :root[data-browse-bot-theme="dark"] .browse-bot-chat .chat-message-user .markdown-body,
