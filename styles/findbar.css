@@ -579,17 +579,14 @@
 
       .chat-message-user {
         align-self: flex-start;
-        background: var(--browse-bot-primary-bg);
-        color: var(--browse-bot-action-fg) !important;
+        color: var(--zen-primary-color) !important;
         border-bottom-left-radius: 4px;
-        padding: 4px 8px !important;
-        font-weight: 500;
-        margin-inline-start: 5px;
+        font-weight: 700;
 
         /* markdown-body sets --fgColor-default / color; must beat theme selectors */
         .message-content,
         .markdown-body {
-          color: var(--browse-bot-action-fg) !important;
+          color: var(--zen-primary-color) !important;
           --fgColor-default: var(--browse-bot-action-fg);
           --fgColor-muted: color-mix(in srgb, var(--browse-bot-action-fg) 80%, transparent);
           --fgColor-accent: var(--browse-bot-action-fg);
