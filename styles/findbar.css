@@ -325,10 +325,6 @@
         }
       }
 
-      &[data-show-ask="true"] .findbar-find-previous,
-      &[data-show-ask="true"] .findbar-find-next {
-        display: none !important;
-      }
 
       .findbar-find-previous {
         background-image: var(--browse-bot-findbar-arrow-up) !important;
@@ -818,6 +814,11 @@
       p:last-child {
         margin-bottom: 0;
       }
+    }
+
+    &[data-show-ask="true"] .findbar-find-previous,
+    &[data-show-ask="true"] .findbar-find-next {
+      display: none !important;
     }
   }
 }
