@@ -703,6 +703,7 @@
           /* 2px left padding keeps the blinking caret visible */
           padding: 2px 0 2px 2px !important;
           margin: 0 !important;
+          margin-inline-start: 5px !important;
           resize: none !important;
           border: none !important;
           background: transparent !important;
