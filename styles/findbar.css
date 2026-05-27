@@ -180,7 +180,8 @@
 
       .ai-chat-input-actions {
         width: auto;
-        height: 24px;
+        min-height: 30px;
+        height: 30px;
         border-radius: 6px;
       }
     }
@@ -652,7 +653,8 @@
         position: relative;
         flex-shrink: 0;
         width: auto;
-        height: 25px;
+        min-height: 30px;
+        height: 30px;
         align-self: flex-end;
         overflow: visible;
         border-radius: 6px;
@@ -714,10 +716,10 @@
         position: absolute !important;
         top: 0 !important;
         right: 0 !important;
-        width: 24px !important;
-        height: 24px !important;
-        min-width: 24px !important;
-        min-height: 24px !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
         padding: 0 !important;
         margin: 0 !important;
         border-radius: 6px !important;
@@ -728,8 +730,8 @@
 
         svg {
           display: block !important;
-          width: 18px !important;
-          height: 18px !important;
+          width: 30px !important;
+          height: 30px !important;
           flex-shrink: 0;
         }
 
