@@ -242,7 +242,6 @@
           border: none !important;
 
           &::placeholder {
-            color: var(--browse-bot-muted) !important;
             opacity: 1 !important;
           }
 

@@ -97,6 +97,7 @@
     --browse-bot-dialog-bg: var(--acrylic-glass-bg) !important;
     --browse-bot-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
     --browse-bot-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
+    --browse-bot-findbar-outline-width: 0;
   }
   @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
     --browse-bot-dialog-bg: transparent !important;
