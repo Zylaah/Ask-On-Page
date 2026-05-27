@@ -47,6 +47,8 @@
   }
 
   findbar {
+    --browse-bot-findbar-control-height: 24px;
+
     padding-inline-start: 0px !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
@@ -92,11 +94,13 @@
     }
 
     .findbar-closebutton {
-      width: 18px !important;
-      height: 18px !important;
-      min-width: 18px !important;
-      min-height: 18px !important;
+      flex: 0 0 auto !important;
+      width: var(--browse-bot-findbar-control-height, 24px) !important;
+      height: var(--browse-bot-findbar-control-height, 24px) !important;
+      min-width: var(--browse-bot-findbar-control-height, 24px) !important;
+      min-height: var(--browse-bot-findbar-control-height, 24px) !important;
       padding: 0 !important;
+      margin: 0 !important;
       appearance: none !important;
       outline: none !important;
       border: none !important;
@@ -107,17 +111,15 @@
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
+      align-self: center !important;
       background-color: transparent !important;
       background-image: none !important;
       box-shadow: none !important;
       -moz-context-properties: fill !important;
       fill: var(--browse-bot-icon-fill) !important;
-      position: absolute !important;
-      top: 50% !important;
-      right: 6px !important;
       z-index: 20 !important;
       pointer-events: auto !important;
-      transform: translateY(-50%) !important;
+      box-sizing: border-box !important;
       opacity: 0.55 !important;
 
       label {
@@ -133,18 +135,32 @@
 
       &:active {
         scale: 0.92 !important;
-        transform: translateY(-50%) !important;
       }
     }
 
     &:not(.ai-expanded) {
-      .findbar-closebutton {
-        display: inline-flex !important;
-        opacity: 0.72 !important;
-      }
+      flex-direction: row !important;
+      align-items: center !important;
+      flex-wrap: nowrap !important;
 
       .findbar-container {
-        padding: 0 28px 0 10px !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        order: 1 !important;
+        padding: 0 4px 0 10px !important;
+      }
+
+      .findbar-closebutton {
+        display: inline-flex !important;
+        position: static !important;
+        order: 2 !important;
+        transform: none !important;
+        margin-inline-end: 6px !important;
+        opacity: 0.72 !important;
+
+        &:active {
+          transform: none !important;
+        }
       }
     }
 
@@ -154,6 +170,7 @@
       }
 
       .findbar-closebutton {
+        position: absolute !important;
         top: 8px !important;
         right: 6px !important;
         transform: none !important;
@@ -164,6 +181,8 @@
         z-index: 30 !important;
         pointer-events: auto !important;
         opacity: 0.72 !important;
+        margin: 0 !important;
+        order: unset !important;
 
         &:active {
           transform: none !important;
@@ -188,8 +207,6 @@
     }
 
     .findbar-container {
-      --browse-bot-findbar-control-height: 24px;
-
       display: flex !important;
       flex-direction: row !important;
       flex-wrap: nowrap !important;
