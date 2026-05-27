@@ -178,8 +178,8 @@
 
       .findbar-closebutton {
         position: absolute !important;
-        top: 8px !important;
-        right: 6px !important;
+        top: 10px !important;
+        right: 10px !important;
         transform: none !important;
         width: 20px !important;
         height: 20px !important;
