@@ -851,7 +851,6 @@
 
     .page-excerpt {
       border-left: 3px solid var(--browser-primary-color) !important;
-      background: color-mix(in srgb, var(--browser-primary-color) 14%, transparent 86%) !important;
       padding: 8px 12px !important;
       margin: 8px 0 !important;
       cursor: pointer;
@@ -870,8 +869,29 @@
         opacity: 0.92;
       }
 
-      p:last-child {
-        margin-bottom: 0;
+      .page-excerpt-quote {
+        font-style: italic;
+
+        p:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      .page-excerpt-action {
+        margin-top: 8px;
+        font-size: 0.8125rem;
+        font-style: normal;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        color: color-mix(in srgb, var(--browser-primary-color) 72%, var(--browse-bot-fg) 28%);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+      }
+
+      .page-excerpt-arrow {
+        font-size: 1.05em;
+        line-height: 1;
       }
     }
 

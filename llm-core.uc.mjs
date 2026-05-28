@@ -259,10 +259,14 @@ function injectExcerptBlocks(html, excerpts, streamingExcerptIndex, marked) {
     const isStreaming = streamingExcerptIndex === index;
     const streamingClass = isStreaming ? " page-excerpt-streaming" : "";
     const attrs = quote
-      ? ` data-excerpt-quote="${escapeHtml(quote)}" tabindex="0" role="button" title="Highlight on page"`
+      ? ` data-excerpt-quote="${escapeHtml(quote)}" tabindex="0" role="button" title="Find on page"`
       : ` tabindex="-1" aria-busy="true"`;
+    const actionHtml =
+      quote && !isStreaming
+        ? `<div class="page-excerpt-action">Find on Page <span class="page-excerpt-arrow" aria-hidden="true">→</span></div>`
+        : "";
 
-    return `<blockquote class="page-excerpt${streamingClass}"${attrs}>${innerHtml}</blockquote>`;
+    return `<blockquote class="page-excerpt${streamingClass}"${attrs}><div class="page-excerpt-quote">${innerHtml}</div>${actionHtml}</blockquote>`;
   });
 }
 
