@@ -652,7 +652,7 @@
       }
 
       .chat-message-ai {
-        max-width: calc(100% - 35px) !important;
+        max-width: 100%  !important;
         align-self: flex-start;
       }
 
