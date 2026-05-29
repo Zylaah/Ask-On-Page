@@ -1752,6 +1752,8 @@ const askOnPageFindbar = {
   _originalOnMatchesCountResult: null,
   _lastMatchResult: null,
   _currentAIMessageDiv: null,
+  /** User question held while the API-key setup panel is shown. */
+  _pendingPrompt: null,
 
   _placeholderObserver: null,
   _placeholderField: null,
@@ -2071,12 +2073,40 @@ const askOnPageFindbar = {
 
   clear() {
     askOnPageFindbarLLM.clearData();
+    this._pendingPrompt = null;
     if (this.findbar) {
       this.findbar.history = null;
     }
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) messages.innerHTML = "";
     setTimeout(() => this._updateFindbarDimensions(), 1);
+  },
+
+  _needsApiKeySetup() {
+    const provider = askOnPageFindbarLLM.currentProvider;
+    return provider.name !== "ollama" && !provider.apiKey;
+  },
+
+  async _flushPendingPrompt() {
+    const prompt = this._pendingPrompt;
+    if (!prompt || this._needsApiKeySetup()) return;
+    this._pendingPrompt = null;
+    await this.sendMessage(prompt);
+  },
+
+  _updateSetupPendingHint() {
+    if (!this.apiKeyContainer) return;
+    const existing = this.apiKeyContainer.querySelector(".ai-setup-pending");
+    if (!this._pendingPrompt) {
+      existing?.remove();
+      return;
+    }
+    if (existing) return;
+    const hint = parseElement(
+      `<p class="ai-setup-pending">Your question is ready — add an API key and press Save to continue.</p>`
+    );
+    const description = this.apiKeyContainer.querySelector(".ai-setup-description");
+    description?.insertAdjacentElement("afterend", hint);
   },
 
   createAPIKeyInterface() {
@@ -2103,20 +2133,27 @@ const askOnPageFindbar = {
 
     const providerSelectorXulElement = parseElement(menulistXul, "xul");
 
+    const pendingHint = this._pendingPrompt
+      ? `<p class="ai-setup-pending">Your question is ready — add an API key and press Save to continue.</p>`
+      : "";
+
     const html = `
         <div class="ask-on-page-setup">
           <div class="ai-setup-content">
-            <h3>AI Setup Required</h3>
-            <p>To use AI features, you need to set up your API key and select a provider.</p>
+            <h3 class="ai-setup-title">Connect your AI provider</h3>
+            <p class="ai-setup-description">Add an API key to ask questions about this page.</p>
+            ${pendingHint}
             <div class="provider-selection-group">
-              <label for="provider-selector">Select Provider:</label>
+              <label for="provider-selector">Provider</label>
             </div>
-            <div class="api-key-input-group">
-              <input type="password" id="api-key" placeholder="Enter your API key" />
-              <button id="save-api-key">Save</button>
+            <div class="api-key-input-group ai-setup-input-shell">
+              <input type="password" id="api-key" placeholder="Enter your API key" autocomplete="off" />
+              <div class="ai-setup-input-actions">
+                <button id="save-api-key" class="send-btn" type="button" disabled>Save</button>
+              </div>
             </div>
             <div class="api-key-links">
-              <button id="get-api-key-link">Get API Key</button>
+              <button id="get-api-key-link" class="setup-link-btn" type="button">Get API Key</button>
             </div>
           </div>
         </div>`;
@@ -2131,20 +2168,28 @@ const askOnPageFindbar = {
     const saveBtn = container.querySelector("#save-api-key");
     const getApiKeyLink = container.querySelector("#get-api-key-link");
     const setupContent = container.querySelector(".ai-setup-content");
-    const description = setupContent.querySelector("p");
+    const description = setupContent.querySelector(".ai-setup-description");
+
+    const syncSaveButtonState = () => {
+      const value = input.value.trim();
+      if (askOnPageFindbarLLM.currentProvider.name === "ollama") {
+        saveBtn.disabled = false;
+        return;
+      }
+      saveBtn.disabled = !value;
+    };
 
     const updateUIForProvider = (providerName) => {
       const provider = askOnPageFindbarLLM.AVAILABLE_PROVIDERS[providerName];
       if (providerName === "ollama") {
         description.textContent =
-          "Ollama is selected. You can customize the Base URL below or use the default.";
+          "Ollama runs locally. Use the default URL or enter your server address.";
         input.type = "text";
-        input.placeholder = "Enter Ollama Base URL";
+        input.placeholder = "http://localhost:11434/api";
         input.value = PREFS.ollamaBaseUrl || "";
         getApiKeyLink.style.display = "none";
       } else {
-        description.textContent =
-          "To use AI features, you need to set up your API key and select a provider.";
+        description.textContent = "Paste your API key for the selected provider.";
         input.type = "password";
         input.placeholder = "Enter your API key";
         input.value = provider.apiKey || "";
@@ -2154,9 +2199,11 @@ const askOnPageFindbar = {
           ? "Get API Key"
           : "No API key link available for this provider.";
       }
+      syncSaveButtonState();
     };
 
     updateUIForProvider(currentProviderName);
+    input.addEventListener("input", syncSaveButtonState);
 
     // Use 'command' event for XUL menulist
     providerSelector.addEventListener("command", (e) => {
@@ -2169,7 +2216,7 @@ const askOnPageFindbar = {
       openTrustedLinkIn(askOnPageFindbarLLM.currentProvider.apiKeyUrl, "tab");
     });
 
-    saveBtn.addEventListener("click", () => {
+    saveBtn.addEventListener("click", async () => {
       const value = input.value.trim();
       const providerName = askOnPageFindbarLLM.currentProvider.name;
 
@@ -2178,10 +2225,15 @@ const askOnPageFindbar = {
           PREFS.ollamaBaseUrl = value;
         }
         this.showAIInterface();
-      } else if (value) {
-        askOnPageFindbarLLM.currentProvider.apiKey = value; // This also updates PREFS.mistralApiKey/geminiApiKey internally
-        this.showAIInterface(); // Refresh UI after saving key
+        await this._flushPendingPrompt();
+        return;
       }
+
+      if (!value) return;
+
+      askOnPageFindbarLLM.currentProvider.apiKey = value;
+      this.showAIInterface();
+      await this._flushPendingPrompt();
     });
     input.addEventListener("keypress", (e) => {
       if (e.key === "Enter") saveBtn.click();
@@ -2195,9 +2247,21 @@ const askOnPageFindbar = {
     this.show();
     if (!this.expanded) {
       this.expanded = true;
-    } else if (!this.chatContainer) {
+    } else if (!this.chatContainer && !this.apiKeyContainer) {
       this.showAIInterface();
     }
+
+    if (this._needsApiKeySetup()) {
+      this._pendingPrompt = prompt;
+      if (!this.apiKeyContainer) {
+        this.showAIInterface();
+      } else {
+        this._updateSetupPendingHint();
+      }
+      return;
+    }
+
+    this._pendingPrompt = null;
 
     this.addChatMessage({ role: "user", content: prompt });
     const messagesContainer = this.chatContainer?.querySelector("#chat-messages");
