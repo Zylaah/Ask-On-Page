@@ -52,7 +52,3 @@ Page text is sent to your chosen LLM provider (except Ollama). Do not use on sen
 ## Credits
 
 Based on [Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot) by Bibek Bhusal / Vertex Mods.
-
-## License
-
-MIT — see [LICENSE](./LICENSE).
