@@ -38,10 +38,10 @@ A **fork** of [Vertex-Mods/Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot
 
 | Preference | Default | Description |
 | ---------- | ------- | ----------- |
-| `extension.browse-bot.findbar-ai.enabled` | `true` | Master toggle |
-| `extension.browse-bot.llm-provider` | `gemini` | AI provider |
-| `extension.browse-bot.findbar-ai.stream-enabled` | `true` | Stream replies |
-| `extension.browse-bot.findbar-ai.shortcut-findbar` | `ctrl+shift+f` | Open AI findbar |
+| `extension.ask-on-page.findbar-ai.enabled` | `true` | Master toggle |
+| `extension.ask-on-page.llm-provider` | `gemini` | AI provider |
+| `extension.ask-on-page.findbar-ai.stream-enabled` | `true` | Stream replies |
+| `extension.ask-on-page.findbar-ai.shortcut-findbar` | `ctrl+shift+f` | Open AI findbar |
 
 See Sine settings or upstream README for full provider keys and findbar appearance prefs.
 

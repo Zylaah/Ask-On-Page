@@ -39,15 +39,15 @@
   }
 }
 
-@media -moz-pref("extension.browse-bot.findbar-ai.enabled") {
-  @media -moz-pref("extension.browse-bot.findbar-ai.context-menu-enabled") {
-    #browse-bot-context-menu-item {
+@media -moz-pref("extension.ask-on-page.findbar-ai.enabled") {
+  @media -moz-pref("extension.ask-on-page.findbar-ai.context-menu-enabled") {
+    #ask-on-page-context-menu-item {
       --menu-image: url("chrome://browser/skin/trending.svg");
     }
   }
 
   findbar {
-    --browse-bot-findbar-control-height: 24px;
+    --ask-on-page-findbar-control-height: 24px;
 
     padding-inline-start: 0px !important;
     padding-top: 0 !important;
@@ -66,13 +66,13 @@
     height: unset !important;
     border-radius: var(--acrylic-radius) !important;
     border: none !important;
-    outline: var(--browse-bot-findbar-outline-width, 1px) solid
-      var(--browse-bot-findbar-outline) !important;
-    color: var(--browse-bot-fg);
+    outline: var(--ask-on-page-findbar-outline-width, 1px) solid
+      var(--ask-on-page-findbar-outline) !important;
+    color: var(--ask-on-page-fg);
     z-index: 9999;
     opacity: 1;
-    background: var(--browse-bot-dialog-bg) !important;
-    backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+    background: var(--ask-on-page-dialog-bg) !important;
+    backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
 
     &:is([hidden="true"]) {
       visibility: inherit !important;
@@ -95,10 +95,10 @@
 
     .findbar-closebutton {
       flex: 0 0 auto !important;
-      width: var(--browse-bot-findbar-control-height, 24px) !important;
-      height: var(--browse-bot-findbar-control-height, 24px) !important;
-      min-width: var(--browse-bot-findbar-control-height, 24px) !important;
-      min-height: var(--browse-bot-findbar-control-height, 24px) !important;
+      width: var(--ask-on-page-findbar-control-height, 24px) !important;
+      height: var(--ask-on-page-findbar-control-height, 24px) !important;
+      min-width: var(--ask-on-page-findbar-control-height, 24px) !important;
+      min-height: var(--ask-on-page-findbar-control-height, 24px) !important;
       padding: 0 !important;
       margin: 0 !important;
       appearance: none !important;
@@ -117,7 +117,7 @@
       background-image: none !important;
       box-shadow: none !important;
       -moz-context-properties: fill !important;
-      fill: var(--browse-bot-icon-fill) !important;
+      fill: var(--ask-on-page-icon-fill) !important;
       z-index: 20 !important;
       pointer-events: auto !important;
       box-sizing: border-box !important;
@@ -129,14 +129,14 @@
 
       &:hover {
         opacity: 0.95 !important;
-        background-color: var(--browse-bot-close-bg-hover) !important;
+        background-color: var(--ask-on-page-close-bg-hover) !important;
         background-image: none !important;
         box-shadow: none !important;
       }
 
       &:active {
         scale: 0.92 !important;
-        background-color: var(--browse-bot-close-bg-hover) !important;
+        background-color: var(--ask-on-page-close-bg-hover) !important;
       }
     }
 
@@ -162,7 +162,7 @@
         background-color: transparent !important;
 
         &:hover {
-          background-color: var(--browse-bot-close-bg-hover) !important;
+          background-color: var(--ask-on-page-close-bg-hover) !important;
         }
 
         &:active {
@@ -190,10 +190,10 @@
         opacity: 1 !important;
         margin: 0 !important;
         order: unset !important;
-        background-color: var(--browse-bot-close-bg) !important;
+        background-color: var(--ask-on-page-close-bg) !important;
 
         &:hover {
-          background-color: var(--browse-bot-close-bg-hover) !important;
+          background-color: var(--ask-on-page-close-bg-hover) !important;
           opacity: 1 !important;
         }
 
@@ -251,7 +251,7 @@
         align-content: center !important;
         order: 1 !important;
         height: 100% !important;
-        min-height: var(--browse-bot-findbar-control-height) !important;
+        min-height: var(--ask-on-page-findbar-control-height) !important;
         margin: 0 !important;
         padding: 0 !important;
         gap: 4px !important;
@@ -270,13 +270,13 @@
           min-width: 0 !important;
           order: 1 !important;
           align-self: center !important;
-          height: var(--browse-bot-findbar-control-height) !important;
-          min-height: var(--browse-bot-findbar-control-height) !important;
-          max-height: var(--browse-bot-findbar-control-height) !important;
-          line-height: var(--browse-bot-findbar-control-height) !important;
+          height: var(--ask-on-page-findbar-control-height) !important;
+          min-height: var(--ask-on-page-findbar-control-height) !important;
+          max-height: var(--ask-on-page-findbar-control-height) !important;
+          line-height: var(--ask-on-page-findbar-control-height) !important;
           box-sizing: border-box !important;
           background: none !important;
-          color: var(--browse-bot-fg) !important;
+          color: var(--ask-on-page-fg) !important;
           padding: 0 !important;
           margin: 0 !important;
           margin-inline-start: 5px !important;
@@ -306,15 +306,15 @@
           font-size: 12px !important;
           white-space: nowrap !important;
           font-weight: 500 !important;
-          color: var(--browse-bot-muted) !important;
+          color: var(--ask-on-page-muted) !important;
           box-sizing: border-box !important;
 
           &:not([hidden]) {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            height: var(--browse-bot-findbar-control-height) !important;
-            min-height: var(--browse-bot-findbar-control-height) !important;
+            height: var(--ask-on-page-findbar-control-height) !important;
+            min-height: var(--ask-on-page-findbar-control-height) !important;
           }
         }
 
@@ -331,21 +331,21 @@
           align-items: center !important;
           justify-content: center !important;
           align-self: center !important;
-          width: var(--browse-bot-findbar-control-height) !important;
-          height: var(--browse-bot-findbar-control-height) !important;
-          min-width: var(--browse-bot-findbar-control-height) !important;
-          min-height: var(--browse-bot-findbar-control-height) !important;
-          max-width: var(--browse-bot-findbar-control-height) !important;
-          max-height: var(--browse-bot-findbar-control-height) !important;
+          width: var(--ask-on-page-findbar-control-height) !important;
+          height: var(--ask-on-page-findbar-control-height) !important;
+          min-width: var(--ask-on-page-findbar-control-height) !important;
+          min-height: var(--ask-on-page-findbar-control-height) !important;
+          max-width: var(--ask-on-page-findbar-control-height) !important;
+          max-height: var(--ask-on-page-findbar-control-height) !important;
           margin: 0 !important;
           padding: 0 !important;
           border-radius: 4px !important;
           font-weight: 600 !important;
           transition: scale 0.2s ease !important;
           opacity: 1 !important;
-          color: var(--browse-bot-fg) !important;
+          color: var(--ask-on-page-fg) !important;
           -moz-context-properties: fill !important;
-          fill: var(--browse-bot-icon-fill) !important;
+          fill: var(--ask-on-page-icon-fill) !important;
           box-sizing: border-box !important;
 
           label {
@@ -385,11 +385,11 @@
 
 
       .findbar-find-previous {
-        background-image: var(--browse-bot-findbar-arrow-up) !important;
+        background-image: var(--ask-on-page-findbar-arrow-up) !important;
       }
 
       .findbar-find-next {
-        background-image: var(--browse-bot-findbar-arrow-down) !important;
+        background-image: var(--ask-on-page-findbar-arrow-down) !important;
       }
 
       .findbar-find-status {
@@ -409,9 +409,9 @@
         align-self: center !important;
         align-items: center !important;
         justify-content: center !important;
-        height: var(--browse-bot-findbar-control-height) !important;
-        min-height: var(--browse-bot-findbar-control-height) !important;
-        max-height: var(--browse-bot-findbar-control-height) !important;
+        height: var(--ask-on-page-findbar-control-height) !important;
+        min-height: var(--ask-on-page-findbar-control-height) !important;
+        max-height: var(--ask-on-page-findbar-control-height) !important;
         margin: 0 !important;
         padding: 0 10px !important;
         box-sizing: border-box !important;
@@ -420,8 +420,8 @@
         font-weight: 600 !important;
         line-height: 1 !important;
         cursor: pointer;
-        background: var(--browse-bot-primary-bg) !important;
-        color: var(--browse-bot-action-fg) !important;
+        background: var(--ask-on-page-primary-bg) !important;
+        color: var(--ask-on-page-action-fg) !important;
         transition: opacity 0.15s ease;
 
         &[data-show-ask="true"] {
@@ -444,8 +444,8 @@
       }
     }
 
-    .browse-bot-setup,
-    .browse-bot-chat {
+    .ask-on-page-setup,
+    .ask-on-page-chat {
       width: 100%;
       box-sizing: border-box;
       display: flex;
@@ -453,7 +453,7 @@
       gap: 14px;
     }
 
-    .browse-bot-setup {
+    .ask-on-page-setup {
       .ai-setup-content {
         text-align: center;
         padding: 15px !important;
@@ -505,7 +505,7 @@
           transition: all 0.2s ease;
           position: relative;
           overflow: hidden;
-          background-color: var(--browse-bot-primary-bg) !important;
+          background-color: var(--ask-on-page-primary-bg) !important;
           min-width: 60px !important;
           font-size: 17px !important;
           appearance: none !important;
@@ -553,7 +553,7 @@
       }
     }
 
-    .browse-bot-chat {
+    .ask-on-page-chat {
       gap: 0 !important;
 
       .markdown-body {
@@ -622,7 +622,7 @@
         &:not(:empty) ~ .ai-chat-input-group {
           border: none !important;
           margin: 5px !important;
-          background: var(--browse-bot-chat-input-shell-bg, #252525);
+          background: var(--ask-on-page-chat-input-shell-bg, #252525);
           border-radius: 6px;
         }
       }
@@ -658,8 +658,8 @@
 
       .chat-message-error {
         align-self: flex-start;
-        background: var(--browse-bot-error-bg);
-        color: var(--browse-bot-error);
+        background: var(--ask-on-page-error-bg);
+        color: var(--ask-on-page-error);
       }
 
       .ai-chat-input-group {
@@ -670,15 +670,15 @@
         box-sizing: border-box;
       }
 
-      @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "acrylic") {
+      @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
         .ai-chat-input-group {
-          background: var(--browse-bot-dialog-bg) !important;
-          backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+          background: var(--ask-on-page-dialog-bg) !important;
+          backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
 
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
-          background: var(--browse-bot-chat-input-acrylic-bg, var(--acrylic-input-glass-bg)) !important;
-          backdrop-filter: var(--browse-bot-dialog-backdrop-filter);
+          background: var(--ask-on-page-chat-input-acrylic-bg, var(--acrylic-input-glass-bg)) !important;
+          backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
       }
 
@@ -711,14 +711,14 @@
           box-shadow: none !important;
           font-size: 14px !important;
           line-height: 1.5 !important;
-          color: var(--browse-bot-fg) !important;
-          caret-color: var(--browse-bot-fg) !important;
+          color: var(--ask-on-page-fg) !important;
+          caret-color: var(--ask-on-page-fg) !important;
           --focus-outline: none !important;
           --focus-outline-inset: 0 !important;
           outline: none !important;
 
           &::placeholder {
-            color: var(--browse-bot-muted) !important;
+            color: var(--ask-on-page-muted) !important;
             opacity: 0.8;
           }
         }
@@ -783,8 +783,8 @@
         font-weight: 600 !important;
         line-height: 1 !important;
         white-space: nowrap !important;
-        background: var(--browse-bot-primary-bg) !important;
-        color: var(--browse-bot-action-fg) !important;
+        background: var(--ask-on-page-primary-bg) !important;
+        color: var(--ask-on-page-action-fg) !important;
       }
 
       .stop-btn {
@@ -840,7 +840,7 @@
           background: linear-gradient(
             90deg,
             transparent,
-            color-mix(in srgb, var(--browse-bot-primary-bg) 20%, transparent 80%),
+            color-mix(in srgb, var(--ask-on-page-primary-bg) 20%, transparent 80%),
             transparent
           );
           background-size: 200% 100%;

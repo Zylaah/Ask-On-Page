@@ -1,6 +1,6 @@
 [
   {
-    "property": "extension.browse-bot.findbar-ai.enabled",
+    "property": "extension.ask-on-page.findbar-ai.enabled",
     "label": "Enable Findbar AI",
     "type": "checkbox",
     "defaultValue": true,
@@ -8,11 +8,11 @@
   },
   {
     "type": "separator",
-    "id": "browse-bot-api-separator",
+    "id": "ask-on-page-api-separator",
     "label": "API Configuration"
   },
   {
-    "property": "extension.browse-bot.llm-provider",
+    "property": "extension.ask-on-page.llm-provider",
     "label": "AI Provider",
     "type": "dropdown",
     "defaultValue": "gemini",
@@ -53,7 +53,7 @@
     ]
   },
   {
-    "property": "extension.browse-bot.claude-api-key",
+    "property": "extension.ask-on-page.claude-api-key",
     "label": "Claude API Key",
     "type": "string",
     "placeholder": "Enter your Anthropic Claude API key",
@@ -62,26 +62,22 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "claude"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.claude-model",
+    "property": "extension.ask-on-page.claude-model",
     "label": "Claude Model",
     "type": "dropdown",
     "defaultValue": "claude-opus-4-1",
     "description": "Select the Claude model to use.",
     "options": [
       {
-        "value": "claude-hiku-4-5",
-        "label": "Claude Hiku 4.5"
-      },
-      {
-        "value": "claude-sonnet-4-5",
-        "label": "Claude Sonnet 4.5"
+        "value": "claude-haiku-4-5",
+        "label": "Claude Haiku 4.5"
       },
       {
         "value": "claude-sonnet-4-5",
@@ -111,14 +107,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "claude"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.gemini-api-key",
+    "property": "extension.ask-on-page.gemini-api-key",
     "label": "Gemini API Key",
     "type": "string",
     "placeholder": "Enter your Google Gemini API key",
@@ -127,14 +123,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "gemini"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.gemini-model",
+    "property": "extension.ask-on-page.gemini-model",
     "label": "Gemini Model",
     "type": "dropdown",
     "defaultValue": "gemini-2.5-flash",
@@ -188,14 +184,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "gemini"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.grok-api-key",
+    "property": "extension.ask-on-page.grok-api-key",
     "label": "Grok API Key",
     "type": "string",
     "placeholder": "Enter your xAI Grok API key",
@@ -204,14 +200,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "grok"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.grok-model",
+    "property": "extension.ask-on-page.grok-model",
     "label": "Grok Model",
     "type": "dropdown",
     "defaultValue": "grok-4",
@@ -277,14 +273,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "grok"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.mistral-api-key",
+    "property": "extension.ask-on-page.mistral-api-key",
     "label": "Mistral API Key",
     "type": "string",
     "placeholder": "Enter your Mistral API key",
@@ -293,14 +289,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "mistral"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.mistral-model",
+    "property": "extension.ask-on-page.mistral-model",
     "label": "Mistral Model",
     "type": "dropdown",
     "defaultValue": "mistral-medium-latest",
@@ -362,14 +358,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "mistral"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.ollama-base-url",
+    "property": "extension.ask-on-page.ollama-base-url",
     "label": "Ollama Base URL",
     "type": "string",
     "placeholder": "http://localhost:11434/api",
@@ -378,14 +374,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "ollama"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.ollama-model",
+    "property": "extension.ask-on-page.ollama-model",
     "label": "Ollama Model",
     "type": "dropdown",
     "defaultValue": "mixtral:8x7b",
@@ -467,14 +463,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "ollama"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.openai-api-key",
+    "property": "extension.ask-on-page.openai-api-key",
     "label": "OpenAI API Key",
     "type": "string",
     "placeholder": "Enter your OpenAI API key",
@@ -483,14 +479,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "openai"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.openai-model",
+    "property": "extension.ask-on-page.openai-model",
     "label": "OpenAI Model",
     "type": "dropdown",
     "defaultValue": "gpt-5.2",
@@ -592,14 +588,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "openai"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.perplexity-api-key",
+    "property": "extension.ask-on-page.perplexity-api-key",
     "label": "Perplexity API Key",
     "type": "string",
     "placeholder": "Enter your Perplexity API key",
@@ -608,14 +604,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "perplexity"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.perplexity-model",
+    "property": "extension.ask-on-page.perplexity-model",
     "label": "Perplexity Model",
     "type": "dropdown",
     "defaultValue": "sonar",
@@ -645,14 +641,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "perplexity"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.cerebras-api-key",
+    "property": "extension.ask-on-page.cerebras-api-key",
     "label": "Cerebras API Key",
     "type": "string",
     "placeholder": "Enter your Cerebras API key",
@@ -661,14 +657,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "cerebras"
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.cerebras-model",
+    "property": "extension.ask-on-page.cerebras-model",
     "label": "Cerebras Model",
     "type": "dropdown",
     "defaultValue": "llama3.1-8b",
@@ -702,7 +698,7 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.llm-provider",
+          "property": "extension.ask-on-page.llm-provider",
           "value": "cerebras"
         }
       }
@@ -710,19 +706,19 @@
   },
   {
     "type": "separator",
-    "id": "browse-bot-response-separator",
+    "id": "ask-on-page-response-separator",
     "label": "AI Response",
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.findbar-ai.stream-enabled",
+    "property": "extension.ask-on-page.findbar-ai.stream-enabled",
     "label": "Stream Response",
     "type": "checkbox",
     "defaultValue": true,
@@ -730,14 +726,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.custom-system-prompt",
+    "property": "extension.ask-on-page.custom-system-prompt",
     "label": "Custom System Prompt",
     "type": "textarea",
     "defaultValue": "",
@@ -746,19 +742,19 @@
   },
   {
     "type": "separator",
-    "id": "browse-bot-appearance-separator",
+    "id": "ask-on-page-appearance-separator",
     "label": "Appearance & Behavior",
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.findbar-ai.persist-chat",
+    "property": "extension.ask-on-page.findbar-ai.persist-chat",
     "label": "Persist Chat History per Tab",
     "type": "checkbox",
     "defaultValue": false,
@@ -766,14 +762,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.findbar-ai.background-style",
+    "property": "extension.ask-on-page.findbar-ai.background-style",
     "label": "Background Style",
     "type": "dropdown",
     "defaultValue": "solid",
@@ -795,7 +791,7 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
@@ -803,19 +799,19 @@
   },
   {
     "type": "separator",
-    "id": "browse-bot-context-menu-separator",
+    "id": "ask-on-page-context-menu-separator",
     "label": "Context Menu",
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.findbar-ai.context-menu-enabled",
+    "property": "extension.ask-on-page.findbar-ai.context-menu-enabled",
     "label": "Enable Context Menu Item",
     "type": "checkbox",
     "defaultValue": true,
@@ -823,14 +819,14 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       }
     ]
   },
   {
-    "property": "extension.browse-bot.findbar-ai.context-menu-autosend",
+    "property": "extension.ask-on-page.findbar-ai.context-menu-autosend",
     "label": "Automatically Send Query from Context Menu",
     "type": "checkbox",
     "defaultValue": true,
@@ -838,13 +834,13 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       },
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.context-menu-enabled",
+          "property": "extension.ask-on-page.findbar-ai.context-menu-enabled",
           "value": true
         }
       }
@@ -852,7 +848,7 @@
     "operator": "AND"
   },
   {
-    "property": "extension.browse-bot.findbar-ai.context-menu-command-no-selection",
+    "property": "extension.ask-on-page.findbar-ai.context-menu-command-no-selection",
     "label": "Context Menu Command (No Selection)",
     "type": "string",
     "defaultValue": "Summarize current page",
@@ -860,13 +856,13 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       },
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.context-menu-enabled",
+          "property": "extension.ask-on-page.findbar-ai.context-menu-enabled",
           "value": true
         }
       }
@@ -874,7 +870,7 @@
     "operator": "AND"
   },
   {
-    "property": "extension.browse-bot.findbar-ai.context-menu-command-with-selection",
+    "property": "extension.ask-on-page.findbar-ai.context-menu-command-with-selection",
     "label": "Context Menu Command (With Selection)",
     "type": "string",
     "defaultValue": "Explain this in context of current page:\n\n{selection}",
@@ -882,13 +878,13 @@
     "conditions": [
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.enabled",
+          "property": "extension.ask-on-page.findbar-ai.enabled",
           "value": true
         }
       },
       {
         "if": {
-          "property": "extension.browse-bot.findbar-ai.context-menu-enabled",
+          "property": "extension.ask-on-page.findbar-ai.context-menu-enabled",
           "value": true
         }
       }
@@ -897,11 +893,11 @@
   },
   {
     "type": "separator",
-    "id": "browse-bot-advanced-llm-separator",
+    "id": "ask-on-page-advanced-llm-separator",
     "label": "Advanced LLM Settings"
   },
   {
-    "property": "extension.browse-bot.llm.temperature",
+    "property": "extension.ask-on-page.llm.temperature",
     "label": "Temperature",
     "type": "dropdown",
     "defaultValue": 0.7,
@@ -934,7 +930,7 @@
     ]
   },
   {
-    "property": "extension.browse-bot.llm.top-p",
+    "property": "extension.ask-on-page.llm.top-p",
     "label": "Top P",
     "type": "dropdown",
     "defaultValue": 1.0,
@@ -971,7 +967,7 @@
     ]
   },
   {
-    "property": "extension.browse-bot.llm.top-k",
+    "property": "extension.ask-on-page.llm.top-k",
     "label": "Top K",
     "type": "dropdown",
     "defaultValue": 40,
@@ -1004,7 +1000,7 @@
     ]
   },
   {
-    "property": "extension.browse-bot.llm.frequency-penalty",
+    "property": "extension.ask-on-page.llm.frequency-penalty",
     "label": "Frequency Penalty",
     "type": "dropdown",
     "defaultValue": 0.0,
@@ -1041,7 +1037,7 @@
     ]
   },
   {
-    "property": "extension.browse-bot.llm.presence-penalty",
+    "property": "extension.ask-on-page.llm.presence-penalty",
     "label": "Presence Penalty",
     "type": "dropdown",
     "defaultValue": 0.0,
@@ -1078,7 +1074,7 @@
     ]
   },
   {
-    "property": "extension.browse-bot.llm.max-output-tokens",
+    "property": "extension.ask-on-page.llm.max-output-tokens",
     "label": "Max Output Tokens",
     "type": "dropdown",
     "defaultValue": 2048,
@@ -1112,11 +1108,11 @@
   },
   {
     "type": "separator",
-    "id": "browse-bot-development-separator",
+    "id": "ask-on-page-development-separator",
     "label": "Development"
   },
   {
-    "property": "extension.browse-bot.debug-mode",
+    "property": "extension.ask-on-page.debug-mode",
     "label": "Enable Debug Mode",
     "type": "checkbox",
     "defaultValue": false,

@@ -1,8 +1,8 @@
-/* Theme tokens — driven by JS data-browse-bot-theme attribute (see installZenThemeSync) */
+/* Theme tokens — driven by JS data-ask-on-page-theme attribute (see installZenThemeSync) */
 
 /* Dark — also the fallback before JS runs */
 :root,
-:root[data-browse-bot-theme="dark"] {
+:root[data-ask-on-page-theme="dark"] {
   color-scheme: dark;
 
   --acrylic-bg: rgb(24, 24, 27);
@@ -10,53 +10,53 @@
   --acrylic-background: rgba(36, 37, 39, 0.6) !important;
   --acrylic-border: 0.5px solid rgba(127, 127, 127, 0.3);
 
-  --browse-bot-fg: rgb(245, 245, 245);
-  --browse-bot-findbar-outline: rgb(48, 48, 48);
-  --browse-bot-findbar-outline-width: 1px;
-  --browse-bot-findbar-border: rgba(235, 235, 235, 0.3);
-  --browse-bot-icon-fill: white;
-  --browse-bot-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
-  --browse-bot-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
-  --browse-bot-action-fg: white;
-  --browse-bot-chat-input-shell-bg: #252525;
+  --ask-on-page-fg: rgb(245, 245, 245);
+  --ask-on-page-findbar-outline: rgb(48, 48, 48);
+  --ask-on-page-findbar-outline-width: 1px;
+  --ask-on-page-findbar-border: rgba(235, 235, 235, 0.3);
+  --ask-on-page-icon-fill: white;
+  --ask-on-page-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
+  --ask-on-page-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
+  --ask-on-page-action-fg: white;
+  --ask-on-page-chat-input-shell-bg: #252525;
 
-  --browse-bot-dialog-bg: var(--acrylic-glass-bg);
-  --browse-bot-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
+  --ask-on-page-dialog-bg: var(--acrylic-glass-bg);
+  --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
 
-  --browse-bot-primary-bg: color-mix(in srgb, var(--browser-primary-color) 70%, black 30%);
-  --browse-bot-primary: color-mix(in srgb, var(--browser-primary-color) 50%, white 50%);
-  --browse-bot-error: #f31260;
-  --browse-bot-error-bg: #610726;
-  --browse-bot-success: #17c964;
-  --browse-bot-success-bg: #095028;
-  --browse-bot-warning: #f5a524;
-  --browse-bot-warning-bg: #62420e;
-  --browse-bot-muted-bg: #27272a;
-  --browse-bot-close-bg: var(--browse-bot-muted-bg);
-  --browse-bot-close-bg-hover: color-mix(in srgb, var(--browse-bot-muted-bg) 78%, white 22%);
+  --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 70%, black 30%);
+  --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, white 50%);
+  --ask-on-page-error: #f31260;
+  --ask-on-page-error-bg: #610726;
+  --ask-on-page-success: #17c964;
+  --ask-on-page-success-bg: #095028;
+  --ask-on-page-warning: #f5a524;
+  --ask-on-page-warning-bg: #62420e;
+  --ask-on-page-muted-bg: #27272a;
+  --ask-on-page-close-bg: var(--ask-on-page-muted-bg);
+  --ask-on-page-close-bg-hover: color-mix(in srgb, var(--ask-on-page-muted-bg) 78%, white 22%);
 
-  --browse-bot-input-bg: color-mix(in srgb, var(--acrylic-bg) 88%, white 12%);
-  --browse-bot-input-border: color-mix(in srgb, white 14%, transparent 86%);
-  --browse-bot-divider: color-mix(in srgb, white 12%, transparent 88%);
+  --ask-on-page-input-bg: color-mix(in srgb, var(--acrylic-bg) 88%, white 12%);
+  --ask-on-page-input-border: color-mix(in srgb, white 14%, transparent 86%);
+  --ask-on-page-divider: color-mix(in srgb, white 12%, transparent 88%);
 
-  @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "solid") {
-    --browse-bot-dialog-bg: var(--acrylic-bg) !important;
-    --browse-bot-dialog-backdrop-filter: none !important;
+  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "solid") {
+    --ask-on-page-dialog-bg: var(--acrylic-bg) !important;
+    --ask-on-page-dialog-backdrop-filter: none !important;
   }
-  @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "acrylic") {
-    --browse-bot-dialog-bg: var(--acrylic-glass-bg) !important;
-    --browse-bot-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
-    --browse-bot-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
-    --browse-bot-findbar-outline-width: 0;
+  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
+    --ask-on-page-dialog-bg: var(--acrylic-glass-bg) !important;
+    --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
+    --ask-on-page-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
+    --ask-on-page-findbar-outline-width: 0;
   }
-  @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
-    --browse-bot-dialog-bg: transparent !important;
-    --browse-bot-dialog-backdrop-filter: none;
+  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "pseudo") {
+    --ask-on-page-dialog-bg: transparent !important;
+    --ask-on-page-dialog-backdrop-filter: none;
   }
 }
 
 /* Light */
-:root[data-browse-bot-theme="light"] {
+:root[data-ask-on-page-theme="light"] {
   color-scheme: light;
 
   --acrylic-bg: rgb(250, 250, 250);
@@ -64,47 +64,47 @@
   --acrylic-background: rgba(255, 255, 255, 0.82) !important;
   --acrylic-border: 0.5px solid rgba(0, 0, 0, 0.12);
 
-  --browse-bot-fg: rgb(24, 24, 27);
-  --browse-bot-findbar-outline: rgb(229, 229, 229);
-  --browse-bot-findbar-outline-width: 1px;
-  --browse-bot-findbar-border: rgba(20, 20, 20, 0.14);
-  --browse-bot-icon-fill: black;
-  --browse-bot-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
-  --browse-bot-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
-  --browse-bot-action-fg: white;
-  --browse-bot-chat-input-shell-bg: #f0f0f0;
+  --ask-on-page-fg: rgb(24, 24, 27);
+  --ask-on-page-findbar-outline: rgb(229, 229, 229);
+  --ask-on-page-findbar-outline-width: 1px;
+  --ask-on-page-findbar-border: rgba(20, 20, 20, 0.14);
+  --ask-on-page-icon-fill: black;
+  --ask-on-page-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
+  --ask-on-page-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
+  --ask-on-page-action-fg: white;
+  --ask-on-page-chat-input-shell-bg: #f0f0f0;
 
-  --browse-bot-dialog-bg: var(--acrylic-glass-bg);
-  --browse-bot-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
+  --ask-on-page-dialog-bg: var(--acrylic-glass-bg);
+  --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
 
-  --browse-bot-primary-bg: color-mix(in srgb, var(--browser-primary-color) 90%, white 10%);
-  --browse-bot-primary: color-mix(in srgb, var(--browser-primary-color) 50%, black 50%);
-  --browse-bot-error: #c20e4d;
-  --browse-bot-error-bg: #fdd0df;
-  --browse-bot-success: #128f4e;
-  --browse-bot-success-bg: #d1f4e0;
-  --browse-bot-warning: #9a6700;
-  --browse-bot-warning-bg: #fdedd3;
-  --browse-bot-muted-bg: #f4f4f5;
-  --browse-bot-close-bg: var(--browse-bot-muted-bg);
-  --browse-bot-close-bg-hover: color-mix(in srgb, var(--browse-bot-muted-bg) 82%, black 18%);
+  --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 90%, white 10%);
+  --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, black 50%);
+  --ask-on-page-error: #c20e4d;
+  --ask-on-page-error-bg: #fdd0df;
+  --ask-on-page-success: #128f4e;
+  --ask-on-page-success-bg: #d1f4e0;
+  --ask-on-page-warning: #9a6700;
+  --ask-on-page-warning-bg: #fdedd3;
+  --ask-on-page-muted-bg: #f4f4f5;
+  --ask-on-page-close-bg: var(--ask-on-page-muted-bg);
+  --ask-on-page-close-bg-hover: color-mix(in srgb, var(--ask-on-page-muted-bg) 82%, black 18%);
 
-  --browse-bot-input-bg: color-mix(in srgb, var(--acrylic-bg) 92%, black 8%);
-  --browse-bot-input-border: color-mix(in srgb, black 10%, transparent 90%);
-  --browse-bot-divider: color-mix(in srgb, black 10%, transparent 90%);
+  --ask-on-page-input-bg: color-mix(in srgb, var(--acrylic-bg) 92%, black 8%);
+  --ask-on-page-input-border: color-mix(in srgb, black 10%, transparent 90%);
+  --ask-on-page-divider: color-mix(in srgb, black 10%, transparent 90%);
 
-  @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "solid") {
-    --browse-bot-dialog-bg: var(--acrylic-bg) !important;
-    --browse-bot-dialog-backdrop-filter: none !important;
+  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "solid") {
+    --ask-on-page-dialog-bg: var(--acrylic-bg) !important;
+    --ask-on-page-dialog-backdrop-filter: none !important;
   }
-  @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "acrylic") {
-    --browse-bot-dialog-bg: var(--acrylic-glass-bg) !important;
-    --browse-bot-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
-    --browse-bot-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
-    --browse-bot-findbar-outline-width: 0;
+  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
+    --ask-on-page-dialog-bg: var(--acrylic-glass-bg) !important;
+    --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
+    --ask-on-page-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
+    --ask-on-page-findbar-outline-width: 0;
   }
-  @media -moz-pref("extension.browse-bot.findbar-ai.background-style", "pseudo") {
-    --browse-bot-dialog-bg: transparent !important;
-    --browse-bot-dialog-backdrop-filter: none;
+  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "pseudo") {
+    --ask-on-page-dialog-bg: transparent !important;
+    --ask-on-page-dialog-backdrop-filter: none;
   }
 }

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name            Browse Bot
+// @name            Ask On Page
 // @description     Findbar-only AI chat for Zen Browser — page-aware Q&A without URL bar or agentic tools.
 // @author          Bibek Bhusal
 // @version         3.0.0-findbar-only
@@ -90,7 +90,7 @@ const FINDBAR_WIDTH = 400;
 const FINDBAR_PLACEHOLDER = "Find or Ask...";
 
 const ZEN_WINDOW_SCHEME_PREF = "zen.view.window.scheme";
-const BROWSE_BOT_THEME_ATTR = "data-browse-bot-theme";
+const ASK_ON_PAGE_THEME_ATTR = "data-ask-on-page-theme";
 
 /**
  * gZenThemePicker is a window-level global in Zen.
@@ -98,7 +98,7 @@ const BROWSE_BOT_THEME_ATTR = "data-browse-bot-theme";
  * zen.view.window.scheme (0=dark, 1=light, 2=auto+prefers-color-scheme).
  * @returns {"dark"|"light"}
  */
-function resolveBrowseBotTheme() {
+function resolveAskOnPageTheme() {
   try {
     if (typeof gZenThemePicker !== "undefined" && gZenThemePicker !== null) {
       return gZenThemePicker.isDarkMode ? "dark" : "light";
@@ -111,10 +111,10 @@ function resolveBrowseBotTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-/** Apply data-browse-bot-theme to <html> and update any rendered markdown. */
-function syncBrowseBotTheme() {
-  const theme = resolveBrowseBotTheme();
-  document.documentElement.setAttribute(BROWSE_BOT_THEME_ATTR, theme);
+/** Apply data-ask-on-page-theme to <html> and update any rendered markdown. */
+function syncAskOnPageTheme() {
+  const theme = resolveAskOnPageTheme();
+  document.documentElement.setAttribute(ASK_ON_PAGE_THEME_ATTR, theme);
   for (const el of document.querySelectorAll(".markdown-body[data-theme]")) {
     el.dataset.theme = theme;
   }
@@ -122,10 +122,10 @@ function syncBrowseBotTheme() {
 
 /** Watch everything that can change Zen's light/dark decision. */
 function installZenThemeSync() {
-  syncBrowseBotTheme();
+  syncAskOnPageTheme();
 
   // zen.view.window.scheme pref (scheme picker buttons & menubar)
-  const prefObserver = { observe() { scheduleBrowseBotThemeSync(); } };
+  const prefObserver = { observe() { scheduleAskOnPageThemeSync(); } };
   try {
     Services.prefs.addObserver(ZEN_WINDOW_SCHEME_PREF, prefObserver);
   } catch {
@@ -134,12 +134,12 @@ function installZenThemeSync() {
 
   // Auto mode depends on OS preference
   window.matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", scheduleBrowseBotThemeSync);
+    .addEventListener("change", scheduleAskOnPageThemeSync);
 
   // Custom gradients update zen-should-be-dark-mode via this observer topic
   try {
     Services.obs.addObserver(
-      { observe() { scheduleBrowseBotThemeSync(); } },
+      { observe() { scheduleAskOnPageThemeSync(); } },
       "zen-space-gradient-update"
     );
   } catch {
@@ -148,9 +148,9 @@ function installZenThemeSync() {
 }
 
 /** Double-sync: once now, once after Zen finishes updating the DOM. */
-function scheduleBrowseBotThemeSync() {
-  syncBrowseBotTheme();
-  requestAnimationFrame(syncBrowseBotTheme);
+function scheduleAskOnPageThemeSync() {
+  syncAskOnPageTheme();
+  requestAnimationFrame(syncAskOnPageTheme);
 }
 
 let PREFS$1 = class PREFS {
@@ -197,119 +197,138 @@ let PREFS$1 = class PREFS {
   }
 };
 
-class BrowseBotPREFS extends PREFS$1 {
-  static MOD_NAME = "BrowseBot";
-  static DEBUG_MODE = "extension.browse-bot.debug-mode";
+class AskOnPagePREFS extends PREFS$1 {
+  static MOD_NAME = "AskOnPage";
+  static DEBUG_MODE = "extension.ask-on-page.debug-mode";
 
-  static ENABLED = "extension.browse-bot.findbar-ai.enabled";
-  static PERSIST = "extension.browse-bot.findbar-ai.persist-chat";
-  static STREAM_ENABLED = "extension.browse-bot.findbar-ai.stream-enabled";
-  static CONTEXT_MENU_ENABLED = "extension.browse-bot.findbar-ai.context-menu-enabled";
-  static CONTEXT_MENU_AUTOSEND = "extension.browse-bot.findbar-ai.context-menu-autosend";
+  static ENABLED = "extension.ask-on-page.findbar-ai.enabled";
+  static PERSIST = "extension.ask-on-page.findbar-ai.persist-chat";
+  static STREAM_ENABLED = "extension.ask-on-page.findbar-ai.stream-enabled";
+  static CONTEXT_MENU_ENABLED = "extension.ask-on-page.findbar-ai.context-menu-enabled";
+  static CONTEXT_MENU_AUTOSEND = "extension.ask-on-page.findbar-ai.context-menu-autosend";
   static CONTEXT_MENU_COMMAND_WITH_SELECTION =
-    "extension.browse-bot.findbar-ai.context-menu-command-with-selection";
+    "extension.ask-on-page.findbar-ai.context-menu-command-with-selection";
   static CONTEXT_MENU_COMMAND_NO_SELECTION =
-    "extension.browse-bot.findbar-ai.context-menu-command-no-selection";
-  static BACKGROUND_STYLE = "extension.browse-bot.findbar-ai.background-style";
-  static CUSTOM_SYSTEM_PROMPT = "extension.browse-bot.custom-system-prompt";
+    "extension.ask-on-page.findbar-ai.context-menu-command-no-selection";
+  static BACKGROUND_STYLE = "extension.ask-on-page.findbar-ai.background-style";
+  static CUSTOM_SYSTEM_PROMPT = "extension.ask-on-page.custom-system-prompt";
 
-  static SHORTCUT_FINDBAR = "extension.browse-bot.findbar-ai.shortcut-findbar";
+  static SHORTCUT_FINDBAR = "extension.ask-on-page.findbar-ai.shortcut-findbar";
 
-  static SOLID_BG = "extension.browse-bot.solid-bg";
+  static SOLID_BG = "extension.ask-on-page.solid-bg";
 
-  static LLM_PROVIDER = "extension.browse-bot.llm-provider";
-  static MISTRAL_API_KEY = "extension.browse-bot.mistral-api-key";
-  static MISTRAL_MODEL = "extension.browse-bot.mistral-model";
-  static GEMINI_API_KEY = "extension.browse-bot.gemini-api-key";
-  static GEMINI_MODEL = "extension.browse-bot.gemini-model";
-  static OPENAI_API_KEY = "extension.browse-bot.openai-api-key";
-  static OPENAI_MODEL = "extension.browse-bot.openai-model";
-  static CLAUDE_API_KEY = "extension.browse-bot.claude-api-key";
-  static CLAUDE_MODEL = "extension.browse-bot.claude-model";
-  static GROK_API_KEY = "extension.browse-bot.grok-api-key";
-  static GROK_MODEL = "extension.browse-bot.grok-model";
-  static PERPLEXITY_API_KEY = "extension.browse-bot.perplexity-api-key";
-  static PERPLEXITY_MODEL = "extension.browse-bot.perplexity-model";
-  static CEREBRAS_API_KEY = "extension.browse-bot.cerebras-api-key";
-  static CEREBRAS_MODEL = "extension.browse-bot.cerebras-model";
-  static OLLAMA_MODEL = "extension.browse-bot.ollama-model";
-  static OLLAMA_BASE_URL = "extension.browse-bot.ollama-base-url";
+  static LLM_PROVIDER = "extension.ask-on-page.llm-provider";
+  static MISTRAL_API_KEY = "extension.ask-on-page.mistral-api-key";
+  static MISTRAL_MODEL = "extension.ask-on-page.mistral-model";
+  static GEMINI_API_KEY = "extension.ask-on-page.gemini-api-key";
+  static GEMINI_MODEL = "extension.ask-on-page.gemini-model";
+  static OPENAI_API_KEY = "extension.ask-on-page.openai-api-key";
+  static OPENAI_MODEL = "extension.ask-on-page.openai-model";
+  static CLAUDE_API_KEY = "extension.ask-on-page.claude-api-key";
+  static CLAUDE_MODEL = "extension.ask-on-page.claude-model";
+  static GROK_API_KEY = "extension.ask-on-page.grok-api-key";
+  static GROK_MODEL = "extension.ask-on-page.grok-model";
+  static PERPLEXITY_API_KEY = "extension.ask-on-page.perplexity-api-key";
+  static PERPLEXITY_MODEL = "extension.ask-on-page.perplexity-model";
+  static CEREBRAS_API_KEY = "extension.ask-on-page.cerebras-api-key";
+  static CEREBRAS_MODEL = "extension.ask-on-page.cerebras-model";
+  static OLLAMA_MODEL = "extension.ask-on-page.ollama-model";
+  static OLLAMA_BASE_URL = "extension.ask-on-page.ollama-base-url";
 
-  static LLM_TEMPERATURE = "extension.browse-bot.llm.temperature";
-  static LLM_TOP_P = "extension.browse-bot.llm.top-p";
-  static LLM_TOP_K = "extension.browse-bot.llm.top-k";
-  static LLM_FREQUENCY_PENALTY = "extension.browse-bot.llm.frequency-penalty";
-  static LLM_PRESENCE_PENALTY = "extension.browse-bot.llm.presence-penalty";
-  static LLM_MAX_OUTPUT_TOKENS = "extension.browse-bot.llm.max-output-tokens";
+  static LLM_TEMPERATURE = "extension.ask-on-page.llm.temperature";
+  static LLM_TOP_P = "extension.ask-on-page.llm.top-p";
+  static LLM_TOP_K = "extension.ask-on-page.llm.top-k";
+  static LLM_FREQUENCY_PENALTY = "extension.ask-on-page.llm.frequency-penalty";
+  static LLM_PRESENCE_PENALTY = "extension.ask-on-page.llm.presence-penalty";
+  static LLM_MAX_OUTPUT_TOKENS = "extension.ask-on-page.llm.max-output-tokens";
 
-  // static COPY_BTN_ENABLED = "extension.browse-bot.findbar-ai.copy-btn-enabled";
-  // static MARKDOWN_ENABLED = "extension.browse-bot.findbar-ai.markdown-enabled";
-  // static SHOW_TOOL_CALL = "extension.browse-bot.findbar-ai.show-tool-call";
+  // static COPY_BTN_ENABLED = "extension.ask-on-page.findbar-ai.copy-btn-enabled";
+  // static MARKDOWN_ENABLED = "extension.ask-on-page.findbar-ai.markdown-enabled";
+  // static SHOW_TOOL_CALL = "extension.ask-on-page.findbar-ai.show-tool-call";
 
   static defaultValues = {
-    [BrowseBotPREFS.ENABLED]: true,
-    [BrowseBotPREFS.DEBUG_MODE]: false,
-    [BrowseBotPREFS.PERSIST]: false,
-    [BrowseBotPREFS.STREAM_ENABLED]: true,
-    [BrowseBotPREFS.CONTEXT_MENU_ENABLED]: true,
-    [BrowseBotPREFS.CONTEXT_MENU_AUTOSEND]: true,
-    [BrowseBotPREFS.CONTEXT_MENU_COMMAND_NO_SELECTION]: "Summarize current page",
-    [BrowseBotPREFS.CONTEXT_MENU_COMMAND_WITH_SELECTION]:
+    [AskOnPagePREFS.ENABLED]: true,
+    [AskOnPagePREFS.DEBUG_MODE]: false,
+    [AskOnPagePREFS.PERSIST]: false,
+    [AskOnPagePREFS.STREAM_ENABLED]: true,
+    [AskOnPagePREFS.CONTEXT_MENU_ENABLED]: true,
+    [AskOnPagePREFS.CONTEXT_MENU_AUTOSEND]: true,
+    [AskOnPagePREFS.CONTEXT_MENU_COMMAND_NO_SELECTION]: "Summarize current page",
+    [AskOnPagePREFS.CONTEXT_MENU_COMMAND_WITH_SELECTION]:
       "Explain this in context of current page:\n\n{selection}",
-    [BrowseBotPREFS.LLM_PROVIDER]: "gemini",
-    [BrowseBotPREFS.MISTRAL_API_KEY]: "",
-    [BrowseBotPREFS.MISTRAL_MODEL]: "mistral-medium-latest",
-    [BrowseBotPREFS.GEMINI_API_KEY]: "",
-    [BrowseBotPREFS.GEMINI_MODEL]: "gemini-2.5-flash",
-    [BrowseBotPREFS.OPENAI_API_KEY]: "",
-    [BrowseBotPREFS.OPENAI_MODEL]: "gpt-5.2",
-    [BrowseBotPREFS.CLAUDE_API_KEY]: "",
-    [BrowseBotPREFS.CLAUDE_MODEL]: "claude-4-opus",
-    [BrowseBotPREFS.GROK_API_KEY]: "",
-    [BrowseBotPREFS.GROK_MODEL]: "grok-4",
-    [BrowseBotPREFS.PERPLEXITY_API_KEY]: "",
-    [BrowseBotPREFS.PERPLEXITY_MODEL]: "sonar",
-    [BrowseBotPREFS.CEREBRAS_API_KEY]: "",
-    [BrowseBotPREFS.CEREBRAS_MODEL]: "llama3.1-8b",
-    [BrowseBotPREFS.OLLAMA_MODEL]: "llama2",
-    [BrowseBotPREFS.OLLAMA_BASE_URL]: "http://localhost:11434/api",
-    [BrowseBotPREFS.BACKGROUND_STYLE]: "solid",
-    [BrowseBotPREFS.SHORTCUT_FINDBAR]: "ctrl+shift+f",
-    [BrowseBotPREFS.CUSTOM_SYSTEM_PROMPT]: "",
-    [BrowseBotPREFS.LLM_TEMPERATURE]: 0.7,
-    [BrowseBotPREFS.LLM_TOP_P]: 1.0,
-    [BrowseBotPREFS.LLM_TOP_K]: 40,
-    [BrowseBotPREFS.LLM_FREQUENCY_PENALTY]: 0.0,
-    [BrowseBotPREFS.LLM_PRESENCE_PENALTY]: 0.0,
-    [BrowseBotPREFS.LLM_MAX_OUTPUT_TOKENS]: 2048,
+    [AskOnPagePREFS.LLM_PROVIDER]: "gemini",
+    [AskOnPagePREFS.MISTRAL_API_KEY]: "",
+    [AskOnPagePREFS.MISTRAL_MODEL]: "mistral-medium-latest",
+    [AskOnPagePREFS.GEMINI_API_KEY]: "",
+    [AskOnPagePREFS.GEMINI_MODEL]: "gemini-2.5-flash",
+    [AskOnPagePREFS.OPENAI_API_KEY]: "",
+    [AskOnPagePREFS.OPENAI_MODEL]: "gpt-5.2",
+    [AskOnPagePREFS.CLAUDE_API_KEY]: "",
+    [AskOnPagePREFS.CLAUDE_MODEL]: "claude-opus-4-1",
+    [AskOnPagePREFS.GROK_API_KEY]: "",
+    [AskOnPagePREFS.GROK_MODEL]: "grok-4",
+    [AskOnPagePREFS.PERPLEXITY_API_KEY]: "",
+    [AskOnPagePREFS.PERPLEXITY_MODEL]: "sonar",
+    [AskOnPagePREFS.CEREBRAS_API_KEY]: "",
+    [AskOnPagePREFS.CEREBRAS_MODEL]: "llama3.1-8b",
+    [AskOnPagePREFS.OLLAMA_MODEL]: "mixtral:8x7b",
+    [AskOnPagePREFS.OLLAMA_BASE_URL]: "http://localhost:11434/api",
+    [AskOnPagePREFS.BACKGROUND_STYLE]: "solid",
+    [AskOnPagePREFS.SHORTCUT_FINDBAR]: "ctrl+shift+f",
+    [AskOnPagePREFS.CUSTOM_SYSTEM_PROMPT]: "",
+    [AskOnPagePREFS.LLM_TEMPERATURE]: 0.7,
+    [AskOnPagePREFS.LLM_TOP_P]: 1.0,
+    [AskOnPagePREFS.LLM_TOP_K]: 40,
+    [AskOnPagePREFS.LLM_FREQUENCY_PENALTY]: 0.0,
+    [AskOnPagePREFS.LLM_PRESENCE_PENALTY]: 0.0,
+    [AskOnPagePREFS.LLM_MAX_OUTPUT_TOKENS]: 2048,
   };
 
-  setInitialPrefs() {
+  static setInitialPrefs() {
     this.migratePrefs();
     super.setInitialPrefs();
   }
 
   static migratePrefs() {
-    const migrationMap = {
-      "extension.browse-bot.enabled": this.ENABLED,
-      "extension.browse-bot.persist-chat": this.PERSIST,
-      "extension.browse-bot.stream-enabled": this.STREAM_ENABLED,
-      "extension.browse-bot.context-menu-enabled": this.CONTEXT_MENU_ENABLED,
-      "extension.browse-bot.context-menu-autosend": this.CONTEXT_MENU_AUTOSEND,
-    };
+    // Assembled so the browse-bot -> ask-on-page rebrand never rewrites this literal.
+    const legacyBranch = "extension." + "browse" + "-bot.";
 
-    for (const [oldKey, newKey] of Object.entries(migrationMap)) {
-      try {
-        const oldPref = this.getPref(oldKey);
-        if (oldPref != undefined) {
-          const value = oldPref;
-          this.debugLog(`Migrating pref ${oldKey} to ${newKey} with value: ${value}`);
-          this.setPref(newKey, value);
-          resetPref(oldPref);
-        }
-      } catch (e) {
-        this.debugError(`Could not migrate pref ${oldKey}:`, e);
+    // Legacy upstream keys (pre-findbar-ai namespace) -> current keys.
+    const legacyMap = {
+      [legacyBranch + "enabled"]: this.ENABLED,
+      [legacyBranch + "persist-chat"]: this.PERSIST,
+      [legacyBranch + "stream-enabled"]: this.STREAM_ENABLED,
+      [legacyBranch + "context-menu-enabled"]: this.CONTEXT_MENU_ENABLED,
+      [legacyBranch + "context-menu-autosend"]: this.CONTEXT_MENU_AUTOSEND,
+    };
+    for (const [oldKey, newKey] of Object.entries(legacyMap)) {
+      this._migrateKey(oldKey, newKey);
+    }
+
+    // Rebrand: copy any remaining browse-bot prefs into the ask-on-page namespace.
+    const newBranch = "extension.ask-on-page.";
+    try {
+      for (const oldKey of Services.prefs.getChildList(legacyBranch)) {
+        this._migrateKey(oldKey, newBranch + oldKey.slice(legacyBranch.length));
       }
+    } catch (e) {
+      this.debugError("Rebrand pref migration failed:", e);
+    }
+  }
+
+  static _migrateKey(oldKey, newKey) {
+    try {
+      if (!oldKey || !newKey || oldKey === newKey) return;
+      if (Services.prefs.getPrefType(oldKey) === 0) return; // old pref does not exist
+      if (!Services.prefs.prefHasUserValue(oldKey)) return; // only migrate user-set values
+      if (Services.prefs.prefHasUserValue(newKey)) return; // never clobber an existing value
+      const value = getPref(oldKey);
+      if (value === undefined) return;
+      this.debugLog(`Migrating pref ${oldKey} -> ${newKey}`);
+      this.setPref(newKey, value);
+      Services.prefs.clearUserPref(oldKey);
+    } catch (e) {
+      this.debugError(`Could not migrate pref ${oldKey}:`, e);
     }
   }
 
@@ -482,7 +501,7 @@ class BrowseBotPREFS extends PREFS$1 {
   }
 }
 
-const PREFS = BrowseBotPREFS;
+const PREFS = AskOnPagePREFS;
 
 async function frameScript() {
   const getUrlAndTitle = () => {
@@ -898,7 +917,7 @@ let _shortcuts = new Map();
 function handleKeyDown(event) {
   // Don't save if input is in focus
   const t = event.target;
-  if (t && (t.tagName === "input" || t.tagName === "textarea" || t.isContentEditable)) {
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
     return;
   }
 
@@ -1029,7 +1048,7 @@ const SettingsModal = {
     const container = parseElement(settingsHtml);
     this._modalElement = container;
 
-    const providerOptionsXUL = Object.entries(browseBotFindbarLLM.AVAILABLE_PROVIDERS)
+    const providerOptionsXUL = Object.entries(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)
       .map(
         ([name, provider]) =>
           `<menuitem
@@ -1054,7 +1073,7 @@ const SettingsModal = {
       placeholder.replaceWith(providerSelectorXulElement);
     }
 
-    for (const [name, provider] of Object.entries(browseBotFindbarLLM.AVAILABLE_PROVIDERS)) {
+    for (const [name, provider] of Object.entries(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)) {
       const modelPrefKey = provider.modelPref;
       const currentModel = provider.model;
 
@@ -1099,8 +1118,8 @@ const SettingsModal = {
     this._modalElement.querySelector("#save-settings").addEventListener("click", () => {
       this.saveSettings();
       this.hide();
-      if (browseBotFindbar.enabled) browseBotFindbar.show();
-      else browseBotFindbar.destroy();
+      if (askOnPageFindbar.enabled) askOnPageFindbar.show();
+      else askOnPageFindbar.destroy();
     });
 
     this._modalElement.addEventListener("click", (e) => {
@@ -1257,8 +1276,8 @@ const SettingsModal = {
       }
     }
     // Special case: If API key is empty after saving, ensure findbar is collapsed
-    if (!browseBotFindbarLLM.currentProvider.apiKey) {
-      browseBotFindbar.expanded = false;
+    if (!askOnPageFindbarLLM.currentProvider.apiKey) {
+      askOnPageFindbar.expanded = false;
     }
   },
 
@@ -1314,7 +1333,7 @@ const SettingsModal = {
         }
       }
       // Update the "Get API Key" link's state for the active provider
-      const provider = browseBotFindbarLLM.AVAILABLE_PROVIDERS[selectedProviderName];
+      const provider = askOnPageFindbarLLM.AVAILABLE_PROVIDERS[selectedProviderName];
       const getApiKeyLink = activeGroup.querySelector(".get-api-key-link");
       if (getApiKeyLink) {
         if (provider.apiKeyUrl) {
@@ -1506,7 +1525,7 @@ const SettingsModal = {
 
     // Section 6: LLM Providers
     let llmProviderSettingsHtml = "";
-    for (const [name, provider] of Object.entries(browseBotFindbarLLM.AVAILABLE_PROVIDERS)) {
+    for (const [name, provider] of Object.entries(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)) {
       const modelPrefKey = provider.modelPref;
 
       let apiInputHtml;
@@ -1555,7 +1574,7 @@ const SettingsModal = {
     const llmProvidersResetPrefs = [
       PREFS.LLM_PROVIDER,
       PREFS.OLLAMA_BASE_URL,
-      ...Object.values(browseBotFindbarLLM.AVAILABLE_PROVIDERS)
+      ...Object.values(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)
         .flatMap((p) => [p.modelPref, PREFS[`${p.name.toUpperCase()}_API_KEY`]])
         .filter(Boolean),
     ];
@@ -1671,7 +1690,7 @@ const SettingsModal = {
 
     return `
       <div id="ai-settings-modal-overlay">
-        <div class="browse-bot-settings-modal">
+        <div class="ask-on-page-settings-modal">
           <div class="ai-settings-header">
             <h3>Settings</h3>
             <div>
@@ -1702,16 +1721,16 @@ const SettingsModal = {
  */
 function renderMarkdown(markdown, target) {
   target.classList.add("markdown-body");
-  target.dataset.theme = resolveBrowseBotTheme();
+  target.dataset.theme = resolveAskOnPageTheme();
   renderMarkdownToElement(markdown, target);
 }
 
 PREFS.setInitialPrefs();
 installZenThemeSync();
-document.documentElement.style.setProperty("--browse-bot-findbar-width", `${FINDBAR_WIDTH}px`);
-document.documentElement.style.setProperty("--browse-bot-findbar-max-width", `${FINDBAR_WIDTH}px`);
+document.documentElement.style.setProperty("--ask-on-page-findbar-width", `${FINDBAR_WIDTH}px`);
+document.documentElement.style.setProperty("--ask-on-page-findbar-max-width", `${FINDBAR_WIDTH}px`);
 
-const browseBotFindbar = {
+const askOnPageFindbar = {
   findbar: null,
   askButton: null,
   chatContainer: null,
@@ -1793,8 +1812,8 @@ const browseBotFindbar = {
    * Apply fixed findbar width.
    */
   _applyFindbarDimensions() {
-    document.documentElement.style.setProperty("--browse-bot-findbar-width", `${FINDBAR_WIDTH}px`);
-    document.documentElement.style.setProperty("--browse-bot-findbar-max-width", `${FINDBAR_WIDTH}px`);
+    document.documentElement.style.setProperty("--ask-on-page-findbar-width", `${FINDBAR_WIDTH}px`);
+    document.documentElement.style.setProperty("--ask-on-page-findbar-max-width", `${FINDBAR_WIDTH}px`);
 
     if (!this.findbar) return;
     this.findbar.style.setProperty("width", `${FINDBAR_WIDTH}px`, "important");
@@ -1872,8 +1891,8 @@ const browseBotFindbar = {
       this.addAskButton();
       if (PREFS.persistChat) {
         if (this?.findbar?.history) {
-          browseBotFindbarLLM.history = this.findbar.history;
-        } else browseBotFindbarLLM.history = [];
+          askOnPageFindbarLLM.history = this.findbar.history;
+        } else askOnPageFindbarLLM.history = [];
         if (this?.findbar?.expanded && !this?.findbar?.hidden) {
           setTimeout(() => (this.expanded = true), 200);
         } else {
@@ -1940,8 +1959,8 @@ const browseBotFindbar = {
   },
 
   _prepareFoundMatchesElement(matchesEl) {
-    if (!matchesEl || matchesEl._browseBotMatchesPrepared) return;
-    matchesEl._browseBotMatchesPrepared = true;
+    if (!matchesEl || matchesEl._askOnPageMatchesPrepared) return;
+    matchesEl._askOnPageMatchesPrepared = true;
     delete matchesEl.dataset.l10nId;
     matchesEl.removeAttribute("data-l10n-id");
     matchesEl.removeAttribute("data-l10n-args");
@@ -2051,7 +2070,7 @@ const browseBotFindbar = {
   },
 
   clear() {
-    browseBotFindbarLLM.clearData();
+    askOnPageFindbarLLM.clearData();
     if (this.findbar) {
       this.findbar.history = null;
     }
@@ -2061,8 +2080,8 @@ const browseBotFindbar = {
   },
 
   createAPIKeyInterface() {
-    const currentProviderName = browseBotFindbarLLM.currentProvider.name;
-    const menuItems = Object.entries(browseBotFindbarLLM.AVAILABLE_PROVIDERS)
+    const currentProviderName = askOnPageFindbarLLM.currentProvider.name;
+    const menuItems = Object.entries(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)
       .map(
         ([name, provider]) => `
                   <menuitem
@@ -2085,7 +2104,7 @@ const browseBotFindbar = {
     const providerSelectorXulElement = parseElement(menulistXul, "xul");
 
     const html = `
-        <div class="browse-bot-setup">
+        <div class="ask-on-page-setup">
           <div class="ai-setup-content">
             <h3>AI Setup Required</h3>
             <p>To use AI features, you need to set up your API key and select a provider.</p>
@@ -2115,7 +2134,7 @@ const browseBotFindbar = {
     const description = setupContent.querySelector("p");
 
     const updateUIForProvider = (providerName) => {
-      const provider = browseBotFindbarLLM.AVAILABLE_PROVIDERS[providerName];
+      const provider = askOnPageFindbarLLM.AVAILABLE_PROVIDERS[providerName];
       if (providerName === "ollama") {
         description.textContent =
           "Ollama is selected. You can customize the Base URL below or use the default.";
@@ -2142,17 +2161,17 @@ const browseBotFindbar = {
     // Use 'command' event for XUL menulist
     providerSelector.addEventListener("command", (e) => {
       const selectedProviderName = e.target.value;
-      browseBotFindbarLLM.setProvider(selectedProviderName); // This also updates PREFS.llmProvider internally
+      askOnPageFindbarLLM.setProvider(selectedProviderName); // This also updates PREFS.llmProvider internally
       updateUIForProvider(selectedProviderName);
     });
 
     getApiKeyLink.addEventListener("click", () => {
-      openTrustedLinkIn(browseBotFindbarLLM.currentProvider.apiKeyUrl, "tab");
+      openTrustedLinkIn(askOnPageFindbarLLM.currentProvider.apiKeyUrl, "tab");
     });
 
     saveBtn.addEventListener("click", () => {
       const value = input.value.trim();
-      const providerName = browseBotFindbarLLM.currentProvider.name;
+      const providerName = askOnPageFindbarLLM.currentProvider.name;
 
       if (providerName === "ollama") {
         if (value) {
@@ -2160,7 +2179,7 @@ const browseBotFindbar = {
         }
         this.showAIInterface();
       } else if (value) {
-        browseBotFindbarLLM.currentProvider.apiKey = value; // This also updates PREFS.mistralApiKey/geminiApiKey internally
+        askOnPageFindbarLLM.currentProvider.apiKey = value; // This also updates PREFS.mistralApiKey/geminiApiKey internally
         this.showAIInterface(); // Refresh UI after saving key
       }
     });
@@ -2205,7 +2224,7 @@ const browseBotFindbar = {
     this._currentAIMessageDiv = aiMessageDiv;
 
     try {
-      const resultPromise = browseBotFindbarLLM.sendMessage(prompt, this._abortController.signal);
+      const resultPromise = askOnPageFindbarLLM.sendMessage(prompt, this._abortController.signal);
 
       if (!PREFS.streamEnabled) {
         const loadingIndicator = this.createLoadingIndicator();
@@ -2440,7 +2459,7 @@ const browseBotFindbar = {
         </div>`;
 
     const container = parseElement(`
-        <div class="browse-bot-chat">
+        <div class="ask-on-page-chat">
           <div class="ai-chat-messages" id="chat-messages"></div>
           ${chatInputGroup}
         </div>`);
@@ -2548,15 +2567,15 @@ const browseBotFindbar = {
     this.findbar.classList.remove("ai-settings-active");
 
     if (
-      !browseBotFindbarLLM.currentProvider.apiKey &&
-      browseBotFindbarLLM.currentProvider.name !== "ollama"
+      !askOnPageFindbarLLM.currentProvider.apiKey &&
+      askOnPageFindbarLLM.currentProvider.name !== "ollama"
     ) {
       this.apiKeyContainer = this.createAPIKeyInterface();
       this.findbar.insertBefore(this.apiKeyContainer, this.findbar.firstChild);
     } else {
       this.chatContainer = this.createChatInterface();
       // Re-render history using the new message format
-      const history = browseBotFindbarLLM.getHistory();
+      const history = askOnPageFindbarLLM.getHistory();
       for (const message of history) {
         this.addChatMessage(message);
       }
@@ -2693,7 +2712,7 @@ const browseBotFindbar = {
     }
 
     const menuItem = document.createXULElement("menuitem");
-    menuItem.id = "browse-bot-context-menu-item";
+    menuItem.id = "ask-on-page-context-menu-item";
     menuItem.setAttribute("label", "Ask AI");
     menuItem.setAttribute("accesskey", "A");
 
@@ -2806,7 +2825,7 @@ const browseBotFindbar = {
     );
     this._persistListener = addPrefListener(PREFS.PERSIST, (pref) => {
       if (!this.findbar) return;
-      if (pref.value) this.findbar.history = browseBotFindbarLLM.history;
+      if (pref.value) this.findbar.history = askOnPageFindbarLLM.history;
       else this.findbar.history = null;
     });
   },
@@ -2870,7 +2889,7 @@ function googleFaviconAPI(domainOrUrl, size = 32) {
 
 initMarkdownVendors();
 
-class BrowseBotLLM {
+class AskOnPageLLM {
   constructor() {
     this.history = [];
     this.AVAILABLE_PROVIDERS = createProviderFacades(PREFS);
@@ -3035,7 +3054,7 @@ ${pageContextBlock}`;
 
     const provider = this.resolveActiveProvider();
     if (provider.needsApiKey && !provider.apiKey) {
-      throw new Error(`Missing API key for ${provider.label}. Add it in BrowseBot settings.`);
+      throw new Error(`Missing API key for ${provider.label}. Add it in AskOnPage settings.`);
     }
 
     this.history.push({ role: "user", content: prompt });
@@ -3054,8 +3073,8 @@ ${pageContextBlock}`;
           yield chunk;
         }
         self.history.push({ role: "assistant", content: accumulated });
-        if (browseBotFindbar?.findbar) {
-          browseBotFindbar.findbar.history = self.getHistory();
+        if (askOnPageFindbar?.findbar) {
+          askOnPageFindbar.findbar.history = self.getHistory();
         }
       })();
 
@@ -3073,15 +3092,15 @@ ${pageContextBlock}`;
 
     const text = await completeChatText(provider, messages, abortSignal, sampling);
     this.history.push({ role: "assistant", content: text });
-    if (browseBotFindbar?.findbar) {
-      browseBotFindbar.findbar.history = this.getHistory();
+    if (askOnPageFindbar?.findbar) {
+      askOnPageFindbar.findbar.history = this.getHistory();
     }
     return { text };
   }
 }
 
-const browseBotFindbarLLM = new BrowseBotLLM();
-window.browseBotFindabrLLM = browseBotFindbarLLM;
+const askOnPageFindbarLLM = new AskOnPageLLM();
+window.askOnPageFindbarLLM = askOnPageFindbarLLM;
 
 function startupFinish(callback) {
   if (document.readyState === "complete") callback();
@@ -3094,31 +3113,31 @@ function setupCommandPaletteIntegration(retryCount = 0) {
 
     window.ZenCommandPalette.addCommands([
       {
-        key: "browsebot:summarize",
+        key: "askonpage:summarize",
         label: "Summarize Page",
         command: () => {
-          browseBotFindbar.expanded = true;
-          browseBotFindbar.sendMessage(PREFS.contextMenuCommandNoSelection);
-          browseBotFindbar.focusPrompt();
+          askOnPageFindbar.expanded = true;
+          askOnPageFindbar.sendMessage(PREFS.contextMenuCommandNoSelection);
+          askOnPageFindbar.focusPrompt();
         },
         condition: () => PREFS.enabled,
         icon: "chrome://global/skin/icons/highlights.svg",
-        tags: ["AI", "Summarize", "BrowseBot", "findbar"],
+        tags: ["AI", "Summarize", "AskOnPage", "findbar"],
       },
       {
-        key: "browsebot:settings",
-        label: "Open BrowseBot Settings",
+        key: "askonpage:settings",
+        label: "Open Ask On Page Settings",
         command: () => SettingsModal.show(),
         icon: "chrome://global/skin/icons/settings.svg",
-        tags: ["AI", "BrowseBot", "Settings"],
+        tags: ["AI", "AskOnPage", "Settings"],
       },
       {
-        key: "browsebot:expand-findbar",
+        key: "askonpage:expand-findbar",
         label: "Expand findbar AI",
-        command: () => (browseBotFindbar.expanded = true),
+        command: () => (askOnPageFindbar.expanded = true),
         condition: () => PREFS.enabled,
         icon: "chrome://global/skin/icons/highlights.svg",
-        tags: ["AI", "BrowseBot", "findbar"],
+        tags: ["AI", "AskOnPage", "findbar"],
       },
     ]);
 
@@ -3134,9 +3153,9 @@ function setupCommandPaletteIntegration(retryCount = 0) {
 }
 
 function registerFindbarShortcut(value = PREFS.shortcutFindbar) {
-  if (!browseBotFindbar.enabled) return;
+  if (!askOnPageFindbar.enabled) return;
   registerShortcut(value, "toggle-findbar-ai-bar", () => {
-    browseBotFindbar.expanded = !browseBotFindbar.expanded;
+    askOnPageFindbar.expanded = !askOnPageFindbar.expanded;
   });
   initShortcutRegistry();
 }
@@ -3147,12 +3166,12 @@ function setupShortcuts() {
 }
 
 function init() {
-  browseBotFindbar.init();
+  askOnPageFindbar.init();
   addPrefListener(PREFS.ENABLED, (val) => {
-    browseBotFindbar.handleEnabledChange(val);
+    askOnPageFindbar.handleEnabledChange(val);
     registerFindbarShortcut();
   });
-  window.browseBotFindbar = browseBotFindbar;
+  window.askOnPageFindbar = askOnPageFindbar;
 
   setupShortcuts();
   setupCommandPaletteIntegration();

@@ -12,10 +12,10 @@
   --acrylic-input-glass-bg: color-mix(in srgb, var(--acrylic-input-bg) 40%, transparent 60%);
   --acrylic-glass-border: 1.5px solid
     color-mix(in srgb, var(--browser-primary-color) 20%, transparent 80%);
-  --browse-bot-input-focus-ring: color-mix(
+  --ask-on-page-input-focus-ring: color-mix(
     in srgb,
     var(--browser-primary-color) 28%,
     transparent 72%
   );
-  --browse-bot-muted: #71717a;
+  --ask-on-page-muted: #71717a;
 }
