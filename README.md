@@ -10,7 +10,7 @@ A **fork** of [Vertex-Mods/Browse-Bot](https://github.com/Vertex-Mods/Browse-Bot
 ## Features
 
 - **Arc-style findbar** — compact row with Ask button, expandable to full chat
-- **Multi-provider LLM** (Gemini, Mistral, OpenAI, Claude, Grok, Perplexity, Cerebras, Ollama)
+- **Multi-provider LLM** (Gemini, Mistral, OpenAI, Claude, OpenRouter, Ollama)
 - **Page content awareness** — page text is sent in the system prompt for Q&A
 - **YouTube transcript support** — on YouTube watch pages, fetches captions via YouTube’s internal API and uses a transcript-focused prompt (no page excerpts)
 - **Clickable excerpt citations** — quotes from the page in `<excerpt>` blocks, click to highlight on page

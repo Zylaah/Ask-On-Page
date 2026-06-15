@@ -226,12 +226,8 @@ class AskOnPagePREFS extends PREFS$1 {
   static OPENAI_MODEL = "extension.ask-on-page.openai-model";
   static CLAUDE_API_KEY = "extension.ask-on-page.claude-api-key";
   static CLAUDE_MODEL = "extension.ask-on-page.claude-model";
-  static GROK_API_KEY = "extension.ask-on-page.grok-api-key";
-  static GROK_MODEL = "extension.ask-on-page.grok-model";
-  static PERPLEXITY_API_KEY = "extension.ask-on-page.perplexity-api-key";
-  static PERPLEXITY_MODEL = "extension.ask-on-page.perplexity-model";
-  static CEREBRAS_API_KEY = "extension.ask-on-page.cerebras-api-key";
-  static CEREBRAS_MODEL = "extension.ask-on-page.cerebras-model";
+  static OPENROUTER_API_KEY = "extension.ask-on-page.openrouter-api-key";
+  static OPENROUTER_MODEL = "extension.ask-on-page.openrouter-model";
   static OLLAMA_MODEL = "extension.ask-on-page.ollama-model";
   static OLLAMA_BASE_URL = "extension.ask-on-page.ollama-base-url";
 
@@ -265,13 +261,9 @@ class AskOnPagePREFS extends PREFS$1 {
     [AskOnPagePREFS.OPENAI_MODEL]: "gpt-5.2",
     [AskOnPagePREFS.CLAUDE_API_KEY]: "",
     [AskOnPagePREFS.CLAUDE_MODEL]: "claude-opus-4-1",
-    [AskOnPagePREFS.GROK_API_KEY]: "",
-    [AskOnPagePREFS.GROK_MODEL]: "grok-4",
-    [AskOnPagePREFS.PERPLEXITY_API_KEY]: "",
-    [AskOnPagePREFS.PERPLEXITY_MODEL]: "sonar",
-    [AskOnPagePREFS.CEREBRAS_API_KEY]: "",
-    [AskOnPagePREFS.CEREBRAS_MODEL]: "llama3.1-8b",
-    [AskOnPagePREFS.OLLAMA_MODEL]: "mixtral:8x7b",
+    [AskOnPagePREFS.OPENROUTER_API_KEY]: "",
+    [AskOnPagePREFS.OPENROUTER_MODEL]: "google/gemini-2.5-flash",
+    [AskOnPagePREFS.OLLAMA_MODEL]: "mistral",
     [AskOnPagePREFS.OLLAMA_BASE_URL]: "http://localhost:11434/api",
     [AskOnPagePREFS.BACKGROUND_STYLE]: "solid",
     [AskOnPagePREFS.SHORTCUT_FINDBAR]: "ctrl+shift+f",
@@ -286,7 +278,17 @@ class AskOnPagePREFS extends PREFS$1 {
 
   static setInitialPrefs() {
     this.migratePrefs();
+    this.migrateRemovedProviders();
     super.setInitialPrefs();
+  }
+
+  static migrateRemovedProviders() {
+    const removed = new Set(["grok", "perplexity", "cerebras"]);
+    const current = this.getPref(this.LLM_PROVIDER);
+    if (removed.has(current)) {
+      this.debugLog(`Provider "${current}" was removed; switching to gemini.`);
+      this.setPref(this.LLM_PROVIDER, "gemini");
+    }
   }
 
   static migratePrefs() {
@@ -1074,6 +1076,8 @@ const SettingsModal = {
     }
 
     for (const [name, provider] of Object.entries(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)) {
+      if (provider.customModel) continue;
+
       const modelPrefKey = provider.modelPref;
       const currentModel = provider.model;
 
@@ -1549,9 +1553,16 @@ const SettingsModal = {
           : "";
       }
 
-      // Placeholder for the XUL menulist, which will be inserted dynamically in createModalElement
+      // Model: free-form text for Ollama / OpenRouter, dropdown placeholder for others.
       const modelSelectPlaceholderHtml = modelPrefKey
-        ? `
+        ? provider.customModel
+          ? `
+        <div class="setting-item">
+          <label for="pref-${this._getSafeIdForProvider(name)}-model">Model</label>
+          <input type="text" id="pref-${this._getSafeIdForProvider(name)}-model" data-pref="${modelPrefKey}" placeholder="${escapeXmlAttribute(provider.modelPlaceholder || "")}" />
+        </div>
+      `
+          : `
         <div class="setting-item">
           <label for="pref-${this._getSafeIdForProvider(name)}-model">Model</label>
           <div id="llm-model-selector-placeholder-${this._getSafeIdForProvider(name)}"></div>

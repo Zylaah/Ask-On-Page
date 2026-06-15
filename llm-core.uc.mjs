@@ -387,10 +387,11 @@ export const PROVIDER_REGISTRY = {
     apiKeyUrl: "",
     apiKeyPref: null,
     modelPref: "extension.ask-on-page.ollama-model",
-    defaultModel: "mixtral:8x7b",
+    defaultModel: "mistral",
     baseUrlPref: "extension.ask-on-page.ollama-base-url",
     defaultBaseUrl: "http://localhost:11434/api/chat",
     kind: "ollama",
+    customModel: true,
   },
   claude: {
     label: "Anthropic Claude",
@@ -402,35 +403,16 @@ export const PROVIDER_REGISTRY = {
     baseUrl: "https://api.anthropic.com/v1/messages",
     kind: "anthropic",
   },
-  grok: {
-    label: "xAI Grok",
-    faviconDomain: "x.ai",
-    apiKeyUrl: "https://console.x.ai/",
-    apiKeyPref: "extension.ask-on-page.grok-api-key",
-    modelPref: "extension.ask-on-page.grok-model",
-    defaultModel: "grok-4",
-    baseUrl: "https://api.x.ai/v1/chat/completions",
+  openrouter: {
+    label: "OpenRouter",
+    faviconDomain: "openrouter.ai",
+    apiKeyUrl: "https://openrouter.ai/keys",
+    apiKeyPref: "extension.ask-on-page.openrouter-api-key",
+    modelPref: "extension.ask-on-page.openrouter-model",
+    defaultModel: "google/gemini-2.5-flash",
+    baseUrl: "https://openrouter.ai/api/v1/chat/completions",
     kind: "openai",
-  },
-  perplexity: {
-    label: "Perplexity AI",
-    faviconDomain: "perplexity.ai",
-    apiKeyUrl: "https://www.perplexity.ai/settings/api",
-    apiKeyPref: "extension.ask-on-page.perplexity-api-key",
-    modelPref: "extension.ask-on-page.perplexity-model",
-    defaultModel: "sonar",
-    baseUrl: "https://api.perplexity.ai/chat/completions",
-    kind: "openai",
-  },
-  cerebras: {
-    label: "Cerebras AI",
-    faviconDomain: "cerebras.ai",
-    apiKeyUrl: "https://cloud.cerebras.ai/",
-    apiKeyPref: "extension.ask-on-page.cerebras-api-key",
-    modelPref: "extension.ask-on-page.cerebras-model",
-    defaultModel: "llama3.1-8b",
-    baseUrl: "https://api.cerebras.ai/v1/chat/completions",
-    kind: "openai",
+    customModel: true,
   },
 };
 
@@ -476,6 +458,8 @@ export function createProviderFacades(prefs) {
       apiKeyUrl: def.apiKeyUrl,
       apiPref: def.apiKeyPref,
       modelPref: def.modelPref,
+      customModel: def.customModel === true,
+      modelPlaceholder: def.defaultModel || "",
       AVAILABLE_MODELS: [],
       get apiKey() {
         return def.apiKeyPref ? prefs.getPref(def.apiKeyPref, "") : "not_required";
@@ -542,6 +526,10 @@ function buildRequestHeaders(provider) {
   }
   if (provider.kind === "gemini") return headers;
   headers.Authorization = `Bearer ${provider.apiKey}`;
+  if (provider.key === "openrouter") {
+    headers["HTTP-Referer"] = "https://github.com/Zylaah/Ask-On-Page";
+    headers["X-Title"] = "Ask On Page";
+  }
   return headers;
 }
 

@@ -23,16 +23,8 @@
         "label": "Anthropic Claude"
       },
       {
-        "value": "cerebras",
-        "label": "Cerebras AI"
-      },
-      {
         "value": "gemini",
         "label": "Google Gemini"
-      },
-      {
-        "value": "grok",
-        "label": "xAI Grok"
       },
       {
         "value": "mistral",
@@ -47,8 +39,8 @@
         "label": "OpenAI GPT"
       },
       {
-        "value": "perplexity",
-        "label": "Perplexity AI"
+        "value": "openrouter",
+        "label": "OpenRouter"
       }
     ]
   },
@@ -191,95 +183,6 @@
     ]
   },
   {
-    "property": "extension.ask-on-page.grok-api-key",
-    "label": "Grok API Key",
-    "type": "string",
-    "placeholder": "Enter your xAI Grok API key",
-    "defaultValue": "",
-    "description": "Your personal API key from xAI. Required to use Grok models.",
-    "conditions": [
-      {
-        "if": {
-          "property": "extension.ask-on-page.llm-provider",
-          "value": "grok"
-        }
-      }
-    ]
-  },
-  {
-    "property": "extension.ask-on-page.grok-model",
-    "label": "Grok Model",
-    "type": "dropdown",
-    "defaultValue": "grok-4",
-    "description": "Select the Grok model to use.",
-    "options": [
-      {
-        "value": "grok-4-fast-non-reasoning",
-        "label": "Grok 4 Fast (Non-Reasoning)"
-      },
-      {
-        "value": "grok-4-fast-reasoning",
-        "label": "Grok 4 Fast (Reasoning)"
-      },
-      {
-        "value": "grok-code-fast-1",
-        "label": "Grok Code Fast 1"
-      },
-      {
-        "value": "grok-4",
-        "label": "Grok 4"
-      },
-      {
-        "value": "grok-3",
-        "label": "Grok 3"
-      },
-      {
-        "value": "grok-3-latest",
-        "label": "Grok 3 Latest"
-      },
-      {
-        "value": "grok-3-fast",
-        "label": "Grok 3 Fast"
-      },
-      {
-        "value": "grok-3-fast-latest",
-        "label": "Grok 3 Fast Latest"
-      },
-      {
-        "value": "grok-3-mini",
-        "label": "Grok 3 Mini"
-      },
-      {
-        "value": "grok-3-mini-latest",
-        "label": "Grok 3 Mini Latest"
-      },
-      {
-        "value": "grok-3-mini-fast",
-        "label": "Grok 3 Mini Fast"
-      },
-      {
-        "value": "grok-3-mini-fast-latest",
-        "label": "Grok 3 Mini Fast Latest"
-      },
-      {
-        "value": "grok-2",
-        "label": "Grok 2"
-      },
-      {
-        "value": "grok-2-latest",
-        "label": "Grok 2 Latest"
-      }
-    ],
-    "conditions": [
-      {
-        "if": {
-          "property": "extension.ask-on-page.llm-provider",
-          "value": "grok"
-        }
-      }
-    ]
-  },
-  {
     "property": "extension.ask-on-page.mistral-api-key",
     "label": "Mistral API Key",
     "type": "string",
@@ -383,83 +286,10 @@
   {
     "property": "extension.ask-on-page.ollama-model",
     "label": "Ollama Model",
-    "type": "dropdown",
-    "defaultValue": "mixtral:8x7b",
-    "description": "Select the Ollama model to use. You must have this model installed locally.",
-    "options": [
-      {
-        "value": "deepseek-r1:8b",
-        "label": "DeepSeek R1 (8B parameters)"
-      },
-      {
-        "value": "deepseek-r1:1.5b",
-        "label": "DeepSeek R1 (1.5B parameters)"
-      },
-      {
-        "value": "deepseek-r1:7b",
-        "label": "DeepSeek R1 (7B parameters)"
-      },
-      {
-        "value": "deepseek-r1:14b",
-        "label": "DeepSeek R1 (14B parameters)"
-      },
-      {
-        "value": "deepseek-r1:32b",
-        "label": "DeepSeek R1 (32B parameters)"
-      },
-      {
-        "value": "deepseek-r1:70b",
-        "label": "DeepSeek R1 (70B parameters)"
-      },
-      {
-        "value": "mixtral:8x22b",
-        "label": "Mixtral (8x22B)"
-      },
-      {
-        "value": "mixtral:8x7b",
-        "label": "Mixtral (8x7B)"
-      },
-      {
-        "value": "qwen3:0.6b",
-        "label": "Qwen3 (0.6B parameters)"
-      },
-      {
-        "value": "qwen3:1.7b",
-        "label": "Qwen3 (1.7B parameters)"
-      },
-      {
-        "value": "qwen3:4b",
-        "label": "Qwen3 (4B parameters)"
-      },
-      {
-        "value": "qwen3:8b",
-        "label": "Qwen3 (8B parameters)"
-      },
-      {
-        "value": "qwen3:14b",
-        "label": "Qwen3 (14B parameters)"
-      },
-      {
-        "value": "qwen3:32b",
-        "label": "Qwen3 (32B parameters)"
-      },
-      {
-        "value": "qwen3:30b-a3b",
-        "label": "Qwen3 (30B-A3B)"
-      },
-      {
-        "value": "qwen3:235b-a22b",
-        "label": "Qwen3 (235B-A22B)"
-      },
-      {
-        "value": "llama4:scout",
-        "label": "Llama 4 Scout"
-      },
-      {
-        "value": "llama4:maverick",
-        "label": "Llama 4 Maverick"
-      }
-    ],
+    "type": "string",
+    "placeholder": "mistral",
+    "defaultValue": "mistral",
+    "description": "The Ollama model name to use (e.g., mistral, llama3.2, qwen2.5). Must be installed locally.",
     "conditions": [
       {
         "if": {
@@ -595,111 +425,33 @@
     ]
   },
   {
-    "property": "extension.ask-on-page.perplexity-api-key",
-    "label": "Perplexity API Key",
+    "property": "extension.ask-on-page.openrouter-api-key",
+    "label": "OpenRouter API Key",
     "type": "string",
-    "placeholder": "Enter your Perplexity API key",
+    "placeholder": "Enter your OpenRouter API key",
     "defaultValue": "",
-    "description": "Your personal API key from Perplexity AI. Required to use Perplexity models.",
+    "description": "Your personal API key from OpenRouter. Required to use OpenRouter models.",
     "conditions": [
       {
         "if": {
           "property": "extension.ask-on-page.llm-provider",
-          "value": "perplexity"
+          "value": "openrouter"
         }
       }
     ]
   },
   {
-    "property": "extension.ask-on-page.perplexity-model",
-    "label": "Perplexity Model",
-    "type": "dropdown",
-    "defaultValue": "sonar",
-    "description": "Select the Perplexity model to use.",
-    "options": [
-      {
-        "value": "sonar-deep-research",
-        "label": "Sonar Deep Research"
-      },
-      {
-        "value": "sonar-reasoning-pro",
-        "label": "Sonar Reasoning Pro"
-      },
-      {
-        "value": "sonar-reasoning",
-        "label": "Sonar Reasoning"
-      },
-      {
-        "value": "sonar-pro",
-        "label": "Sonar Pro"
-      },
-      {
-        "value": "sonar",
-        "label": "Sonar"
-      }
-    ],
-    "conditions": [
-      {
-        "if": {
-          "property": "extension.ask-on-page.llm-provider",
-          "value": "perplexity"
-        }
-      }
-    ]
-  },
-  {
-    "property": "extension.ask-on-page.cerebras-api-key",
-    "label": "Cerebras API Key",
+    "property": "extension.ask-on-page.openrouter-model",
+    "label": "OpenRouter Model",
     "type": "string",
-    "placeholder": "Enter your Cerebras API key",
-    "defaultValue": "",
-    "description": "Your personal API key from Cerebras AI. Required to use Cerebras models.",
+    "placeholder": "google/gemini-2.5-flash",
+    "defaultValue": "google/gemini-2.5-flash",
+    "description": "OpenRouter model ID (e.g., google/gemini-2.5-flash, anthropic/claude-sonnet-4). See openrouter.ai/models.",
     "conditions": [
       {
         "if": {
           "property": "extension.ask-on-page.llm-provider",
-          "value": "cerebras"
-        }
-      }
-    ]
-  },
-  {
-    "property": "extension.ask-on-page.cerebras-model",
-    "label": "Cerebras Model",
-    "type": "dropdown",
-    "defaultValue": "llama3.1-8b",
-    "description": "Select the Cerebras model to use.",
-    "options": [
-      {
-        "value": "llama3.1-8b",
-        "label": "Llama 3.1 8B"
-      },
-      {
-        "value": "llama-3.3-70b",
-        "label": "Llama 3.3 70B"
-      },
-      {
-        "value": "gpt-oss-120b",
-        "label": "OpenAI GPT OSS 120B"
-      },
-      {
-        "value": "qwen-3-32b",
-        "label": "Qwen 3 32B"
-      },
-      {
-        "value": "qwen-3-235b-a22b-instruct-2507",
-        "label": "Qwen 3 235B Instruct (Preview)"
-      },
-      {
-        "value": "zai-glm-4.6",
-        "label": "Z.ai GLM 4.6 (Preview)"
-      }
-    ],
-    "conditions": [
-      {
-        "if": {
-          "property": "extension.ask-on-page.llm-provider",
-          "value": "cerebras"
+          "value": "openrouter"
         }
       }
     ]
