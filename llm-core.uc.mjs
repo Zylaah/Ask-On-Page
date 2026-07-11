@@ -15,6 +15,13 @@ const LLM_LIMITS = {
 let markedLib = null;
 let DOMPurifyLib = null;
 
+const HTTP_STATUS = {
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  TOO_MANY_REQUESTS: 429,
+  SERVER_ERROR_MIN: 500,
+};
+
 function sleepWithAbort(ms, signal) {
   return new Promise((resolve, reject) => {
     const t = setTimeout(resolve, ms);
@@ -37,7 +44,7 @@ function sleepWithAbort(ms, signal) {
  * @param {RequestInit} options
  * @param {AbortSignal|null} signal
  */
-export async function fetchWithRetry(url, options = {}, signal = null) {
+async function fetchWithRetry(url, options = {}, signal = null) {
   const maxAttempts = LLM_LIMITS.RETRY_MAX_ATTEMPTS;
   const baseDelay = LLM_LIMITS.RETRY_BASE_DELAY_MS;
   const maxDelay = LLM_LIMITS.RETRY_MAX_DELAY_MS;
@@ -263,10 +270,14 @@ function injectExcerptBlocks(html, excerpts, streamingExcerptIndex, marked) {
       : ` tabindex="-1" aria-busy="true"`;
     const actionHtml =
       quote && !isStreaming
-        ? `<div class="page-excerpt-action">Find on Page <span class="page-excerpt-arrow" aria-hidden="true">→</span></div>`
+        ? `<div class="page-excerpt-action">Find on Page ` +
+          `<span class="page-excerpt-arrow" aria-hidden="true">→</span></div>`
         : "";
 
-    return `<blockquote class="page-excerpt${streamingClass}"${attrs}><div class="page-excerpt-quote">${innerHtml}</div>${actionHtml}</blockquote>`;
+    return (
+      `<blockquote class="page-excerpt${streamingClass}"${attrs}>` +
+      `<div class="page-excerpt-quote">${innerHtml}</div>${actionHtml}</blockquote>`
+    );
   });
 }
 
@@ -330,27 +341,17 @@ export function renderMarkdownToElement(text, element) {
       });
       setElementHtmlFromMarkup(element, sanitized.trim());
       return;
-    } catch {
-      /* fallback below */
+    } catch (err) {
+      console.debug("AskOnPage: markdown rendering failed, using plain-text fallback", err);
     }
   }
   renderMarkdownFallback(text, element);
 }
 
 /**
- * @param {string} text
- * @returns {string}
- */
-export function renderMarkdownHtml(text) {
-  const el = document.createElement("div");
-  renderMarkdownToElement(text, el);
-  return el.innerHTML;
-}
-
-/**
  * Provider metadata + pref keys (Ask-On-Page prefs).
  */
-export const PROVIDER_REGISTRY = {
+const PROVIDER_REGISTRY = {
   mistral: {
     label: "Mistral AI",
     faviconDomain: "mistral.ai",
@@ -458,7 +459,7 @@ export function createProviderFacades(prefs) {
       apiKeyUrl: def.apiKeyUrl,
       apiPref: def.apiKeyPref,
       modelPref: def.modelPref,
-      customModel: def.customModel === true,
+      customModel: !!def.customModel,
       modelPlaceholder: def.defaultModel || "",
       AVAILABLE_MODELS: [],
       get apiKey() {
@@ -492,15 +493,21 @@ export function buildChatMessages(systemPrompt, history) {
   }
   for (const m of history) {
     if (!m || (m.role !== "user" && m.role !== "assistant")) continue;
-    const content =
-      typeof m.content === "string"
-        ? m.content
-        : Array.isArray(m.content)
-          ? m.content.map((p) => p.text || "").join("")
-          : String(m.content ?? "");
-    messages.push({ role: m.role, content });
+    messages.push({ role: m.role, content: normalizeMessageContent(m.content) });
   }
   return messages;
+}
+
+/**
+ * Normalize a message's content field to a plain string, whether it arrived
+ * as a string, a content-part array (e.g. `[{ text }]`), or something else.
+ * @param {unknown} content
+ * @returns {string}
+ */
+function normalizeMessageContent(content) {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) return content.map((p) => p.text || "").join("");
+  return String(content ?? "");
 }
 
 function buildRequestUrl(provider) {
@@ -566,9 +573,11 @@ export function formatLlmError(error) {
   const msg = (error?.message || String(error)).toLowerCase();
   const statusMatch = msg.match(/api error:\s*(\d+)/);
   const status = statusMatch ? parseInt(statusMatch[1], 10) : null;
-  if (status === 401 || status === 403) return "Invalid API key. Check your settings.";
-  if (status === 429) return "Rate limit exceeded. Wait a moment and try again.";
-  if (status >= 500) return "Service temporarily unavailable. Try again later.";
+  if (status === HTTP_STATUS.UNAUTHORIZED || status === HTTP_STATUS.FORBIDDEN) {
+    return "Invalid API key. Check your settings.";
+  }
+  if (status === HTTP_STATUS.TOO_MANY_REQUESTS) return "Rate limit exceeded. Wait a moment and try again.";
+  if (status >= HTTP_STATUS.SERVER_ERROR_MIN) return "Service temporarily unavailable. Try again later.";
   if (/network|fetch|connection|timeout|refused/i.test(msg)) {
     return "Connection error. Check your network or local server.";
   }
@@ -584,11 +593,7 @@ function parseOpenAiSseData(data) {
 
   const json = JSON.parse(data);
   if (json.error) {
-    const message =
-      json.error.message ||
-      json.error.status ||
-      (typeof json.error === "string" ? json.error : JSON.stringify(json.error));
-    throw new Error(`API error: ${message}`);
+    throw new Error(`API error: ${extractApiErrorMessage(json.error)}`);
   }
 
   const text =
@@ -597,6 +602,14 @@ function parseOpenAiSseData(data) {
     json.candidates?.[0]?.content?.parts?.[0]?.text;
 
   return { text: text || undefined };
+}
+
+/**
+ * @param {object|string} error
+ * @returns {string}
+ */
+function extractApiErrorMessage(error) {
+  return error.message || error.status || (typeof error === "string" ? error : JSON.stringify(error));
 }
 
 /**
@@ -609,15 +622,34 @@ function throwIfJsonErrorBody(buffer) {
   try {
     const json = JSON.parse(trimmed);
     if (json.error) {
-      const message =
-        json.error.message ||
-        json.error.status ||
-        (typeof json.error === "string" ? json.error : JSON.stringify(json.error));
-      throw new Error(`API error: ${message}`);
+      throw new Error(`API error: ${extractApiErrorMessage(json.error)}`);
     }
   } catch (err) {
     if (err.message?.startsWith("API error:")) throw err;
   }
+}
+
+/**
+ * Read a fetch response body as a stream of newline-delimited text lines,
+ * carrying any partial trailing line over to the next chunk.
+ * @param {Response} response
+ */
+async function* readResponseLines(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    yield* lines;
+  }
+
+  // Surface any trailing text that never received a closing newline.
+  if (buffer) yield buffer;
 }
 
 /**
@@ -647,56 +679,33 @@ export async function* streamChatText(provider, messages, signal, sampling = {})
     throw new Error("API error: empty streaming response body");
   }
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   const isOllama = provider.kind === "ollama";
-  let yieldedAny = false;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  for await (const line of readResponseLines(response)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      if (trimmed.startsWith("data: ")) {
-        const data = trimmed.slice(6);
-        try {
-          const parsed = parseOpenAiSseData(data);
-          if (parsed.done) return;
-          if (parsed.text) {
-            yieldedAny = true;
-            yield parsed.text;
-          }
-        } catch (err) {
-          if (err.message?.startsWith("API error:")) throw err;
-        }
-      } else if (isOllama) {
-        try {
-          const json = JSON.parse(trimmed);
-          const text = json.message?.content;
-          if (text) {
-            yieldedAny = true;
-            yield text;
-          }
-          if (json.done) return;
-        } catch {
-          /* ignore */
-        }
-      } else {
-        throwIfJsonErrorBody(trimmed);
+    if (trimmed.startsWith("data: ")) {
+      const data = trimmed.slice(6);
+      try {
+        const parsed = parseOpenAiSseData(data);
+        if (parsed.done) return;
+        if (parsed.text) yield parsed.text;
+      } catch (err) {
+        if (err.message?.startsWith("API error:")) throw err;
       }
+    } else if (isOllama) {
+      try {
+        const json = JSON.parse(trimmed);
+        const text = json.message?.content;
+        if (text) yield text;
+        if (json.done) return;
+      } catch (err) {
+        console.debug("AskOnPage: Ollama stream chunk parse failed", err);
+      }
+    } else {
+      throwIfJsonErrorBody(trimmed);
     }
-  }
-
-  if (!yieldedAny) {
-    throwIfJsonErrorBody(buffer);
   }
 }
 
@@ -711,27 +720,15 @@ async function* streamAnthropic(provider, messages, signal, sampling = {}) {
     signal
   );
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      try {
-        const json = JSON.parse(line.slice(6));
-        if (json.type === "content_block_delta" && json.delta?.text) {
-          yield json.delta.text;
-        }
-      } catch {
-        /* ignore */
+  for await (const line of readResponseLines(response)) {
+    if (!line.startsWith("data: ")) continue;
+    try {
+      const json = JSON.parse(line.slice(6));
+      if (json.type === "content_block_delta" && json.delta?.text) {
+        yield json.delta.text;
       }
+    } catch (err) {
+      console.debug("AskOnPage: Claude/Anthropic stream chunk parse failed", err);
     }
   }
 }
@@ -747,4 +744,3 @@ export async function completeChatText(provider, messages, signal, sampling = {}
   return full;
 }
 
-export { LLM_LIMITS };

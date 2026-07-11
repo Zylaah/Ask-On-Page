@@ -35,8 +35,8 @@ function setPref(key, value) {
     } else {
       prefService.setStringPref(key, value);
     }
-  } catch {
-    //ignore
+  } catch (err) {
+    console.warn("AskOnPage: failed to set pref", key, err);
   }
 }
 
@@ -53,7 +53,8 @@ const getPref = (key, defaultValue) => {
           return prefService.getBoolPref(key);
       }
     }
-  } catch {
+  } catch (err) {
+    console.warn("AskOnPage: failed to read pref", key, err);
     return defaultValue;
   }
   return defaultValue;
@@ -62,12 +63,6 @@ const getPref = (key, defaultValue) => {
 const setPrefIfUnset = (key, value) => {
   if (Services.prefs.getPrefType(key) === 0) {
     setPref(key, value);
-  }
-};
-
-const resetPref = (key) => {
-  if (Services.prefs.getPrefType(key) !== 0) {
-    Services.prefs.clearUserPref(key);
   }
 };
 
@@ -103,8 +98,8 @@ function resolveAskOnPageTheme() {
     if (typeof gZenThemePicker !== "undefined" && gZenThemePicker !== null) {
       return gZenThemePicker.isDarkMode ? "dark" : "light";
     }
-  } catch {
-    // gZenThemePicker not available (non-Zen Firefox)
+  } catch (err) {
+    console.debug("AskOnPage: gZenThemePicker not available (non-Zen Firefox)", err);
   }
 
   // Fallback for non-Zen: use prefers-color-scheme
@@ -128,8 +123,8 @@ function installZenThemeSync() {
   const prefObserver = { observe() { scheduleAskOnPageThemeSync(); } };
   try {
     Services.prefs.addObserver(ZEN_WINDOW_SCHEME_PREF, prefObserver);
-  } catch {
-    // Services not available outside Zen/Firefox chrome
+  } catch (err) {
+    console.debug("AskOnPage: Services not available outside Zen/Firefox chrome", err);
   }
 
   // Auto mode depends on OS preference
@@ -142,8 +137,8 @@ function installZenThemeSync() {
       { observe() { scheduleAskOnPageThemeSync(); } },
       "zen-space-gradient-update"
     );
-  } catch {
-    // Optional
+  } catch (err) {
+    console.debug("AskOnPage: zen-space-gradient-update observer not available", err);
   }
 }
 
@@ -237,10 +232,6 @@ class AskOnPagePREFS extends PREFS$1 {
   static LLM_FREQUENCY_PENALTY = "extension.ask-on-page.llm.frequency-penalty";
   static LLM_PRESENCE_PENALTY = "extension.ask-on-page.llm.presence-penalty";
   static LLM_MAX_OUTPUT_TOKENS = "extension.ask-on-page.llm.max-output-tokens";
-
-  // static COPY_BTN_ENABLED = "extension.ask-on-page.findbar-ai.copy-btn-enabled";
-  // static MARKDOWN_ENABLED = "extension.ask-on-page.findbar-ai.markdown-enabled";
-  // static SHOW_TOOL_CALL = "extension.ask-on-page.findbar-ai.show-tool-call";
 
   static defaultValues = {
     [AskOnPagePREFS.ENABLED]: true,
@@ -406,30 +397,6 @@ class AskOnPagePREFS extends PREFS$1 {
     return this.backgroundStyle === "pseudo";
   }
 
-  // static get copyBtnEnabled() {
-  //   return this.getPref(this.COPY_BTN_ENABLED);
-  // }
-  //
-  // static set copyBtnEnabled(value) {
-  //   this.setPref(this.COPY_BTN_ENABLED, value);
-  // }
-  //
-  // static get markdownEnabled() {
-  //   return this.getPref(this.MARKDOWN_ENABLED);
-  // }
-  //
-  // static set markdownEnabled(value) {
-  //   this.setPref(this.MARKDOWN_ENABLED, value);
-  // }
-
-  // static get showToolCall() {
-  //   return this.getPref(this.SHOW_TOOL_CALL);
-  // }
-  //
-  // static set showToolCall(value) {
-  //   this.setPref(this.SHOW_TOOL_CALL, value);
-  // }
-
   static get ollamaBaseUrl() {
     return this.getPref(this.OLLAMA_BASE_URL);
   }
@@ -515,9 +482,11 @@ async function frameScript() {
 
   const extractTextContent = (trimWhiteSpace = true) => {
     const clonedBody = content.document.body.cloneNode(true);
-    const elementsToRemove = clonedBody.querySelectorAll(
-      "script, style, meta, noscript, iframe, svg, canvas, input, textarea, select, img, video, audio, object, embed, applet, form, button, link, head"
-    );
+    const nonTextTags = [
+      "script", "style", "meta", "noscript", "iframe", "svg", "canvas", "input", "textarea",
+      "select", "img", "video", "audio", "object", "embed", "applet", "form", "button", "link", "head",
+    ];
+    const elementsToRemove = clonedBody.querySelectorAll(nonTextTags.join(", "));
     elementsToRemove.forEach((el) => el.remove());
 
     clonedBody.querySelectorAll("br").forEach((br) => {
@@ -714,7 +683,8 @@ const escapeXmlAttribute = (str) => {
 
 const YOUTUBE_PLAYER_URL = "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
 const YOUTUBE_ANDROID_CLIENT_VERSION = "20.10.38";
-const YOUTUBE_ANDROID_USER_AGENT = `com.google.android.youtube/${YOUTUBE_ANDROID_CLIENT_VERSION} (Linux; U; Android 14)`;
+const YOUTUBE_ANDROID_USER_AGENT =
+  `com.google.android.youtube/${YOUTUBE_ANDROID_CLIENT_VERSION} (Linux; U; Android 14)`;
 
 /**
  * Extracts a YouTube video ID from a URL, bare ID, or URL embedded in text.
@@ -746,8 +716,8 @@ function getYouTubeVideoId(input) {
       const shortsMatch = url.pathname.match(/^\/shorts\/([^/?]+)/);
       if (shortsMatch) return shortsMatch[1];
     }
-  } catch {
-    // Fall through to bare ID check.
+  } catch (err) {
+    console.debug("AskOnPage: YouTube URL parsing failed, falling through to bare ID check", err);
   }
 
   return /^[\w-]{11}$/.test(trimmed) ? trimmed : null;
@@ -988,6 +958,14 @@ const SettingsModal = {
     this._boundHandleShortcutKeyDown = this._handleShortcutKeyDown.bind(this);
   },
 
+  /** Clear recording UI state for the given input and stop listening for keys. */
+  _stopShortcutRecording(targetInput) {
+    targetInput.classList.remove("recording");
+    targetInput.placeholder = "Click to set";
+    this._currentShortcutTarget = null;
+    window.removeEventListener("keydown", this._boundHandleShortcutKeyDown, true);
+  },
+
   _handleShortcutKeyDown(event) {
     if (!this._currentShortcutTarget) return;
 
@@ -999,20 +977,14 @@ const SettingsModal = {
 
     if (event.key === "Escape") {
       targetInput.value = PREFS.getPref(prefKey);
-      targetInput.classList.remove("recording");
-      targetInput.placeholder = "Click to set";
-      this._currentShortcutTarget = null;
-      window.removeEventListener("keydown", this._boundHandleShortcutKeyDown, true);
+      this._stopShortcutRecording(targetInput);
       return;
     }
 
     if (event.key === "Backspace" || event.key === "Delete") {
       targetInput.value = "";
       this._currentPrefValues[prefKey] = "";
-      targetInput.classList.remove("recording");
-      targetInput.placeholder = "Click to set";
-      this._currentShortcutTarget = null;
-      window.removeEventListener("keydown", this._boundHandleShortcutKeyDown, true);
+      this._stopShortcutRecording(targetInput);
       return;
     }
 
@@ -1025,10 +997,7 @@ const SettingsModal = {
     this._currentPrefValues[prefKey] = shortcutString;
     PREFS.debugLog(`Shortcut for ${prefKey} set to: ${shortcutString}`);
 
-    targetInput.classList.remove("recording");
-    targetInput.placeholder = "Click to set";
-    this._currentShortcutTarget = null;
-    window.removeEventListener("keydown", this._boundHandleShortcutKeyDown, true);
+    this._stopShortcutRecording(targetInput);
   },
 
   _generateShortcutInputHtml(prefConstant, label) {
@@ -1212,10 +1181,7 @@ const SettingsModal = {
 
       input.addEventListener("blur", () => {
         if (this._currentShortcutTarget) {
-          this._currentShortcutTarget.classList.remove("recording");
-          this._currentShortcutTarget.placeholder = "Click to set";
-          this._currentShortcutTarget = null;
-          window.removeEventListener("keydown", this._boundHandleShortcutKeyDown, true);
+          this._stopShortcutRecording(this._currentShortcutTarget);
         }
       });
 
@@ -1887,6 +1853,12 @@ const askOnPageFindbar = {
     else this.destroy();
   },
 
+  /** Store the resolved findbar reference and (re)install the placeholder guard on it. */
+  _attachFindbar(findbar) {
+    this.findbar = findbar;
+    this._installFindFieldPlaceholderGuard(findbar);
+  },
+
   updateFindbar() {
     SettingsModal.hide();
     this._removeFindFieldPlaceholderGuard();
@@ -1898,8 +1870,7 @@ const askOnPageFindbar = {
       this.clear();
     }
     gBrowser.getFindBar().then((findbar) => {
-      this.findbar = findbar;
-      this._installFindFieldPlaceholderGuard(findbar);
+      this._attachFindbar(findbar);
       this._applyFindbarDimensions();
       this.addAskButton();
       if (PREFS.persistChat) {
@@ -2008,8 +1979,8 @@ const askOnPageFindbar = {
 
     try {
       this.findbar.toggleHighlight(false);
-    } catch {
-      // ignore
+    } catch (err) {
+      console.debug("AskOnPage: toggleHighlight failed", err);
     }
 
     const matches =
@@ -2587,7 +2558,9 @@ const askOnPageFindbar = {
         e.preventDefault();
         try {
           openTrustedLinkIn(e.target.href, "tab");
-        } catch {}
+        } catch (err) {
+          console.debug("AskOnPage: openTrustedLinkIn failed", err);
+        }
       }
     });
 
@@ -2711,7 +2684,9 @@ const askOnPageFindbar = {
     this.expanded = false;
     try {
       this.removeListeners();
-    } catch {}
+    } catch (err) {
+      console.debug("AskOnPage: removeListeners failed during destroy", err);
+    }
     this.removeAskButton();
     this.removeContextMenuItem();
     this.removeAIInterface();
@@ -2855,7 +2830,7 @@ const askOnPageFindbar = {
   },
   updateContextMenuText() {
     if (!PREFS.contextMenuEnabled || !this.contextMenuItem) return;
-    const hasSelection = gContextMenu?.isTextSelected === true;
+    const hasSelection = !!gContextMenu?.isTextSelected;
     this.contextMenuItem.label = hasSelection ? "Ask AI" : "Summarize with AI";
   },
 
@@ -2929,8 +2904,7 @@ const askOnPageFindbar = {
     if (!this.enabled) return;
     PREFS.debugLog("Findbar is being opened");
     void gBrowser.getFindBar().then((findbar) => {
-      this.findbar = findbar;
-      this._installFindFieldPlaceholderGuard(findbar);
+      this._attachFindbar(findbar);
       // Hidden until onMatchesCountResult reports zero matches for a non-empty query.
       this._updateAskButtonVisibility(findbar, { searchString: "", total: 1 });
       setTimeout(() => this._updateFindbarDimensions(), 1);
@@ -2946,21 +2920,6 @@ const askOnPageFindbar = {
     }
   },
 };
-
-/**
- * @param {string} domainOrUrl
- * @param {number} size
- * @returns {string}
- */
-function googleFaviconAPI(domainOrUrl, size = 32) {
-  let domain;
-  try {
-    domain = new URL(domainOrUrl).hostname;
-  } catch {
-    domain = domainOrUrl;
-  }
-  return `https://s2.googleusercontent.com/s2/favicons?domain_url=https://${domain}&sz=${size}`;
-}
 
 initMarkdownVendors();
 
