@@ -8,8 +8,9 @@
   --browser-primary-color: var(--zen-primary-color, #8ae3be);
   --browser-themed-toolbar-bg: var(--zen-themed-toolbar-bg, #333333);
   --acrylic-radius: 8px;
-  --acrylic-glass-bg: color-mix(in srgb, var(--acrylic-bg) 40%, transparent 60%);
-  --acrylic-input-glass-bg: color-mix(in srgb, var(--acrylic-input-bg) 40%, transparent 60%);
+  /* Same glass as Zia hover cards: 76% of the fill, blur(24px) saturate(1.6). */
+  --acrylic-glass-bg: color-mix(in srgb, var(--acrylic-bg) 76%, transparent);
+  --acrylic-input-glass-bg: color-mix(in srgb, var(--acrylic-input-bg) 76%, transparent);
   --acrylic-glass-border: 1.5px solid
     color-mix(in srgb, var(--browser-primary-color) 20%, transparent 80%);
   --ask-on-page-input-focus-ring: color-mix(
@@ -18,4 +19,12 @@
     transparent 72%
   );
   --ask-on-page-muted: #71717a;
+}
+
+/* So the findbar blur can sample the page, same compositing trick Zia uses for hover cards. */
+@media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
+  #tabbrowser-tabpanels .browserSidebarContainer {
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+  }
 }

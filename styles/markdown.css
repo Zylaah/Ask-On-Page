@@ -1236,17 +1236,11 @@
 
 /* User bubbles — override github-markdown theme tokens (higher specificity + after theme blocks) */
 :root[data-ask-on-page-theme="dark"] .ask-on-page-chat .chat-message-user .message-content,
-:root[data-ask-on-page-theme="dark"] .ask-on-page-chat .chat-message-user .markdown-body {
-  color: color-mix(in srgb, var(--zen-primary-color) 95%, white) !important;
-  --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 95%, white);
-  --fgColor-muted: color-mix(in srgb, var(--zen-primary-color) 95%, white);
-  --fgColor-accent: color-mix(in srgb, var(--zen-primary-color) 95%, white);
-}
-
+:root[data-ask-on-page-theme="dark"] .ask-on-page-chat .chat-message-user .markdown-body,
 :root[data-ask-on-page-theme="light"] .ask-on-page-chat .chat-message-user .message-content,
 :root[data-ask-on-page-theme="light"] .ask-on-page-chat .chat-message-user .markdown-body {
-  color: color-mix(in srgb, var(--zen-primary-color) 80%, black) !important;
-  --fgColor-default: color-mix(in srgb, var(--zen-primary-color) 80%, black);
-  --fgColor-muted: color-mix(in srgb, var(--zen-primary-color) 80%, black);
-  --fgColor-accent: color-mix(in srgb, var(--zen-primary-color) 80%, black);
+  color: var(--ask-on-page-user-message-color) !important;
+  --fgColor-default: var(--ask-on-page-user-message-color);
+  --fgColor-muted: var(--ask-on-page-user-message-color);
+  --fgColor-accent: var(--ask-on-page-user-message-color);
 }

@@ -21,7 +21,9 @@
   --ask-on-page-chat-input-shell-bg: #252525;
 
   --ask-on-page-dialog-bg: var(--acrylic-glass-bg);
-  --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
+  --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
+  /* Dark primary on a dark findbar is hard to read; lift it. Light primaries stay. */
+  --ask-on-page-user-message-color: oklch(from var(--zen-primary-color, var(--browser-primary-color)) max(l, 0.78) c h);
 
   --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 70%, black 30%);
   --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, white 50%);
@@ -45,7 +47,7 @@
   }
   @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
     --ask-on-page-dialog-bg: var(--acrylic-glass-bg) !important;
-    --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(0.7) saturate(2.5);
+    --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
     --ask-on-page-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
     --ask-on-page-findbar-outline-width: 0;
   }
@@ -75,7 +77,9 @@
   --ask-on-page-chat-input-shell-bg: #f0f0f0;
 
   --ask-on-page-dialog-bg: var(--acrylic-glass-bg);
-  --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
+  --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
+  /* Light primary on a light findbar is hard to read; darken it. Dark primaries stay. */
+  --ask-on-page-user-message-color: oklch(from var(--zen-primary-color, var(--browser-primary-color)) min(l, 0.42) c h);
 
   --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 90%, white 10%);
   --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, black 50%);
@@ -99,7 +103,7 @@
   }
   @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
     --ask-on-page-dialog-bg: var(--acrylic-glass-bg) !important;
-    --ask-on-page-dialog-backdrop-filter: blur(32px) brightness(1.06) saturate(1.1);
+    --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
     --ask-on-page-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
     --ask-on-page-findbar-outline-width: 0;
   }

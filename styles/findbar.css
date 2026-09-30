@@ -707,7 +707,7 @@
 
       .chat-message-user {
         align-self: flex-start;
-        color: var(--zen-primary-color) !important;
+        color: var(--ask-on-page-user-message-color, var(--zen-primary-color)) !important;
         border-bottom-left-radius: 4px;
         font-weight: 700;
 
