@@ -87,23 +87,9 @@ const FINDBAR_PLACEHOLDER = "Find or Ask...";
 const ZEN_WINDOW_SCHEME_PREF = "zen.view.window.scheme";
 const ASK_ON_PAGE_THEME_ATTR = "data-ask-on-page-theme";
 
-/**
- * gZenThemePicker is a window-level global in Zen.
- * Its isDarkMode getter is the authoritative source: handles private window,
- * zen.view.window.scheme (0=dark, 1=light, 2=auto+prefers-color-scheme).
- * @returns {"dark"|"light"}
- */
+/** The findbar keeps its dark style in both Zen schemes. */
 function resolveAskOnPageTheme() {
-  try {
-    if (typeof gZenThemePicker !== "undefined" && gZenThemePicker !== null) {
-      return gZenThemePicker.isDarkMode ? "dark" : "light";
-    }
-  } catch (err) {
-    console.debug("AskOnPage: gZenThemePicker not available (non-Zen Firefox)", err);
-  }
-
-  // Fallback for non-Zen: use prefers-color-scheme
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 /** Apply data-ask-on-page-theme to <html> and update any rendered markdown. */

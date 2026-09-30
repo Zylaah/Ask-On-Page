@@ -65,10 +65,27 @@
     overflow-x: hidden !important;
     height: unset !important;
     border-radius: var(--acrylic-radius) !important;
+    corner-shape: round !important;
     border: none !important;
-    outline: var(--ask-on-page-findbar-outline-width, 1px) solid
-      var(--ask-on-page-findbar-outline) !important;
+    outline: none !important;
+
+    /* Hairline ring, same mask trick as Zia's tabs and folders. */
+    &::after {
+      content: "" !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 4 !important;
+      padding: var(--ask-on-page-findbar-shine-width, 0.5px) !important;
+      border-radius: inherit !important;
+      corner-shape: round !important;
+      pointer-events: none !important;
+      background: var(--ask-on-page-findbar-shine) !important;
+      mask:
+        linear-gradient(#000 0 0) content-box exclude,
+        linear-gradient(#000 0 0) !important;
+    }
     color: var(--ask-on-page-fg);
+    color-scheme: dark;
     z-index: 9999;
     opacity: 1;
     background: var(--ask-on-page-dialog-bg) !important;
@@ -384,12 +401,21 @@
       }
 
 
+      .findbar-find-previous,
+      .findbar-find-next {
+        background-color: var(--ask-on-page-fg) !important;
+        background-image: none !important;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-size: 16px 16px;
+      }
+
       .findbar-find-previous {
-        background-image: var(--ask-on-page-findbar-arrow-up) !important;
+        mask-image: var(--ask-on-page-findbar-arrow-up);
       }
 
       .findbar-find-next {
-        background-image: var(--ask-on-page-findbar-arrow-down) !important;
+        mask-image: var(--ask-on-page-findbar-arrow-down);
       }
 
       .findbar-find-status {
@@ -533,7 +559,7 @@
           box-shadow: none !important;
           font-size: 14px !important;
           line-height: 1.4 !important;
-          color: var(--ask-on-page-fg) !important;
+          color: var(--ask-on-page-chat-input-fg, #18181b) !important;
           appearance: none !important;
           outline: none !important;
 
@@ -744,7 +770,7 @@
         }
 
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
-          background: var(--ask-on-page-chat-input-acrylic-bg, var(--acrylic-input-glass-bg)) !important;
+          background: var(--ask-on-page-user-message-color) !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
       }
@@ -753,6 +779,8 @@
         display: flex;
         align-items: flex-end;
         gap: 8px;
+        background: transparent !important;
+        color-scheme: light;
         /* box-sizing so that width:100% + border don't cause overflow */
         box-sizing: border-box !important;
         width: 100%;
@@ -770,7 +798,7 @@
           height: auto !important;
           /* 2px left padding keeps the blinking caret visible */
           padding: 2px 0 2px 2px !important;
-          margin: 0 !important;
+          margin: 0 0 2px 0 !important;
           margin-inline-start: 5px !important;
           resize: none !important;
           border: none !important;
@@ -778,15 +806,16 @@
           box-shadow: none !important;
           font-size: 14px !important;
           line-height: 1.5 !important;
-          color: var(--ask-on-page-fg) !important;
-          caret-color: var(--ask-on-page-fg) !important;
+          color: var(--ask-on-page-chat-input-fg, #18181b) !important;
+          caret-color: var(--ask-on-page-chat-input-fg, #18181b) !important;
           --focus-outline: none !important;
           --focus-outline-inset: 0 !important;
           outline: none !important;
 
           &::placeholder {
-            color: var(--ask-on-page-muted) !important;
+            color: #19191a !important;
             opacity: 0.8;
+            margin-bottom: 2px;
           }
         }
       }
@@ -917,7 +946,7 @@
     }
 
     .page-excerpt {
-      border-left: 3px solid var(--browser-primary-color) !important;
+      border-left: 3px solid var(--ask-on-page-user-message-color) !important;
       padding: 8px 12px !important;
       margin: 8px 0 !important;
       cursor: pointer;
@@ -927,7 +956,7 @@
 
       &:hover,
       &:focus-visible {
-        background: color-mix(in srgb, var(--browser-primary-color) 24%, transparent 76%) !important;
+        background: color-mix(in srgb, var(--browser-primary-color) 24%, white 10%) !important;
         outline: none;
       }
 
@@ -950,7 +979,7 @@
         font-style: normal;
         font-weight: 600;
         letter-spacing: 0.01em;
-        color: color-mix(in srgb, var(--zen-primary-color) 90%, white);
+        color: color-mix(in srgb, var(--zen-primary-color) 45%, white);
         display: inline-flex;
         align-items: center;
         gap: 0.35em;

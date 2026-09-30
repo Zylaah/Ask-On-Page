@@ -1,29 +1,22 @@
-/* Theme tokens — driven by JS data-ask-on-page-theme attribute (see installZenThemeSync) */
-
-/* Dark — also the fallback before JS runs */
-:root,
-:root[data-ask-on-page-theme="dark"] {
-  color-scheme: dark;
-
+/* Findbar stays on the dark palette. Light/dark Zen does not restyle it. */
+:root {
   --acrylic-bg: rgb(24, 24, 27);
   --acrylic-input-bg: rgb(18, 18, 20);
   --acrylic-background: rgba(36, 37, 39, 0.6) !important;
   --acrylic-border: 0.5px solid rgba(127, 127, 127, 0.3);
 
-  --ask-on-page-fg: rgb(245, 245, 245);
-  --ask-on-page-findbar-outline: rgb(48, 48, 48);
-  --ask-on-page-findbar-outline-width: 1px;
-  --ask-on-page-findbar-border: rgba(235, 235, 235, 0.3);
-  --ask-on-page-icon-fill: white;
+  --ask-on-page-fg: oklch(from var(--ask-on-page-findbar-fill) calc(0.575 + sign(0.55 - l) * 0.4) 0 h);
+  --ask-on-page-icon-fill: var(--ask-on-page-fg);
   --ask-on-page-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
   --ask-on-page-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
   --ask-on-page-action-fg: white;
-  --ask-on-page-chat-input-shell-bg: #252525;
+  --ask-on-page-chat-input-shell-bg: #f4f4f5;
+  --ask-on-page-chat-input-fg: #18181b;
 
-  --ask-on-page-dialog-bg: var(--acrylic-glass-bg);
-  --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
-  /* Dark primary on a dark findbar is hard to read; lift it. Light primaries stay. */
-  --ask-on-page-user-message-color: oklch(from var(--zen-primary-color, var(--browser-primary-color)) max(l, 0.78) c h);
+  --ask-on-page-dialog-bg: var(--ask-on-page-findbar-fill);
+  --ask-on-page-dialog-backdrop-filter: blur(40px) saturate(1.6);
+  /* Contrast with the primary fill: dark primaries get light text, light primaries get dark text. */
+  --ask-on-page-user-message-color: oklch(from var(--ask-on-page-findbar-fill) calc(0.56 + sign(0.55 - l) * 0.34) c h);
 
   --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 70%, black 30%);
   --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, white 50%);
@@ -42,70 +35,13 @@
   --ask-on-page-divider: color-mix(in srgb, white 12%, transparent 88%);
 
   @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "solid") {
-    --ask-on-page-dialog-bg: var(--acrylic-bg) !important;
+    --ask-on-page-dialog-bg: var(--ask-on-page-findbar-fill) !important;
     --ask-on-page-dialog-backdrop-filter: none !important;
   }
   @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
-    --ask-on-page-dialog-bg: var(--acrylic-glass-bg) !important;
-    --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
+    --ask-on-page-dialog-bg: var(--ask-on-page-findbar-glass-bg) !important;
+    --ask-on-page-dialog-backdrop-filter: blur(40px) saturate(1.6);
     --ask-on-page-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
-    --ask-on-page-findbar-outline-width: 0;
-  }
-  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "pseudo") {
-    --ask-on-page-dialog-bg: transparent !important;
-    --ask-on-page-dialog-backdrop-filter: none;
-  }
-}
-
-/* Light */
-:root[data-ask-on-page-theme="light"] {
-  color-scheme: light;
-
-  --acrylic-bg: rgb(250, 250, 250);
-  --acrylic-input-bg: rgb(230, 230, 230);
-  --acrylic-background: rgba(255, 255, 255, 0.82) !important;
-  --acrylic-border: 0.5px solid rgba(0, 0, 0, 0.12);
-
-  --ask-on-page-fg: rgb(24, 24, 27);
-  --ask-on-page-findbar-outline: rgb(229, 229, 229);
-  --ask-on-page-findbar-outline-width: 1px;
-  --ask-on-page-findbar-border: rgba(20, 20, 20, 0.14);
-  --ask-on-page-icon-fill: black;
-  --ask-on-page-findbar-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 20V4m0 0l6 6m-6-6l-6 6'/%3E%3C/svg%3E");
-  --ask-on-page-findbar-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M12 4v16m0 0l6-6m-6 6l-6-6'/%3E%3C/svg%3E");
-  --ask-on-page-action-fg: white;
-  --ask-on-page-chat-input-shell-bg: #f0f0f0;
-
-  --ask-on-page-dialog-bg: var(--acrylic-glass-bg);
-  --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
-  /* Light primary on a light findbar is hard to read; darken it. Dark primaries stay. */
-  --ask-on-page-user-message-color: oklch(from var(--zen-primary-color, var(--browser-primary-color)) min(l, 0.42) c h);
-
-  --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 90%, white 10%);
-  --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, black 50%);
-  --ask-on-page-error: #c20e4d;
-  --ask-on-page-error-bg: #fdd0df;
-  --ask-on-page-success: #128f4e;
-  --ask-on-page-success-bg: #d1f4e0;
-  --ask-on-page-warning: #9a6700;
-  --ask-on-page-warning-bg: #fdedd3;
-  --ask-on-page-muted-bg: #f4f4f5;
-  --ask-on-page-close-bg: var(--ask-on-page-muted-bg);
-  --ask-on-page-close-bg-hover: color-mix(in srgb, var(--ask-on-page-muted-bg) 82%, black 18%);
-
-  --ask-on-page-input-bg: color-mix(in srgb, var(--acrylic-bg) 92%, black 8%);
-  --ask-on-page-input-border: color-mix(in srgb, black 10%, transparent 90%);
-  --ask-on-page-divider: color-mix(in srgb, black 10%, transparent 90%);
-
-  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "solid") {
-    --ask-on-page-dialog-bg: var(--acrylic-bg) !important;
-    --ask-on-page-dialog-backdrop-filter: none !important;
-  }
-  @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
-    --ask-on-page-dialog-bg: var(--acrylic-glass-bg) !important;
-    --ask-on-page-dialog-backdrop-filter: blur(24px) saturate(1.6);
-    --ask-on-page-chat-input-acrylic-bg: var(--acrylic-input-glass-bg);
-    --ask-on-page-findbar-outline-width: 0;
   }
   @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "pseudo") {
     --ask-on-page-dialog-bg: transparent !important;

@@ -7,10 +7,12 @@
 :root {
   --browser-primary-color: var(--zen-primary-color, #8ae3be);
   --browser-themed-toolbar-bg: var(--zen-themed-toolbar-bg, #333333);
+  --ask-on-page-findbar-fill: var(--zen-primary-color, var(--browser-primary-color));
   --acrylic-radius: 8px;
-  /* Same glass as Zia hover cards: 76% of the fill, blur(24px) saturate(1.6). */
-  --acrylic-glass-bg: color-mix(in srgb, var(--acrylic-bg) 76%, transparent);
-  --acrylic-input-glass-bg: color-mix(in srgb, var(--acrylic-input-bg) 76%, transparent);
+  /* Frosted glass: mostly the fill, with a stronger blur than Zia's hover cards. */
+  --ask-on-page-findbar-glass-bg: color-mix(in srgb, var(--ask-on-page-findbar-fill) 88%, transparent);
+  --acrylic-glass-bg: color-mix(in srgb, var(--acrylic-bg) 88%, transparent);
+  --acrylic-input-glass-bg: color-mix(in srgb, var(--acrylic-input-bg) 88%, transparent);
   --acrylic-glass-border: 1.5px solid
     color-mix(in srgb, var(--browser-primary-color) 20%, transparent 80%);
   --ask-on-page-input-focus-ring: color-mix(
@@ -19,6 +21,16 @@
     transparent 72%
   );
   --ask-on-page-muted: #71717a;
+  --ask-on-page-findbar-shine-width: 0.5px;
+  --ask-on-page-findbar-shine:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.2) 65%, rgba(255, 255, 255, 0.08)),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.14) 35%, rgba(255, 255, 255, 0.14) 65%, rgba(255, 255, 255, 0.06));
+}
+
+@media (max-resolution: 1.5dppx) {
+  :root {
+    --ask-on-page-findbar-shine-width: 1px;
+  }
 }
 
 /* So the findbar blur can sample the page, same compositing trick Zia uses for hover cards. */
