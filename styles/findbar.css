@@ -68,6 +68,22 @@
     corner-shape: round !important;
     border: none !important;
     outline: none !important;
+    /* The glass lives on ::before. A mask on this element (the shine ring)
+       makes Firefox drop backdrop-filter, so the blur cannot sit here. */
+    background: transparent !important;
+    backdrop-filter: none !important;
+
+    &::before {
+      content: "" !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: -1 !important;
+      border-radius: inherit !important;
+      corner-shape: round !important;
+      pointer-events: none !important;
+      background: var(--ask-on-page-dialog-bg) !important;
+      backdrop-filter: var(--ask-on-page-dialog-backdrop-filter) !important;
+    }
 
     /* Hairline ring, same mask trick as Zia's tabs and folders. */
     &::after {
@@ -88,8 +104,6 @@
     color-scheme: dark;
     z-index: 9999;
     opacity: 1;
-    background: var(--ask-on-page-dialog-bg) !important;
-    backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
 
     &:is([hidden="true"]) {
       visibility: inherit !important;
