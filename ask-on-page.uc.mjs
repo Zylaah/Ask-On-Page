@@ -1901,7 +1901,6 @@ const askOnPageFindbar = {
     if (direction === "collapse") flyer.setAttribute("data-reverse", "true");
     flyer.style.setProperty("font", askStyle.font, "important");
     flyer.style.setProperty("color", askStyle.color, "important");
-    flyer.style.setProperty("--ask-flight-bg", askStyle.backgroundColor);
     if (morph === "stop") {
       flyer.setAttribute("data-morph", "stop");
       const label = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
@@ -1920,50 +1919,63 @@ const askOnPageFindbar = {
       flyer.style.setProperty("background-color", askStyle.backgroundColor, "important");
     }
 
-    const setLen = (name, value) => flyer.style.setProperty(name, `${value}px`);
-    setLen("--ask-flight-left", askBox.left);
-    setLen("--ask-flight-top", askBox.top);
-    setLen("--ask-flight-w0", askBox.width);
-    setLen("--ask-flight-h0", askBox.height);
-    setLen("--ask-flight-w1", sendBox.width);
-    setLen("--ask-flight-h1", sendBox.height);
-    setLen("--ask-flight-r0", radiusOf(askStyle));
-    setLen("--ask-flight-r1", radiusOf(targetStyle));
-    setLen("--ask-flight-dx", dx);
-    setLen("--ask-flight-dy", dy);
-    /* Bow inward over the bar. A rightward arc would leave the window. */
-    setLen("--ask-flight-mx", dx / 2 - Math.abs(dy) * 0.28);
-    setLen("--ask-flight-my", dy / 2);
-
     const gen = (this._askFlightGen = (this._askFlightGen || 0) + 1);
-    const ms = direction === "collapse" ? 260 : 350;
+    const collapse = direction === "collapse";
+    const ms = collapse ? 260 : 350;
+    const easing = collapse ? "cubic-bezier(0.4, 0, 1, 1)" : "cubic-bezier(0.22, 1, 0.36, 1)";
     this._askFlightEl = flyer;
     this.findbar.setAttribute("data-ask-flight", "true");
+    document.documentElement.appendChild(flyer);
 
-    const finish = (event) => {
-      if (event?.propertyName && event.propertyName !== "--ask-on-page-flight-p") return;
+    /* A transformed ancestor would shift a fixed box. Correct for it. */
+    const origin = flyer.getBoundingClientRect();
+    const baseX = askBox.left - origin.left;
+    const baseY = askBox.top - origin.top;
+
+    /* Quadratic arc that bows inward over the bar, sampled into keyframes. */
+    const mx = dx / 2 - Math.abs(dy) * 0.28;
+    const my = dy / 2;
+    const r0 = radiusOf(askStyle);
+    const r1 = radiusOf(targetStyle);
+    const steps = 16;
+    const frames = [];
+    for (let i = 0; i <= steps; i++) {
+      const p = i / steps;
+      const u = 1 - p;
+      const x = 2 * u * p * mx + p * p * dx;
+      const y = 2 * u * p * my + p * p * dy;
+      const frame = {
+        offset: p,
+        transform: `translate(${baseX + x}px, ${baseY + y}px)`,
+        width: `${askBox.width + (sendBox.width - askBox.width) * p}px`,
+        height: `${askBox.height + (sendBox.height - askBox.height) * p}px`,
+        borderRadius: `${r0 + (r1 - r0) * p}px`,
+      };
+      if (morph === "stop") {
+        frame.backgroundColor = `color-mix(in srgb, ${askStyle.backgroundColor} ${Math.round(u * 100)}%, transparent)`;
+      }
+      frames.push(frame);
+    }
+    if (collapse) frames.reverse().forEach((f) => (f.offset = 1 - f.offset));
+
+    const timing = { duration: ms, easing, fill: "both" };
+    const animations = [flyer.animate(frames, timing)];
+    if (morph === "stop") {
+      const label = flyer.querySelector(".ask-on-page-ask-flight-label");
+      const icon = flyer.querySelector(".ask-on-page-ask-flight-stop");
+      const labelFrames = [{ opacity: 1, offset: 0 }, { opacity: 0, offset: 0.42 }, { opacity: 0, offset: 1 }];
+      const iconFrames = [{ opacity: 0, offset: 0 }, { opacity: 0, offset: 0.28 }, { opacity: 1, offset: 1 }];
+      const flip = (list) => list.map((f) => ({ ...f, offset: 1 - f.offset })).reverse();
+      if (label) animations.push(label.animate(collapse ? flip(labelFrames) : labelFrames, timing));
+      if (icon) animations.push(icon.animate(collapse ? flip(iconFrames) : iconFrames, timing));
+    }
+
+    const finish = () => {
       if (this._askFlightGen !== gen) return;
       this._clearAskFlight();
     };
-
-    if (direction === "collapse") {
-      flyer.style.setProperty("transition", "none", "important");
-      flyer.style.setProperty("--ask-on-page-flight-p", "1");
-    }
-    (this.findbar.parentNode || document.documentElement).appendChild(flyer);
-    /* Commit the start pose so the progress change actually transitions. */
-    void flyer.offsetWidth;
-    flyer.addEventListener("transitionend", finish);
-    setTimeout(finish, ms + 80);
-
-    requestAnimationFrame(() => {
-      if (this._askFlightGen !== gen) return;
-      if (direction === "collapse") {
-        flyer.style.removeProperty("transition");
-        void flyer.offsetWidth;
-      }
-      flyer.style.setProperty("--ask-on-page-flight-p", direction === "collapse" ? "0" : "1");
-    });
+    animations[0].finished.then(finish, () => {});
+    setTimeout(finish, ms + 120);
   },
 
   /**
