@@ -785,7 +785,7 @@
         }
 
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
-          background: var(--ask-on-page-user-message-color) !important;
+          background: color-mix(in srgb, var(--zen-primary-color) 65%, white) !important !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
       }
