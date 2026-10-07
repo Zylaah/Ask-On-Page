@@ -1029,8 +1029,8 @@
       display: none !important;
     }
 
-    /* The flying Ask pill is the one on screen until it lands. */
-    &[data-ask-flight] :is(#findbar-ask, #send-prompt) {
+    /* The flying pill is the one on screen until it lands. */
+    &[data-ask-flight] :is(#findbar-ask, #send-prompt, #stop-generation) {
       visibility: hidden !important;
     }
   }
@@ -1081,6 +1081,48 @@
   &[data-reverse] {
     transition-duration: 260ms !important;
     transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
+  }
+
+  /* Ask pill reshapes into the stop control while a reply is starting. */
+  &[data-morph="stop"] {
+    overflow: hidden !important;
+    background-color: color-mix(
+      in srgb,
+      var(--ask-flight-bg) calc((1 - var(--ask-on-page-flight-p)) * 100%),
+      transparent
+    ) !important;
+
+    .ask-on-page-ask-flight-label {
+      position: absolute !important;
+      inset: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      opacity: clamp(0, calc((0.42 - var(--ask-on-page-flight-p)) / 0.42), 1);
+    }
+
+    .ask-on-page-ask-flight-stop {
+      position: absolute !important;
+      inset: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      opacity: clamp(0, calc((var(--ask-on-page-flight-p) - 0.28) / 0.72), 1);
+
+      svg {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .stop-icon-outer {
+        fill: var(--zen-primary-color, var(--browser-primary-color)) !important;
+      }
+
+      .stop-icon-inner {
+        fill: white !important;
+      }
+    }
   }
 }
 

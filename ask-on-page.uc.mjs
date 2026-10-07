@@ -1800,9 +1800,10 @@ const askOnPageFindbar = {
     bar.style.setProperty("transition-duration", `${ms}ms`, "important");
     bar.style.setProperty("height", `${from}px`, "important");
     void bar.offsetHeight;
+    this._morphTo = to;
     requestAnimationFrame(() => {
       if (this._morphGen !== gen) return;
-      bar.style.setProperty("height", `${to}px`, "important");
+      bar.style.setProperty("height", `${this._morphTo}px`, "important");
     });
     const done = (event) => {
       if (event?.propertyName && event.propertyName !== "height") return;
@@ -1840,14 +1841,42 @@ const askOnPageFindbar = {
     return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
   },
 
+  _chatActionTarget() {
+    const root = this.chatContainer;
+    if (!root) return null;
+    const streaming = root.querySelector(".ai-chat-input-actions")?.hasAttribute("data-streaming");
+    const el = root.querySelector(streaming ? "#stop-generation" : "#send-prompt");
+    const box = this._controlBox(el);
+    if (!box) return null;
+    return { box, morph: streaming ? "stop" : "send" };
+  },
+
+  /** Fly to the stop button once sending has put it in the input group. */
+  _finishDeferredAskFlight() {
+    const from = this._askFlightFrom;
+    this._askFlightFrom = null;
+    const bar = this.findbar;
+    if (!from || !bar) return;
+    if (bar.style.height) {
+      const overlay = bar.querySelector(".ask-on-page-chat, .ask-on-page-setup");
+      const lifted = overlay && getComputedStyle(overlay).position === "absolute";
+      this._morphTo = lifted
+        ? Math.max(bar.querySelector(".findbar-container")?.offsetHeight || 0, 36)
+        : bar.scrollHeight;
+    }
+    const stopBtn = this.chatContainer?.querySelector("#stop-generation");
+    this._flyAskButton("expand", from, this._controlBox(stopBtn), "stop");
+  },
+
   /**
    * Move the Ask pill between the find row and the chat input, along an arc.
-   * The real buttons stay hidden until the flight lands.
+   * The real button stays hidden until the flight lands.
    * @param {"expand"|"collapse"} direction
    * @param {{ left: number, top: number, width: number, height: number }|null} askBox
    * @param {{ left: number, top: number, width: number, height: number }|null} sendBox
+   * @param {"send"|"stop"} [morph]
    */
-  _flyAskButton(direction, askBox, sendBox) {
+  _flyAskButton(direction, askBox, sendBox, morph = "send") {
     this._clearAskFlight();
     if (!askBox || !sendBox || !this.findbar) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -1862,18 +1891,34 @@ const askOnPageFindbar = {
     }
 
     const askStyle = getComputedStyle(askBtn);
-    const sendBtn = this.chatContainer?.querySelector("#send-prompt");
-    const sendStyle = sendBtn ? getComputedStyle(sendBtn) : askStyle;
+    const targetBtn = this.chatContainer?.querySelector(morph === "stop" ? "#stop-generation" : "#send-prompt");
+    const targetStyle = targetBtn ? getComputedStyle(targetBtn) : askStyle;
     const radiusOf = (style) => parseFloat(style.borderTopLeftRadius) || 0;
 
     const flyer = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
     flyer.className = "ask-on-page-ask-flight";
     flyer.setAttribute("aria-hidden", "true");
     if (direction === "collapse") flyer.setAttribute("data-reverse", "true");
-    flyer.textContent = (askBtn.textContent || "Ask").trim();
     flyer.style.setProperty("font", askStyle.font, "important");
     flyer.style.setProperty("color", askStyle.color, "important");
-    flyer.style.setProperty("background-color", askStyle.backgroundColor, "important");
+    flyer.style.setProperty("--ask-flight-bg", askStyle.backgroundColor);
+    if (morph === "stop") {
+      flyer.setAttribute("data-morph", "stop");
+      const label = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+      label.className = "ask-on-page-ask-flight-label";
+      label.textContent = (askBtn.textContent || "Ask").trim();
+      flyer.appendChild(label);
+      const svg = targetBtn?.querySelector("svg");
+      if (svg) {
+        const icon = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+        icon.className = "ask-on-page-ask-flight-stop";
+        icon.appendChild(svg.cloneNode(true));
+        flyer.appendChild(icon);
+      }
+    } else {
+      flyer.textContent = (askBtn.textContent || "Ask").trim();
+      flyer.style.setProperty("background-color", askStyle.backgroundColor, "important");
+    }
 
     const setLen = (name, value) => flyer.style.setProperty(name, `${value}px`);
     setLen("--ask-flight-left", askBox.left);
@@ -1883,7 +1928,7 @@ const askOnPageFindbar = {
     setLen("--ask-flight-w1", sendBox.width);
     setLen("--ask-flight-h1", sendBox.height);
     setLen("--ask-flight-r0", radiusOf(askStyle));
-    setLen("--ask-flight-r1", radiusOf(sendStyle));
+    setLen("--ask-flight-r1", radiusOf(targetStyle));
     setLen("--ask-flight-dx", dx);
     setLen("--ask-flight-dy", dy);
     /* Bow inward over the bar. A rightward arc would leave the window. */
@@ -1962,11 +2007,19 @@ const askOnPageFindbar = {
       if (isChanged) {
         const askBtn = this.askButton || this.findbar.querySelector("#findbar-ask");
         const askBox = askBtn?.hasAttribute("data-show-ask") ? this._controlBox(askBtn) : null;
-        this._morphFindbarHeight(() => {
-          openChat();
-          const sendBtn = this.chatContainer?.querySelector("#send-prompt");
-          this._flyAskButton("expand", askBox, this._controlBox(sendBtn));
-        }, 350);
+        const deferFlight = this._deferAskFlight;
+        this._deferAskFlight = false;
+        if (deferFlight) {
+          /* Sending lays out the stop button after this. Fly once it exists. */
+          this._askFlightFrom = askBox;
+          this._morphFindbarHeight(openChat, 350);
+        } else {
+          this._morphFindbarHeight(() => {
+            openChat();
+            const sendBtn = this.chatContainer?.querySelector("#send-prompt");
+            this._flyAskButton("expand", askBox, this._controlBox(sendBtn), "send");
+          }, 350);
+        }
       } else openChat();
       if (isChanged) this.focusPrompt();
       const messagesContainer = this?.chatContainer?.querySelector("#chat-messages");
@@ -1978,20 +2031,19 @@ const askOnPageFindbar = {
         this._abortController?.abort(); // Stop messsage if it is running
       }
       if (isChanged) {
-        const sendBtn = this.chatContainer?.querySelector("#send-prompt");
-        const sendBox = this._controlBox(sendBtn);
+        const action = this._chatActionTarget();
         const flyBack = this._askWillShow();
         this.findbar.classList.add("ai-collapsing");
         this._morphFindbarHeight(() => {
           this.findbar.classList.remove("ai-expanded");
-          if (!flyBack) {
+          if (!flyBack || !action) {
             this._clearAskFlight();
             return;
           }
           const askBtn = this.askButton || this.findbar.querySelector("#findbar-ask");
           askBtn?.setAttribute("data-show-ask", "true");
           this.findbar.setAttribute("data-show-ask", "true");
-          this._flyAskButton("collapse", this._controlBox(askBtn), sendBox);
+          this._flyAskButton("collapse", this._controlBox(askBtn), action.box, action.morph);
         }, 260);
         setTimeout(() => {
           if (this._isExpanded) return;
@@ -2397,12 +2449,14 @@ const askOnPageFindbar = {
 
     this.show();
     if (!this.expanded) {
+      this._deferAskFlight = true;
       this.expanded = true;
     } else if (!this.chatContainer && !this.apiKeyContainer) {
       this.showAIInterface();
     }
 
     if (this._needsApiKeySetup()) {
+      this._askFlightFrom = null;
       this._pendingPrompt = prompt;
       if (!this.apiKeyContainer) {
         this.showAIInterface();
@@ -2417,6 +2471,7 @@ const askOnPageFindbar = {
     this.addChatMessage({ role: "user", content: prompt });
     const messagesContainer = this.chatContainer?.querySelector("#chat-messages");
     if (!messagesContainer) {
+      this._askFlightFrom = null;
       PREFS.debugError("Chat UI is unavailable.");
       return;
     }
@@ -2437,6 +2492,7 @@ const askOnPageFindbar = {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     this._currentAIMessageDiv = aiMessageDiv;
+    this._finishDeferredAskFlight();
 
     try {
       const resultPromise = askOnPageFindbarLLM.sendMessage(prompt, this._abortController.signal);
