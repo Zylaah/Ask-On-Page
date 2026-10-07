@@ -1816,6 +1816,111 @@ const askOnPageFindbar = {
     setTimeout(done, ms + 80);
   },
 
+  _clearAskFlight() {
+    this._askFlightGen = (this._askFlightGen || 0) + 1;
+    this._askFlightEl?.remove();
+    this._askFlightEl = null;
+    this.findbar?.removeAttribute("data-ask-flight");
+  },
+
+  /** Whether the find-row Ask button will be on screen in normal mode. */
+  _askWillShow() {
+    const result =
+      this._lastMatchResult && typeof this._lastMatchResult.total === "number"
+        ? this._lastMatchResult
+        : { searchString: "", total: 1 };
+    const searchString = (result.searchString ?? "").trim();
+    return searchString !== "" && result.total === 0;
+  },
+
+  _controlBox(el) {
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return null;
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+  },
+
+  /**
+   * Move the Ask pill between the find row and the chat input, along an arc.
+   * The real buttons stay hidden until the flight lands.
+   * @param {"expand"|"collapse"} direction
+   * @param {{ left: number, top: number, width: number, height: number }|null} askBox
+   * @param {{ left: number, top: number, width: number, height: number }|null} sendBox
+   */
+  _flyAskButton(direction, askBox, sendBox) {
+    this._clearAskFlight();
+    if (!askBox || !sendBox || !this.findbar) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const askBtn = this.askButton || this.findbar.querySelector("#findbar-ask");
+    if (!askBtn) return;
+
+    const dx = sendBox.left - askBox.left;
+    const dy = sendBox.top - askBox.top;
+    if (Math.hypot(dx, dy) < 1 && Math.abs(sendBox.width - askBox.width) < 1 && Math.abs(sendBox.height - askBox.height) < 1) {
+      return;
+    }
+
+    const askStyle = getComputedStyle(askBtn);
+    const sendBtn = this.chatContainer?.querySelector("#send-prompt");
+    const sendStyle = sendBtn ? getComputedStyle(sendBtn) : askStyle;
+    const radiusOf = (style) => parseFloat(style.borderTopLeftRadius) || 0;
+
+    const flyer = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    flyer.className = "ask-on-page-ask-flight";
+    flyer.setAttribute("aria-hidden", "true");
+    if (direction === "collapse") flyer.setAttribute("data-reverse", "true");
+    flyer.textContent = (askBtn.textContent || "Ask").trim();
+    flyer.style.setProperty("font", askStyle.font, "important");
+    flyer.style.setProperty("color", askStyle.color, "important");
+    flyer.style.setProperty("background-color", askStyle.backgroundColor, "important");
+
+    const setLen = (name, value) => flyer.style.setProperty(name, `${value}px`);
+    setLen("--ask-flight-left", askBox.left);
+    setLen("--ask-flight-top", askBox.top);
+    setLen("--ask-flight-w0", askBox.width);
+    setLen("--ask-flight-h0", askBox.height);
+    setLen("--ask-flight-w1", sendBox.width);
+    setLen("--ask-flight-h1", sendBox.height);
+    setLen("--ask-flight-r0", radiusOf(askStyle));
+    setLen("--ask-flight-r1", radiusOf(sendStyle));
+    setLen("--ask-flight-dx", dx);
+    setLen("--ask-flight-dy", dy);
+    /* Bow inward over the bar. A rightward arc would leave the window. */
+    setLen("--ask-flight-mx", dx / 2 - Math.abs(dy) * 0.28);
+    setLen("--ask-flight-my", dy / 2);
+
+    const gen = (this._askFlightGen = (this._askFlightGen || 0) + 1);
+    const ms = direction === "collapse" ? 260 : 350;
+    this._askFlightEl = flyer;
+    this.findbar.setAttribute("data-ask-flight", "true");
+
+    const finish = (event) => {
+      if (event?.propertyName && event.propertyName !== "--ask-on-page-flight-p") return;
+      if (this._askFlightGen !== gen) return;
+      this._clearAskFlight();
+    };
+
+    if (direction === "collapse") {
+      flyer.style.setProperty("transition", "none", "important");
+      flyer.style.setProperty("--ask-on-page-flight-p", "1");
+    }
+    (this.findbar.parentNode || document.documentElement).appendChild(flyer);
+    /* Commit the start pose so the progress change actually transitions. */
+    void flyer.offsetWidth;
+    flyer.addEventListener("transitionend", finish);
+    setTimeout(finish, ms + 80);
+
+    requestAnimationFrame(() => {
+      if (this._askFlightGen !== gen) return;
+      if (direction === "collapse") {
+        flyer.style.removeProperty("transition");
+        void flyer.offsetWidth;
+      }
+      flyer.style.setProperty("--ask-on-page-flight-p", direction === "collapse" ? "0" : "1");
+    });
+  },
+
   /**
    * Apply fixed findbar width.
    */
@@ -1854,8 +1959,15 @@ const askOnPageFindbar = {
         this.show();
         this.showAIInterface();
       };
-      if (isChanged) this._morphFindbarHeight(openChat, 350);
-      else openChat();
+      if (isChanged) {
+        const askBtn = this.askButton || this.findbar.querySelector("#findbar-ask");
+        const askBox = askBtn?.hasAttribute("data-show-ask") ? this._controlBox(askBtn) : null;
+        this._morphFindbarHeight(() => {
+          openChat();
+          const sendBtn = this.chatContainer?.querySelector("#send-prompt");
+          this._flyAskButton("expand", askBox, this._controlBox(sendBtn));
+        }, 350);
+      } else openChat();
       if (isChanged) this.focusPrompt();
       const messagesContainer = this?.chatContainer?.querySelector("#chat-messages");
       if (messagesContainer) {
@@ -1866,9 +1978,20 @@ const askOnPageFindbar = {
         this._abortController?.abort(); // Stop messsage if it is running
       }
       if (isChanged) {
+        const sendBtn = this.chatContainer?.querySelector("#send-prompt");
+        const sendBox = this._controlBox(sendBtn);
+        const flyBack = this._askWillShow();
         this.findbar.classList.add("ai-collapsing");
         this._morphFindbarHeight(() => {
           this.findbar.classList.remove("ai-expanded");
+          if (!flyBack) {
+            this._clearAskFlight();
+            return;
+          }
+          const askBtn = this.askButton || this.findbar.querySelector("#findbar-ask");
+          askBtn?.setAttribute("data-show-ask", "true");
+          this.findbar.setAttribute("data-show-ask", "true");
+          this._flyAskButton("collapse", this._controlBox(askBtn), sendBox);
         }, 260);
         setTimeout(() => {
           if (this._isExpanded) return;
@@ -2724,6 +2847,7 @@ const askOnPageFindbar = {
     this._overrideFindbarMatchesDisplay();
   },
   destroy() {
+    this._clearAskFlight();
     this._removeFindFieldPlaceholderGuard();
     this.findbar = null;
     setTimeout(() => this._updateFindbarDimensions(), 10);

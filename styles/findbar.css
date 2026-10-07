@@ -1,3 +1,9 @@
+@property --ask-on-page-flight-p {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 @keyframes pulse {
   0% {
     opacity: 0.4;
@@ -1022,6 +1028,59 @@
     &[data-show-ask="true"] .findbar-find-next {
       display: none !important;
     }
+
+    /* The flying Ask pill is the one on screen until it lands. */
+    &[data-ask-flight] :is(#findbar-ask, #send-prompt) {
+      visibility: hidden !important;
+    }
+  }
+}
+
+/* Ask pill flying between the find row and the chat send button.
+   Progress drives a quadratic arc, same idea as Zen's library badge. */
+.ask-on-page-ask-flight {
+  --ask-on-page-flight-p: 0;
+  --ask-flight-u: calc(1 - var(--ask-on-page-flight-p));
+  --ask-flight-tx: calc(
+    2 * var(--ask-flight-u) * var(--ask-on-page-flight-p) * var(--ask-flight-mx) +
+      var(--ask-on-page-flight-p) * var(--ask-on-page-flight-p) * var(--ask-flight-dx)
+  );
+  --ask-flight-ty: calc(
+    2 * var(--ask-flight-u) * var(--ask-on-page-flight-p) * var(--ask-flight-my) +
+      var(--ask-on-page-flight-p) * var(--ask-on-page-flight-p) * var(--ask-flight-dy)
+  );
+
+  position: fixed !important;
+  z-index: 2147483646 !important;
+  left: var(--ask-flight-left) !important;
+  top: var(--ask-flight-top) !important;
+  width: calc(
+    var(--ask-flight-w0) + (var(--ask-flight-w1) - var(--ask-flight-w0)) * var(--ask-on-page-flight-p)
+  ) !important;
+  height: calc(
+    var(--ask-flight-h0) + (var(--ask-flight-h1) - var(--ask-flight-h0)) * var(--ask-on-page-flight-p)
+  ) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  border-radius: calc(
+    var(--ask-flight-r0) + (var(--ask-flight-r1) - var(--ask-flight-r0)) * var(--ask-on-page-flight-p)
+  ) !important;
+  corner-shape: round !important;
+  transform: translate(var(--ask-flight-tx), var(--ask-flight-ty)) !important;
+  transform-origin: top left !important;
+  transition: --ask-on-page-flight-p 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+
+  &[data-reverse] {
+    transition-duration: 260ms !important;
+    transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
   }
 }
 
