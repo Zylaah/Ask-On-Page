@@ -775,11 +775,12 @@
         /* no horizontal padding — shell uses its own internal spacing */
         padding: 0 !important;
         box-sizing: border-box;
+		corner-shape: round !important;
       }
 
       @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
         .ai-chat-input-group {
-          background: var(--ask-on-page-dialog-bg) !important;
+          background: color-mix(in srgb, var(--zen-primary-color) 65%, white) !important !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
 
