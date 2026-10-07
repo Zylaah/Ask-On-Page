@@ -161,6 +161,7 @@
       pointer-events: auto !important;
       box-sizing: border-box !important;
       opacity: 0.55 !important;
+      corner-shape: round !important;
 
       label {
         display: none !important;
