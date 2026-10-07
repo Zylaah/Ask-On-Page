@@ -221,7 +221,7 @@
         opacity: 1 !important;
         margin: 0 !important;
         order: unset !important;
-        background-color: var(--ask-on-page-close-bg) !important;
+        background-color: transparent !important;
 
         &:hover {
           background-color: rgba(194, 194, 194, 0.2) !important;
