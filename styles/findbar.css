@@ -729,7 +729,7 @@
         &:not(:empty) ~ .ai-chat-input-group {
           border: none !important;
           margin: 5px !important;
-          background: color-mix(in srgb, var(--zen-primary-color) 65%, white) !important;
+          background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
           border-radius: 6px;
         }
       }
@@ -780,12 +780,12 @@
 
       @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
         .ai-chat-input-group {
-          background: color-mix(in srgb, var(--zen-primary-color) 65%, white) !important !important;
+          background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
 
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
-          background: color-mix(in srgb, var(--zen-primary-color) 65%, white) !important !important;
+          background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
       }
