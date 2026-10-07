@@ -775,17 +775,17 @@
         /* no horizontal padding — shell uses its own internal spacing */
         padding: 0 !important;
         box-sizing: border-box;
-		corner-shape: round !important;
+		    corner-shape: round !important;
       }
 
       @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
         .ai-chat-input-group {
-          background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
+          background: transparent !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
 
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {
-          background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
+          background: transparent !important;
           backdrop-filter: var(--ask-on-page-dialog-backdrop-filter);
         }
       }
@@ -794,14 +794,13 @@
         display: flex;
         align-items: flex-end;
         gap: 8px;
-        background: transparent !important;
+        background: rgb(219, 219, 219, 0.4) !important;
         color-scheme: light;
         /* box-sizing so that width:100% + border don't cause overflow */
         box-sizing: border-box !important;
         width: 100%;
         /* left padding is 10px; textarea adds its own 2px cursor clearance */
         padding: 5px 5px 5px 5px;
-        border-radius: 14px;
         /* ensure children are never clipped */
         overflow: visible !important;
 
