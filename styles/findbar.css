@@ -1,17 +1,12 @@
-@keyframes glass-disappear {
-  0% {
-    backdrop-filter: blur(10px);
-    opacity: 1;
-  }
-
-  99% {
-    backdrop-filter: blur(10px);
-    opacity: 0.1;
-  }
-
-  100% {
-    backdrop-filter: none;
+@keyframes findbar-content-in {
+  from {
     opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -104,21 +99,31 @@
     color-scheme: dark;
     z-index: 9999;
     opacity: 1;
+    transform: none;
+    transform-origin: top center;
+    transition:
+      opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 
-    &:is([hidden="true"]) {
-      visibility: inherit !important;
+    &:is([hidden], [hidden="true"]) {
+      display: flex !important;
+      visibility: visible !important;
       pointer-events: none !important;
       opacity: 0 !important;
-      top: 0 !important;
-      animation: glass-disappear 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      animation-fill-mode: forwards !important;
-      filter: blur(5px);
-      transform: translateY(-10px);
+      transform: translateY(6px) scale(0.98) !important;
+      transition-duration: 200ms !important;
+      transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
+    }
+
+    &.ai-collapsing {
+      transition-duration: 260ms !important;
+      transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
     }
 
     min-height: 36px !important;
     align-items: stretch !important;
-    overflow: visible !important;
+    overflow: hidden !important;
 
     .close-icon.findbar-closebutton {
       margin: 0 !important;
@@ -136,10 +141,19 @@
       outline: none !important;
       border: none !important;
       border-radius: 4px !important;
+      position: absolute !important;
+      top: 6px !important;
+      right: 6px !important;
       transition:
         opacity 0.15s ease,
         background-color 0.15s ease,
-        scale 0.15s ease !important;
+        scale 0.15s ease,
+        top 350ms cubic-bezier(0.22, 1, 0.36, 1),
+        right 350ms cubic-bezier(0.22, 1, 0.36, 1),
+        width 350ms cubic-bezier(0.22, 1, 0.36, 1),
+        height 350ms cubic-bezier(0.22, 1, 0.36, 1),
+        min-width 350ms cubic-bezier(0.22, 1, 0.36, 1),
+        min-height 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -180,15 +194,13 @@
         flex: 1 1 auto !important;
         min-width: 0 !important;
         order: 1 !important;
-        padding: 0 4px 0 10px !important;
+        padding: 0 40px 0 10px !important;
       }
 
       .findbar-closebutton {
         display: inline-flex !important;
-        position: static !important;
-        order: 2 !important;
         transform: none !important;
-        margin-inline-end: 6px !important;
+        margin-inline-end: 0 !important;
         opacity: 0.72 !important;
         background-color: transparent !important;
 
@@ -204,7 +216,12 @@
 
     &.ai-expanded {
       .findbar-container {
-        display: none !important;
+        position: absolute !important;
+        inset-inline: 0 !important;
+        top: 0 !important;
+        opacity: 0 !important;
+        transform: translateY(-4px) !important;
+        pointer-events: none !important;
       }
 
       .findbar-closebutton {
@@ -221,11 +238,11 @@
         opacity: 1 !important;
         margin: 0 !important;
         order: unset !important;
-        background-color: transparent !important;
+        background-color: rgba(194, 194, 194, 0.1) !important;
         corner-shape: round !important;
 
         &:hover {
-          background-color: rgba(194, 194, 194, 0.2) !important;
+          background-color: rgba(194, 194, 194, 0.3) !important;
           opacity: 1 !important;
         }
 
@@ -261,6 +278,10 @@
       margin-bottom: 0 !important;
       margin-inline-start: 0 !important;
       row-gap: 0 !important;
+      opacity: 1;
+      transition:
+        opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 280ms cubic-bezier(0.22, 1, 0.36, 1) !important;
       height: 36px !important;
       min-height: 36px !important;
       width: 100% !important;
@@ -660,6 +681,23 @@
           }
         }
       }
+    }
+
+    :is(.ask-on-page-chat, .ask-on-page-setup) {
+      animation: findbar-content-in 320ms cubic-bezier(0.22, 1, 0.36, 1) 40ms backwards;
+    }
+
+    &.ai-collapsing:not(.ai-expanded) :is(.ask-on-page-chat, .ask-on-page-setup) {
+      position: absolute !important;
+      inset-inline: 0 !important;
+      top: 0 !important;
+      opacity: 0 !important;
+      transform: translateY(4px) !important;
+      pointer-events: none !important;
+      animation: none !important;
+      transition:
+        opacity 180ms cubic-bezier(0.4, 0, 1, 1),
+        transform 180ms cubic-bezier(0.4, 0, 1, 1) !important;
     }
 
     .ask-on-page-chat {

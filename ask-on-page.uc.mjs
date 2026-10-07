@@ -1774,6 +1774,49 @@ const askOnPageFindbar = {
   },
 
   /**
+   * Ease the findbar's height around a layout change. Width stays fixed.
+   * @param {() => void} mutate
+   * @param {number} ms
+   */
+  _morphFindbarHeight(mutate, ms) {
+    const bar = this.findbar;
+    if (!bar) {
+      mutate();
+      return;
+    }
+    const gen = (this._morphGen = (this._morphGen || 0) + 1);
+    const from = bar.getBoundingClientRect().height;
+    mutate();
+    const overlay = bar.querySelector(".ask-on-page-chat, .ask-on-page-setup");
+    const overlayLifted = overlay && getComputedStyle(overlay).position === "absolute";
+    const to = overlayLifted
+      ? Math.max(bar.querySelector(".findbar-container")?.offsetHeight || 0, 36)
+      : bar.scrollHeight;
+    if (Math.abs(to - from) < 1) {
+      bar.style.removeProperty("height");
+      bar.style.removeProperty("transition-duration");
+      return;
+    }
+    bar.style.setProperty("transition-duration", `${ms}ms`, "important");
+    bar.style.setProperty("height", `${from}px`, "important");
+    void bar.offsetHeight;
+    requestAnimationFrame(() => {
+      if (this._morphGen !== gen) return;
+      bar.style.setProperty("height", `${to}px`, "important");
+    });
+    const done = (event) => {
+      if (event?.propertyName && event.propertyName !== "height") return;
+      if (this._morphGen !== gen) return;
+      this._morphGen += 1;
+      bar.style.removeProperty("height");
+      bar.style.removeProperty("transition-duration");
+      bar.removeEventListener("transitionend", done);
+    };
+    bar.addEventListener("transitionend", done);
+    setTimeout(done, ms + 80);
+  },
+
+  /**
    * Apply fixed findbar width.
    */
   _applyFindbarDimensions() {
@@ -1805,9 +1848,14 @@ const askOnPageFindbar = {
     }
 
     if (value) {
-      this.findbar.classList.add("ai-expanded");
-      this.show();
-      this.showAIInterface();
+      const openChat = () => {
+        this.findbar.classList.remove("ai-collapsing");
+        this.findbar.classList.add("ai-expanded");
+        this.show();
+        this.showAIInterface();
+      };
+      if (isChanged) this._morphFindbarHeight(openChat, 350);
+      else openChat();
       if (isChanged) this.focusPrompt();
       const messagesContainer = this?.chatContainer?.querySelector("#chat-messages");
       if (messagesContainer) {
@@ -1817,9 +1865,21 @@ const askOnPageFindbar = {
       if (this._isStreaming) {
         this._abortController?.abort(); // Stop messsage if it is running
       }
-      this.findbar.classList.remove("ai-expanded");
-      this.removeAIInterface();
-      if (isChanged) this.focusInput();
+      if (isChanged) {
+        this.findbar.classList.add("ai-collapsing");
+        this._morphFindbarHeight(() => {
+          this.findbar.classList.remove("ai-expanded");
+        }, 260);
+        setTimeout(() => {
+          if (this._isExpanded) return;
+          this.removeAIInterface();
+          this.findbar?.classList.remove("ai-collapsing");
+        }, 260);
+        this.focusInput();
+      } else {
+        this.findbar.classList.remove("ai-expanded");
+        this.removeAIInterface();
+      }
       if (this._lastMatchResult && typeof this._lastMatchResult.total === "number") {
         this._updateAskButtonVisibility(this.findbar, this._lastMatchResult);
       } else {
