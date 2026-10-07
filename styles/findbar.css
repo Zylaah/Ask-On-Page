@@ -193,7 +193,7 @@
         background-color: transparent !important;
 
         &:hover {
-          background-color: var(--ask-on-page-close-bg-hover) !important;
+          background-color: rgba(194, 194, 194, 0.2) !important;
         }
 
         &:active {
@@ -463,6 +463,7 @@
         background: var(--ask-on-page-primary-bg) !important;
         color: var(--ask-on-page-action-fg) !important;
         transition: opacity 0.15s ease;
+        corner-shape: round !important;
 
         &[data-show-ask="true"] {
           display: inline-flex !important;
