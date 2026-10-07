@@ -20,7 +20,7 @@
     var(--browser-primary-color) 28%,
     transparent 72%
   );
-  --ask-on-page-muted: #71717a;
+  --ask-on-page-muted: #e7e7e7;
   --ask-on-page-findbar-shine-width: 0.5px;
   --ask-on-page-findbar-shine:
     linear-gradient(to right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.2) 65%, rgba(255, 255, 255, 0.08)),
