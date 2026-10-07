@@ -68,7 +68,7 @@
       backdrop-filter: var(--ask-on-page-dialog-backdrop-filter) !important;
       /* Blur resamples the page on every frame of a transform and flashes
          anything translucent on top of it. Hold it off until the slide ends. */
-      transition: backdrop-filter 0s linear 480ms !important;
+      transition: backdrop-filter 0s linear 260ms !important;
     }
 
     /* Hairline ring, same mask trick as Zia's tabs and folders. */
@@ -93,7 +93,7 @@
     transform: none;
     transform-origin: top right;
     transition:
-      transform 480ms cubic-bezier(0.22, 1.35, 0.36, 1),
+      transform 260ms cubic-bezier(0.22, 1.35, 0.36, 1),
       height 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 
     &:is([hidden], [hidden="true"]) {
@@ -101,7 +101,7 @@
       visibility: visible !important;
       pointer-events: none !important;
       transform: translateY(calc(-100% - 24px)) !important;
-      transition-duration: 120ms !important;
+      transition-duration: 70ms !important;
       transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
 
       &::before {
