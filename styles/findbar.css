@@ -895,6 +895,7 @@
         white-space: nowrap !important;
         background: var(--ask-on-page-primary-bg) !important;
         color: var(--ask-on-page-action-fg) !important;
+        corner-shape: round !important;
       }
 
       .stop-btn {
@@ -912,7 +913,7 @@
         z-index: 2;
         background: transparent !important;
         color: inherit !important;
-
+        corner-shape: round !important;
         svg {
           display: block !important;
           width: 30px !important;
