@@ -729,7 +729,7 @@
         &:not(:empty) ~ .ai-chat-input-group {
           border: none !important;
           margin: 5px !important;
-          background: var(--ask-on-page-chat-input-shell-bg, #252525);
+          background: color-mix(in srgb, var(--zen-primary-color) 65%, white) !important;
           border-radius: 6px;
         }
       }
