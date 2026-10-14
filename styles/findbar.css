@@ -100,7 +100,7 @@
       display: flex !important;
       visibility: visible !important;
       pointer-events: none !important;
-      transform: translateY(calc(-100% - 24px)) !important;
+      transform: translateY(calc(-100% - 74px)) !important;
       transition-duration: 70ms !important;
       transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
 
