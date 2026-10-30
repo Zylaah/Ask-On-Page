@@ -1186,3 +1186,11 @@
   --fgColor-muted: var(--ask-on-page-user-message-color);
   --fgColor-accent: var(--ask-on-page-user-message-color);
 }
+
+.ask-on-page-chat .chat-message-ai .message-content,
+.ask-on-page-chat .chat-message-ai .markdown-body {
+  color: var(--ask-on-page-ai-message-color) !important;
+  --fgColor-default: var(--ask-on-page-ai-message-color);
+  --fgColor-muted: var(--ask-on-page-ai-message-muted);
+  --fgColor-accent: var(--ask-on-page-ai-message-accent);
+}

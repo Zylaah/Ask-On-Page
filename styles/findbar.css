@@ -806,8 +806,8 @@
         display: flex;
         align-items: flex-end;
         gap: 8px;
-        background: rgb(219, 219, 219, 0.4) !important;
-        color-scheme: light;
+        background: var(--ask-on-page-chat-input-shell-bg) !important;
+        color: var(--ask-on-page-chat-input-fg);
         /* box-sizing so that width:100% + border don't cause overflow */
         box-sizing: border-box !important;
         width: 100%;
@@ -832,14 +832,14 @@
           box-shadow: none !important;
           font-size: 14px !important;
           line-height: 1.5 !important;
-          color: var(--ask-on-page-chat-input-fg, #18181b) !important;
-          caret-color: var(--ask-on-page-chat-input-fg, #18181b) !important;
+          color: var(--ask-on-page-chat-input-fg) !important;
+          caret-color: var(--ask-on-page-chat-input-fg) !important;
           --focus-outline: none !important;
           --focus-outline-inset: 0 !important;
           outline: none !important;
 
           &::placeholder {
-            color: #19191a !important;
+            color: var(--ask-on-page-chat-input-fg) !important;
             opacity: 0.8;
             margin-bottom: 2px;
           }
