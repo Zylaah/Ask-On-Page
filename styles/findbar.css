@@ -789,6 +789,44 @@
 		    corner-shape: round !important;
       }
 
+      .ai-jump-bottom {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        transform: translate(-50%, -60%);
+        z-index: 6;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        margin: 0;
+        border: none;
+        border-radius: 50%;
+        corner-shape: round;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: var(--ask-on-page-chat-input-shell-bg);
+        color: var(--ask-on-page-fg);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+        appearance: none;
+        outline: none;
+
+        &[hidden] {
+          display: none !important;
+        }
+
+        &:hover {
+          opacity: 0.92;
+        }
+
+        svg {
+          width: 16px;
+          height: 16px;
+          display: block;
+        }
+      }
+
       @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "acrylic") {
         .ai-chat-input-group,
         .ai-chat-messages:not(:empty) ~ .ai-chat-input-group {

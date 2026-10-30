@@ -607,7 +607,7 @@ const messageManagerAPI = {
       return { ...page, contentSource: "page" };
     }
 
-    if (_youtubeTranscriptCache.url === page.url && _youtubeTranscriptCache.transcript) {
+    if (_youtubeTranscriptCache.videoId === videoId && _youtubeTranscriptCache.transcript) {
       return {
         url: page.url,
         title: page.title,
@@ -626,7 +626,7 @@ const messageManagerAPI = {
 
     try {
       const transcript = await fetchYouTubeTranscript(videoId, locale);
-      _youtubeTranscriptCache = { url: page.url, transcript };
+      _youtubeTranscriptCache = { url: page.url, videoId, transcript };
       PREFS.debugLog("Using YouTube transcript for page context:", videoId);
       return {
         url: page.url,
@@ -827,7 +827,7 @@ async function fetchYouTubeTranscript(videoIdOrUrl, locale) {
   return transcriptText;
 }
 
-let _youtubeTranscriptCache = { url: null, transcript: null };
+let _youtubeTranscriptCache = { url: null, videoId: null, transcript: null };
 
 /**
  * Creates a unique signature for a keyboard shortcut.
@@ -1717,6 +1717,11 @@ const askOnPageFindbar = {
   _currentAIMessageDiv: null,
   /** User question held while the API-key setup panel is shown. */
   _pendingPrompt: null,
+  _stickToBottom: true,
+  _ignoreMessageScroll: false,
+  _youtubeContextKey: undefined,
+  _youtubeNavTimer: null,
+  _tabsProgressListener: null,
 
   _placeholderObserver: null,
   _placeholderField: null,
@@ -1771,6 +1776,7 @@ const askOnPageFindbar = {
     document.documentElement.style.setProperty("--findbar-height", `${_findbarDimension.height}px`);
     document.documentElement.style.setProperty("--findbar-x", `${_findbarCoors.x}px`);
     document.documentElement.style.setProperty("--findbar-y", `${_findbarCoors.y}px`);
+    this._syncJumpToBottom();
   },
 
   /**
@@ -2034,10 +2040,8 @@ const askOnPageFindbar = {
         }
       } else openChat();
       if (isChanged) this.focusPrompt();
-      const messagesContainer = this?.chatContainer?.querySelector("#chat-messages");
-      if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
+      this._stickToBottom = true;
+      this._maybeAutoScroll();
     } else {
       if (this._isStreaming) {
         this._abortController?.abort(); // Stop messsage if it is running
@@ -2093,6 +2097,7 @@ const askOnPageFindbar = {
   },
 
   updateFindbar() {
+    this._youtubeContextKey = getYouTubeVideoId(gBrowser.currentURI?.spec) || null;
     SettingsModal.hide();
     this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
@@ -2289,12 +2294,61 @@ const askOnPageFindbar = {
   clear() {
     askOnPageFindbarLLM.clearData();
     this._pendingPrompt = null;
+    this._stickToBottom = true;
     if (this.findbar) {
       this.findbar.history = null;
     }
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) messages.innerHTML = "";
+    this._syncJumpToBottom();
     setTimeout(() => this._updateFindbarDimensions(), 1);
+  },
+
+  _messagesEl() {
+    return this.chatContainer?.querySelector("#chat-messages") || null;
+  },
+
+  _isNearBottom(el, threshold = 64) {
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+  },
+
+  _scrollMessagesToBottom() {
+    const el = this._messagesEl();
+    if (!el) return;
+    this._ignoreMessageScroll = true;
+    el.scrollTop = el.scrollHeight;
+    requestAnimationFrame(() => {
+      this._ignoreMessageScroll = false;
+    });
+  },
+
+  _maybeAutoScroll() {
+    if (this._stickToBottom) this._scrollMessagesToBottom();
+    this._syncJumpToBottom();
+  },
+
+  _onMessagesScroll() {
+    if (this._ignoreMessageScroll) return;
+    const el = this._messagesEl();
+    if (!el) return;
+    this._stickToBottom = this._isNearBottom(el);
+    this._syncJumpToBottom();
+  },
+
+  _jumpToBottom() {
+    this._stickToBottom = true;
+    this._scrollMessagesToBottom();
+    this._syncJumpToBottom();
+  },
+
+  _syncJumpToBottom() {
+    const btn = this.chatContainer?.querySelector(".ai-jump-bottom");
+    const el = this._messagesEl();
+    if (!btn) return;
+    const overflow = el && el.scrollHeight > el.clientHeight + 8;
+    const show = !!(overflow && !this._stickToBottom);
+    btn.hidden = !show;
   },
 
   _needsApiKeySetup() {
@@ -2479,6 +2533,7 @@ const askOnPageFindbar = {
     }
 
     this._pendingPrompt = null;
+    this._stickToBottom = true;
 
     this.addChatMessage({ role: "user", content: prompt });
     const messagesContainer = this.chatContainer?.querySelector("#chat-messages");
@@ -2501,7 +2556,7 @@ const askOnPageFindbar = {
     const contentDiv = aiMessageDiv.querySelector(".markdown-body");
     if (messagesContainer) {
       messagesContainer.appendChild(aiMessageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      this._maybeAutoScroll();
     }
     this._currentAIMessageDiv = aiMessageDiv;
     this._finishDeferredAskFlight();
@@ -2512,7 +2567,7 @@ const askOnPageFindbar = {
       if (!PREFS.streamEnabled) {
         const loadingIndicator = this.createLoadingIndicator();
         messagesContainer.appendChild(loadingIndicator);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        this._maybeAutoScroll();
 
         try {
           const result = await resultPromise;
@@ -2525,7 +2580,7 @@ const askOnPageFindbar = {
           }
         } finally {
           if (loadingIndicator.parentNode) loadingIndicator.remove();
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          this._maybeAutoScroll();
           setTimeout(() => this._updateFindbarDimensions(), 0);
         }
       } else {
@@ -2539,9 +2594,7 @@ const askOnPageFindbar = {
             PREFS.debugError("Markdown render failed:", e.message);
           }
           setTimeout(() => this._updateFindbarDimensions(), 0);
-          if (messagesContainer) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          }
+          this._maybeAutoScroll();
         }
         if (fullText.trim() === "") {
           aiMessageDiv.remove();
@@ -2727,6 +2780,11 @@ const askOnPageFindbar = {
 
   createChatInterface() {
     const chatInputGroup = `<div class="ai-chat-input-group">
+          <button type="button" class="ai-jump-bottom" hidden title="Jump to latest" aria-label="Jump to latest">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
           <div class="ai-chat-input-shell">
             <textarea id="ai-prompt" placeholder="Ask anything about this page…" rows="1"></textarea>
             <div class="ai-chat-input-actions">
@@ -2751,6 +2809,11 @@ const askOnPageFindbar = {
     const promptInput = container.querySelector("#ai-prompt");
     const sendBtn = container.querySelector("#send-prompt");
     const stopBtn = container.querySelector("#stop-generation");
+    const jumpBtn = container.querySelector(".ai-jump-bottom");
+
+    this._stickToBottom = true;
+    chatMessages.addEventListener("scroll", () => this._onMessagesScroll(), { passive: true });
+    jumpBtn.addEventListener("click", () => this._jumpToBottom());
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();
@@ -2841,13 +2904,14 @@ const askOnPageFindbar = {
 
     messageDiv.appendChild(contentDiv);
     messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    this._maybeAutoScroll();
     setTimeout(() => this._updateFindbarDimensions(), 10);
   },
 
   showAIInterface() {
     if (!this.findbar) return;
     this.removeAIInterface();
+    this._stickToBottom = true;
 
     this.findbar.classList.remove("ai-settings-active");
 
@@ -3088,6 +3152,38 @@ const askOnPageFindbar = {
     }
   },
 
+  _resetForYouTubeContextChange() {
+    if (this._isStreaming) this._abortController?.abort();
+    _youtubeTranscriptCache = { url: null, videoId: null, transcript: null };
+    askOnPageFindbarLLM.clearData();
+    this._pendingPrompt = null;
+    this._stickToBottom = true;
+    if (this.findbar) {
+      this.findbar.history = PREFS.persistChat ? [] : null;
+    }
+    const messages = this._messagesEl();
+    if (messages) messages.replaceChildren();
+    this._syncJumpToBottom();
+    setTimeout(() => this._updateFindbarDimensions(), 1);
+  },
+
+  _applyYouTubeContext(spec) {
+    const videoId = getYouTubeVideoId(spec) || null;
+    const prev = this._youtubeContextKey;
+    if (videoId === prev) return;
+    this._youtubeContextKey = videoId;
+    if (prev === undefined && !videoId) return;
+    this._resetForYouTubeContextChange();
+  },
+
+  _handleLocationChange(browser, locationURI) {
+    if (!this.enabled) return;
+    if (browser !== gBrowser.selectedBrowser) return;
+    const spec = typeof locationURI === "string" ? locationURI : locationURI?.spec || "";
+    clearTimeout(this._youtubeNavTimer);
+    this._youtubeNavTimer = setTimeout(() => this._applyYouTubeContext(spec), 80);
+  },
+
   addListeners() {
     this._updateFindbar = this.updateFindbar.bind(this);
     this._addKeymaps = this.addKeymaps.bind(this);
@@ -3098,6 +3194,12 @@ const askOnPageFindbar = {
     };
 
     gBrowser.tabContainer.addEventListener("TabSelect", this._updateFindbar);
+    this._tabsProgressListener = {
+      onLocationChange: (browser, _webProgress, _request, locationURI) => {
+        this._handleLocationChange(browser, locationURI);
+      },
+    };
+    gBrowser.addTabsProgressListener(this._tabsProgressListener);
     document.addEventListener("keydown", this._addKeymaps);
     this._handleFindbarOpenEvent = this.handleFindbarOpenEvent.bind(this);
     this._handleFindbarCloseEvent = this.handleFindbarCloseEvent.bind(this);
@@ -3124,6 +3226,12 @@ const askOnPageFindbar = {
       this.findbar._findField.removeEventListener("input", this._handleFindFieldInput);
     }
     gBrowser.tabContainer.removeEventListener("TabSelect", this._updateFindbar);
+    if (this._tabsProgressListener) {
+      gBrowser.removeTabsProgressListener(this._tabsProgressListener);
+      this._tabsProgressListener = null;
+    }
+    clearTimeout(this._youtubeNavTimer);
+    this._youtubeNavTimer = null;
     document.removeEventListener("keydown", this._addKeymaps);
     window.removeEventListener("findbaropen", this._handleFindbarOpenEvent);
     window.removeEventListener("findbarclose", this._handleFindbarCloseEvent);
@@ -3280,13 +3388,12 @@ ${pageContextBlock}`;
 
 RULES:
 1. Stay in your role throughout the dialogue.
-2. Answer from the transcript. If the transcript does not contain enough information, say so clearly. Do not invent facts or use outside knowledge.
-3. Ignore sponsor segments and promotional content when summarizing.
-4. Use Markdown, not HTML, to format your answer. Use **bold** for key terms and takeaways.
-5. Be concise but complete. For summaries, use clear bullet points; emoji headlines are fine when they help scanability.
+2. Answer only from the transcript. If it does not contain enough information, say so. Do not invent facts or use outside knowledge.
+3. Ignore sponsor segments, ads, end screens, and promotional content.
+4. Use Markdown, not HTML. Use **bold** for key terms. Do not use emojis, decorative headers, or icon bullets.
+5. Be concise. For a summary: a short overview of a few sentences, then a tight list of takeaways. Skip filler, greetings, and recaps of the recap.
 6. Respond in ${locale}. Keep short quoted phrases in the original language of the transcript when it differs from ${locale}, but write your answers in ${locale}.
 7. Do NOT use <excerpt> tags. Quote short phrases inline with Markdown when useful.
-8. You may perform translations, summaries, or other textual transformations for the user if asked.
 
 VIDEO TRANSCRIPT CONTEXT FOR OUR DIALOGUE:
 ${pageContextBlock}`;
