@@ -1006,7 +1006,7 @@
         font-style: normal;
         font-weight: 600;
         letter-spacing: 0.01em;
-        color: color-mix(in srgb, var(--zen-primary-color) 45%, white);
+        color: var(--ask-on-page-user-message-color) !important;
         display: inline-flex;
         align-items: center;
         gap: 0.35em;
