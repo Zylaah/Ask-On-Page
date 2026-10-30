@@ -110,7 +110,7 @@
       transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
     }
 
-    min-height: 36px !important;
+    min-height: 40px !important;
     align-items: stretch !important;
     overflow: hidden !important;
 
@@ -262,8 +262,8 @@
       margin-bottom: 0 !important;
       margin-inline-start: 0 !important;
       row-gap: 0 !important;
-      height: 36px !important;
-      min-height: 36px !important;
+      height: 40px !important;
+      min-height: 40px !important;
       width: 100% !important;
       box-sizing: border-box !important;
       gap: 4px !important;

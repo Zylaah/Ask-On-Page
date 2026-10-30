@@ -1793,7 +1793,7 @@ const askOnPageFindbar = {
     const overlay = bar.querySelector(".ask-on-page-chat, .ask-on-page-setup");
     const overlayLifted = overlay && getComputedStyle(overlay).position === "absolute";
     const to = overlayLifted
-      ? Math.max(bar.querySelector(".findbar-container")?.offsetHeight || 0, 36)
+      ? Math.max(bar.querySelector(".findbar-container")?.offsetHeight || 0, 40)
       : bar.scrollHeight;
     if (Math.abs(to - from) < 1) {
       bar.style.removeProperty("height");
@@ -1864,7 +1864,7 @@ const askOnPageFindbar = {
       const overlay = bar.querySelector(".ask-on-page-chat, .ask-on-page-setup");
       const lifted = overlay && getComputedStyle(overlay).position === "absolute";
       this._morphTo = lifted
-        ? Math.max(bar.querySelector(".findbar-container")?.offsetHeight || 0, 36)
+        ? Math.max(bar.querySelector(".findbar-container")?.offsetHeight || 0, 40)
         : bar.scrollHeight;
     }
     const stopBtn = this.chatContainer?.querySelector("#stop-generation");
