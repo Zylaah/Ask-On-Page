@@ -30,7 +30,7 @@
   }
 
   findbar {
-    --ask-on-page-findbar-control-height: 24px;
+    --ask-on-page-findbar-control-height: 28px;
 
     padding-inline-start: 0px !important;
     padding-top: 0 !important;
@@ -131,8 +131,7 @@
       border: none !important;
       border-radius: 4px !important;
       position: absolute !important;
-      top: 6px !important;
-      right: 6px !important;
+      right: 8px !important;
       transition:
         opacity 0.15s ease,
         background-color 0.15s ease,
@@ -456,7 +455,7 @@
         min-height: var(--ask-on-page-findbar-control-height) !important;
         max-height: var(--ask-on-page-findbar-control-height) !important;
         margin: 0 !important;
-        padding: 0 10px !important;
+        padding: 0 12px !important;
         box-sizing: border-box !important;
         border-radius: 6px !important;
         font-size: 12px !important;
