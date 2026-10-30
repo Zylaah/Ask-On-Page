@@ -17,7 +17,7 @@
   --ask-on-page-ai-message-accent: var(--ask-on-page-user-message-color);
   /* Well inverts the fill: dark primary → light veil, light primary → dark veil. */
   --ask-on-page-chat-input-shell-fill: oklch(from var(--ask-on-page-findbar-fill) calc(0.52 + sign(0.55 - l) * 0.36) calc(c * 0.12) h);
-  --ask-on-page-chat-input-shell-bg: color-mix(in srgb, var(--ask-on-page-chat-input-shell-fill) 40%, transparent);
+  --ask-on-page-chat-input-shell-bg: var(--ask-on-page-chat-input-shell-fill);
   --ask-on-page-chat-input-fg: oklch(from var(--ask-on-page-findbar-fill) calc(0.5 - sign(0.55 - l) * 0.4) 0 h);
 
   --ask-on-page-dialog-bg: var(--ask-on-page-findbar-fill);
