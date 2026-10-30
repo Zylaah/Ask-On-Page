@@ -1717,8 +1717,6 @@ const askOnPageFindbar = {
   _currentAIMessageDiv: null,
   /** User question held while the API-key setup panel is shown. */
   _pendingPrompt: null,
-  _stickToBottom: true,
-  _ignoreMessageScroll: false,
   _youtubeContextKey: undefined,
   _youtubeNavTimer: null,
   _tabsProgressListener: null,
@@ -1776,7 +1774,6 @@ const askOnPageFindbar = {
     document.documentElement.style.setProperty("--findbar-height", `${_findbarDimension.height}px`);
     document.documentElement.style.setProperty("--findbar-x", `${_findbarCoors.x}px`);
     document.documentElement.style.setProperty("--findbar-y", `${_findbarCoors.y}px`);
-    this._syncJumpToBottom();
   },
 
   /**
@@ -2040,8 +2037,10 @@ const askOnPageFindbar = {
         }
       } else openChat();
       if (isChanged) this.focusPrompt();
-      this._stickToBottom = true;
-      this._maybeAutoScroll();
+      const messagesContainer = this?.chatContainer?.querySelector("#chat-messages");
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
     } else {
       if (this._isStreaming) {
         this._abortController?.abort(); // Stop messsage if it is running
@@ -2294,61 +2293,12 @@ const askOnPageFindbar = {
   clear() {
     askOnPageFindbarLLM.clearData();
     this._pendingPrompt = null;
-    this._stickToBottom = true;
     if (this.findbar) {
       this.findbar.history = null;
     }
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) messages.innerHTML = "";
-    this._syncJumpToBottom();
     setTimeout(() => this._updateFindbarDimensions(), 1);
-  },
-
-  _messagesEl() {
-    return this.chatContainer?.querySelector("#chat-messages") || null;
-  },
-
-  _isNearBottom(el, threshold = 64) {
-    if (!el) return true;
-    return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
-  },
-
-  _scrollMessagesToBottom() {
-    const el = this._messagesEl();
-    if (!el) return;
-    this._ignoreMessageScroll = true;
-    el.scrollTop = el.scrollHeight;
-    requestAnimationFrame(() => {
-      this._ignoreMessageScroll = false;
-    });
-  },
-
-  _maybeAutoScroll() {
-    if (this._stickToBottom) this._scrollMessagesToBottom();
-    this._syncJumpToBottom();
-  },
-
-  _onMessagesScroll() {
-    if (this._ignoreMessageScroll) return;
-    const el = this._messagesEl();
-    if (!el) return;
-    this._stickToBottom = this._isNearBottom(el);
-    this._syncJumpToBottom();
-  },
-
-  _jumpToBottom() {
-    this._stickToBottom = true;
-    this._scrollMessagesToBottom();
-    this._syncJumpToBottom();
-  },
-
-  _syncJumpToBottom() {
-    const btn = this.chatContainer?.querySelector(".ai-jump-bottom");
-    const el = this._messagesEl();
-    if (!btn) return;
-    const overflow = el && el.scrollHeight > el.clientHeight + 8;
-    const show = !!(overflow && !this._stickToBottom);
-    btn.hidden = !show;
   },
 
   _needsApiKeySetup() {
@@ -2533,7 +2483,6 @@ const askOnPageFindbar = {
     }
 
     this._pendingPrompt = null;
-    this._stickToBottom = true;
 
     this.addChatMessage({ role: "user", content: prompt });
     const messagesContainer = this.chatContainer?.querySelector("#chat-messages");
@@ -2556,7 +2505,7 @@ const askOnPageFindbar = {
     const contentDiv = aiMessageDiv.querySelector(".markdown-body");
     if (messagesContainer) {
       messagesContainer.appendChild(aiMessageDiv);
-      this._maybeAutoScroll();
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     this._currentAIMessageDiv = aiMessageDiv;
     this._finishDeferredAskFlight();
@@ -2567,7 +2516,7 @@ const askOnPageFindbar = {
       if (!PREFS.streamEnabled) {
         const loadingIndicator = this.createLoadingIndicator();
         messagesContainer.appendChild(loadingIndicator);
-        this._maybeAutoScroll();
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
           const result = await resultPromise;
@@ -2580,7 +2529,7 @@ const askOnPageFindbar = {
           }
         } finally {
           if (loadingIndicator.parentNode) loadingIndicator.remove();
-          this._maybeAutoScroll();
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
           setTimeout(() => this._updateFindbarDimensions(), 0);
         }
       } else {
@@ -2594,7 +2543,9 @@ const askOnPageFindbar = {
             PREFS.debugError("Markdown render failed:", e.message);
           }
           setTimeout(() => this._updateFindbarDimensions(), 0);
-          this._maybeAutoScroll();
+          if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          }
         }
         if (fullText.trim() === "") {
           aiMessageDiv.remove();
@@ -2780,11 +2731,6 @@ const askOnPageFindbar = {
 
   createChatInterface() {
     const chatInputGroup = `<div class="ai-chat-input-group">
-          <button type="button" class="ai-jump-bottom" hidden title="Jump to latest" aria-label="Jump to latest">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
-            </svg>
-          </button>
           <div class="ai-chat-input-shell">
             <textarea id="ai-prompt" placeholder="Ask anything about this page…" rows="1"></textarea>
             <div class="ai-chat-input-actions">
@@ -2809,11 +2755,6 @@ const askOnPageFindbar = {
     const promptInput = container.querySelector("#ai-prompt");
     const sendBtn = container.querySelector("#send-prompt");
     const stopBtn = container.querySelector("#stop-generation");
-    const jumpBtn = container.querySelector(".ai-jump-bottom");
-
-    this._stickToBottom = true;
-    chatMessages.addEventListener("scroll", () => this._onMessagesScroll(), { passive: true });
-    jumpBtn.addEventListener("click", () => this._jumpToBottom());
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();
@@ -2904,14 +2845,13 @@ const askOnPageFindbar = {
 
     messageDiv.appendChild(contentDiv);
     messagesContainer.appendChild(messageDiv);
-    this._maybeAutoScroll();
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
     setTimeout(() => this._updateFindbarDimensions(), 10);
   },
 
   showAIInterface() {
     if (!this.findbar) return;
     this.removeAIInterface();
-    this._stickToBottom = true;
 
     this.findbar.classList.remove("ai-settings-active");
 
@@ -3153,18 +3093,21 @@ const askOnPageFindbar = {
   },
 
   _resetForYouTubeContextChange() {
-    if (this._isStreaming) this._abortController?.abort();
     _youtubeTranscriptCache = { url: null, videoId: null, transcript: null };
-    askOnPageFindbarLLM.clearData();
     this._pendingPrompt = null;
-    this._stickToBottom = true;
+    this._deferAskFlight = false;
+    this._askFlightFrom = null;
+    this._clearAskFlight();
+    askOnPageFindbarLLM.clearData();
     if (this.findbar) {
       this.findbar.history = PREFS.persistChat ? [] : null;
     }
-    const messages = this._messagesEl();
-    if (messages) messages.replaceChildren();
-    this._syncJumpToBottom();
-    setTimeout(() => this._updateFindbarDimensions(), 1);
+    if (this.expanded) {
+      this.expanded = false;
+    } else if (this._isStreaming) {
+      this._abortController?.abort();
+    }
+    this._resetMinimalFindbarState();
   },
 
   _applyYouTubeContext(spec) {
