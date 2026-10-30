@@ -667,11 +667,8 @@
       }
     }
 
-    &.ai-collapsing:not(.ai-expanded) :is(.ask-on-page-chat, .ask-on-page-setup) {
-      position: absolute !important;
-      inset-inline: 0 !important;
-      top: 0 !important;
-      pointer-events: none !important;
+    &.ai-collapsing :is(.ask-on-page-chat, .ask-on-page-setup) {
+      display: none !important;
     }
 
     .ask-on-page-chat {

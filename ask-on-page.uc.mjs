@@ -2030,10 +2030,10 @@ const askOnPageFindbar = {
         this.findbar.classList.add("ai-collapsing");
         this._morphFindbarHeight(() => {
           this.findbar.classList.remove("ai-expanded");
+          this.removeAIInterface();
         }, 260);
         setTimeout(() => {
           if (this._isExpanded) return;
-          this.removeAIInterface();
           this.findbar?.classList.remove("ai-collapsing");
         }, 260);
         this.focusInput();
