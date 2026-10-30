@@ -108,6 +108,10 @@
     &.ai-collapsing {
       transition-duration: 260ms !important;
       transition-timing-function: cubic-bezier(0.4, 0, 1, 1) !important;
+
+      #findbar-ask {
+        display: none !important;
+      }
     }
 
     min-height: 40px !important;
@@ -1021,6 +1025,15 @@
     &[data-ask-flight] :is(#findbar-ask, #send-prompt, #stop-generation) {
       visibility: hidden !important;
     }
+  }
+
+  /* Glance's overlay is a transformed containing block. A hidden findbar
+     still forced to display:flex would paint inside that card. */
+  :is(.browserSidebarContainer.zen-glance-overlay, #zen-glance-detached) findbar {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
   }
 }
 

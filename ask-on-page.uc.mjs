@@ -1827,31 +1827,11 @@ const askOnPageFindbar = {
     this.findbar?.removeAttribute("data-ask-flight");
   },
 
-  /** Whether the find-row Ask button will be on screen in normal mode. */
-  _askWillShow() {
-    const result =
-      this._lastMatchResult && typeof this._lastMatchResult.total === "number"
-        ? this._lastMatchResult
-        : { searchString: "", total: 1 };
-    const searchString = (result.searchString ?? "").trim();
-    return searchString !== "" && result.total === 0;
-  },
-
   _controlBox(el) {
     if (!el) return null;
     const rect = el.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return null;
     return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-  },
-
-  _chatActionTarget() {
-    const root = this.chatContainer;
-    if (!root) return null;
-    const streaming = root.querySelector(".ai-chat-input-actions")?.hasAttribute("data-streaming");
-    const el = root.querySelector(streaming ? "#stop-generation" : "#send-prompt");
-    const box = this._controlBox(el);
-    if (!box) return null;
-    return { box, morph: streaming ? "stop" : "send" };
   },
 
   /** Fly to the stop button once sending has put it in the input group. */
@@ -2046,19 +2026,10 @@ const askOnPageFindbar = {
         this._abortController?.abort(); // Stop messsage if it is running
       }
       if (isChanged) {
-        const action = this._chatActionTarget();
-        const flyBack = this._askWillShow();
+        this._clearAskFlight();
         this.findbar.classList.add("ai-collapsing");
         this._morphFindbarHeight(() => {
           this.findbar.classList.remove("ai-expanded");
-          if (!flyBack || !action) {
-            this._clearAskFlight();
-            return;
-          }
-          const askBtn = this.askButton || this.findbar.querySelector("#findbar-ask");
-          askBtn?.setAttribute("data-show-ask", "true");
-          this.findbar.setAttribute("data-show-ask", "true");
-          this._flyAskButton("collapse", this._controlBox(askBtn), action.box, action.morph);
         }, 260);
         setTimeout(() => {
           if (this._isExpanded) return;
@@ -2095,7 +2066,12 @@ const askOnPageFindbar = {
     this._installFindFieldPlaceholderGuard(findbar);
   },
 
+  _isGlanceTab(tab = gBrowser.selectedTab) {
+    return !!tab?.hasAttribute("zen-glance-tab");
+  },
+
   updateFindbar() {
+    if (this._isGlanceTab()) return;
     this._youtubeContextKey = getYouTubeVideoId(gBrowser.currentURI?.spec) || null;
     SettingsModal.hide();
     this._removeFindFieldPlaceholderGuard();
@@ -3121,6 +3097,7 @@ const askOnPageFindbar = {
 
   _handleLocationChange(browser, locationURI) {
     if (!this.enabled) return;
+    if (this._isGlanceTab()) return;
     if (browser !== gBrowser.selectedBrowser) return;
     const spec = typeof locationURI === "string" ? locationURI : locationURI?.spec || "";
     clearTimeout(this._youtubeNavTimer);
@@ -3191,6 +3168,7 @@ const askOnPageFindbar = {
 
   handleFindbarOpenEvent: function () {
     if (!this.enabled) return;
+    if (this._isGlanceTab()) return;
     PREFS.debugLog("Findbar is being opened");
     void gBrowser.getFindBar().then((findbar) => {
       this._attachFindbar(findbar);
