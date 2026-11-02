@@ -31,9 +31,8 @@
 
   findbar {
     --ask-on-page-findbar-control-height: 28px;
-    /* How far message pixels dissolve / frost at the top of the scroller. */
-    --ask-on-page-chat-top-fade-height: 48px;
-    --ask-on-page-chat-top-frost-blur: 12px;
+    /* How far message pixels dissolve at the top of the scroller. */
+    --ask-on-page-chat-top-fade-height: 40px;
 
     padding-inline-start: 0px !important;
     padding-top: 0 !important;
@@ -676,7 +675,6 @@
 
     .ask-on-page-chat {
       gap: 0 !important;
-      position: relative;
 
       .markdown-body {
         overflow-wrap: anywhere;
@@ -714,40 +712,6 @@
         z-index: 2;
       }
 
-      /* Blurred copy of the glyphs. filter:blur (own pixels) + mask on this
-         strip — not backdrop-filter, which Gecko drops when masked. */
-      .ai-chat-top-frost {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 4 !important;
-        height: calc(var(--ask-on-page-chat-top-fade-height, 48px) * 1.25) !important;
-        overflow: hidden !important;
-        pointer-events: none !important;
-        filter: blur(var(--ask-on-page-chat-top-frost-blur, 12px));
-        mask-image: linear-gradient(
-          to bottom,
-          #000 0,
-          #000 28%,
-          transparent 100%
-        );
-      }
-
-      &:not(:has(.chat-message)) .ai-chat-top-frost {
-        display: none !important;
-      }
-
-      .ai-chat-top-frost-live {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-sizing: border-box;
-        width: 100%;
-        padding: 12px 12px 8px 12px;
-        will-change: transform;
-      }
-
       .ai-chat-messages {
         max-height: 320px;
         padding: 12px 12px 8px 12px !important;
@@ -757,13 +721,13 @@
         gap: 10px;
         scrollbar-width: none;
 
-        /* Dissolve the real glyphs so they do not double-print through the
-           frost. The strip above supplies the blur. */
+        /* Dissolve the glyphs (Grok): the scroller's own pixels go
+           transparent at the edges. No overlay, no tint. */
         &:has(.chat-message) {
           mask-image: linear-gradient(
             to bottom,
             transparent 0,
-            #000 var(--ask-on-page-chat-top-fade-height, 48px),
+            #000 var(--ask-on-page-chat-top-fade-height, 40px),
             #000 calc(100% - 16px),
             transparent 100%
           );
