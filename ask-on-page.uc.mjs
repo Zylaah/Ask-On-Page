@@ -2274,11 +2274,18 @@ const askOnPageFindbar = {
     }
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) {
-      // Keep the sticky top-fade band; drop only the conversation.
       messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
     }
     this.chatContainer?.removeAttribute("data-scrolled");
     setTimeout(() => this._updateFindbarDimensions(), 1);
+  },
+
+  _syncChatTopFade() {
+    const container = this.chatContainer;
+    const el = container?.querySelector("#chat-messages");
+    if (!container || !el) return;
+    if (el.scrollTop > 2) container.setAttribute("data-scrolled", "true");
+    else container.removeAttribute("data-scrolled");
   },
 
   _needsApiKeySetup() {
@@ -2727,9 +2734,8 @@ const askOnPageFindbar = {
 
     const container = parseElement(`
         <div class="ask-on-page-chat">
-          <div class="ai-chat-messages" id="chat-messages">
-            <div class="ai-chat-top-fade" aria-hidden="true"></div>
-          </div>
+          <div class="ai-chat-top-fade" aria-hidden="true"></div>
+          <div class="ai-chat-messages" id="chat-messages"></div>
           ${chatInputGroup}
         </div>`);
 
@@ -2738,17 +2744,7 @@ const askOnPageFindbar = {
     const sendBtn = container.querySelector("#send-prompt");
     const stopBtn = container.querySelector("#stop-generation");
 
-    /* Top fade band (Grok-style): shown only once content has scrolled
-       under the top edge of the chat. CSS watches [data-scrolled]. */
-    const syncTopFade = () => {
-      const scrolled = chatMessages.scrollTop > 2;
-      if (scrolled) {
-        container.setAttribute("data-scrolled", "true");
-      } else {
-        container.removeAttribute("data-scrolled");
-      }
-    };
-    chatMessages.addEventListener("scroll", syncTopFade);
+    chatMessages.addEventListener("scroll", () => this._syncChatTopFade());
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();
@@ -2840,6 +2836,7 @@ const askOnPageFindbar = {
     messageDiv.appendChild(contentDiv);
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    this._syncChatTopFade();
     setTimeout(() => this._updateFindbarDimensions(), 10);
   },
 
