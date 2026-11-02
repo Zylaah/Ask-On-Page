@@ -31,10 +31,8 @@
 
   findbar {
     --ask-on-page-findbar-control-height: 28px;
-    /* Grok-style top fade in chat mode. Blur is mode-independent: it only
-       smears the conversation content passing underneath, not the glass. */
-    --ask-on-page-chat-top-fade-height: 30px;
-    --ask-on-page-chat-top-backdrop-filter: blur(24px) saturate(1.5);
+    /* How far message pixels dissolve at the top of the scroller. */
+    --ask-on-page-chat-top-fade-height: 40px;
 
     padding-inline-start: 0px !important;
     padding-top: 0 !important;
@@ -677,8 +675,6 @@
 
     .ask-on-page-chat {
       gap: 0 !important;
-      position: relative;
-      isolation: isolate;
 
       .markdown-body {
         overflow-wrap: anywhere;
@@ -716,50 +712,6 @@
         z-index: 2;
       }
 
-      /* Overlay sibling of the scroller — not inside it. Gecko drops
-         backdrop-filter on any descendant of a masked element, so the
-         bottom fade mask stays on the list only. */
-      .ai-chat-top-fade {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 4 !important;
-        height: calc(var(--ask-on-page-chat-top-fade-height, 30px) * 1.6) !important;
-        pointer-events: none !important;
-        opacity: 0;
-        transition: opacity 140ms ease;
-
-        &::before,
-        &::after {
-          content: "" !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          pointer-events: none !important;
-        }
-
-        &::before {
-          height: var(--ask-on-page-chat-top-fade-height, 30px) !important;
-          backdrop-filter: var(--ask-on-page-chat-top-backdrop-filter) !important;
-        }
-
-        &::after {
-          height: 100% !important;
-          background: linear-gradient(
-            to bottom,
-            color-mix(in srgb, var(--ask-on-page-chat-top-tint, var(--ask-on-page-dialog-bg)) 55%, transparent),
-            color-mix(in srgb, var(--ask-on-page-chat-top-tint, var(--ask-on-page-dialog-bg)) 22%, transparent) 62%,
-            transparent
-          );
-        }
-      }
-
-      &:has(.chat-message) .ai-chat-top-fade {
-        opacity: 1;
-      }
-
       .ai-chat-messages {
         max-height: 320px;
         padding: 12px 12px 8px 12px !important;
@@ -769,11 +721,14 @@
         gap: 10px;
         scrollbar-width: none;
 
+        /* Dissolve the glyphs (Grok): the scroller's own pixels go
+           transparent at the edges. No overlay, no tint. */
         &:has(.chat-message) {
           mask-image: linear-gradient(
             to bottom,
-            #000 0,
-            #000 calc(100% - 15px),
+            transparent 0,
+            #000 var(--ask-on-page-chat-top-fade-height, 40px),
+            #000 calc(100% - 16px),
             transparent 100%
           );
         }
