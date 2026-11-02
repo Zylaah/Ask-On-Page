@@ -677,55 +677,6 @@
 
     .ask-on-page-chat {
       gap: 0 !important;
-      /* Containing block for the sticky top fade band. */
-      position: relative !important;
-
-      /* Grok-style top edge: once messages have scrolled under the top
-         (element has [data-scrolled], set by JS), the content dissolves.
-         Gecko drops backdrop-filter when the same element carries a mask
-         (same issue as the findbar shine ring above), so blur and fade
-         live on separate pseudo layers:
-           ::before — frosted blur band over the exiting content,
-           ::after  — tint gradient bridging the band's lower edge so the
-                      blur melts into the rest of the conversation. */
-      &::before,
-      &::after {
-        content: "" !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 3 !important;
-        pointer-events: none !important;
-        opacity: 0;
-        visibility: hidden;
-        transition:
-          opacity 140ms ease,
-          visibility 140ms ease;
-      }
-
-      &::before {
-        height: var(--ask-on-page-chat-top-fade-height, 30px) !important;
-        backdrop-filter: var(--ask-on-page-chat-top-backdrop-filter) !important;
-      }
-
-      &::after {
-        height: calc(var(--ask-on-page-chat-top-fade-height, 30px) * 1.8) !important;
-        background: linear-gradient(
-          to bottom,
-          color-mix(in srgb, var(--ask-on-page-chat-top-tint, var(--ask-on-page-dialog-bg)) 62%, transparent),
-          color-mix(in srgb, var(--ask-on-page-chat-top-tint, var(--ask-on-page-dialog-bg)) 25%, transparent) 45%,
-          transparent
-        );
-      }
-
-      &[data-scrolled="true"] {
-        &::before,
-        &::after {
-          opacity: 1;
-          visibility: visible;
-        }
-      }
 
       .markdown-body {
         overflow-wrap: anywhere;
@@ -772,7 +723,59 @@
         gap: 10px;
         scrollbar-width: none;
 
-        &:not(:empty) {
+        /* Grok-style top edge. It must live INSIDE the scroller as a sticky
+           child: backdrop-filter on a band outside the scroll layer only
+           frosts the panel background, never the messages. Being a flex item
+           painted above the messages (z-index) puts them in its backdrop. */
+        .ai-chat-top-fade {
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 3 !important;
+          flex: 0 0 auto !important;
+          align-self: stretch !important;
+          display: block !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          margin: 0 !important;
+          /* Cancel the flex gap after this zero-height item. */
+          margin-bottom: -10px !important;
+          pointer-events: none !important;
+
+          &::before,
+          &::after {
+            content: "" !important;
+            position: absolute !important;
+            /* Spans across the scroller's 12px inline padding. */
+            top: 0 !important;
+            left: -12px !important;
+            right: -12px !important;
+            z-index: 1 !important;
+            pointer-events: none !important;
+            opacity: 0;
+            transition: opacity 140ms ease;
+          }
+
+          /* Frost. No mask on this layer: Gecko drops backdrop-filter from
+             masked elements (same quirk as the findbar shine ring). */
+          &::before {
+            height: var(--ask-on-page-chat-top-fade-height, 30px) !important;
+            backdrop-filter: var(--ask-on-page-chat-top-backdrop-filter) !important;
+          }
+
+          /* Tint, taller than the blur band so the straight lower edge of the
+             blur melts into the conversation instead of cutting hard. */
+          &::after {
+            height: calc(var(--ask-on-page-chat-top-fade-height, 30px) * 1.6) !important;
+            background: linear-gradient(
+              to bottom,
+              color-mix(in srgb, var(--ask-on-page-chat-top-tint, var(--ask-on-page-dialog-bg)) 55%, transparent),
+              color-mix(in srgb, var(--ask-on-page-chat-top-tint, var(--ask-on-page-dialog-bg)) 22%, transparent) 62%,
+              transparent
+            );
+          }
+        }
+
+        &:has(.chat-message) {
           mask-image: linear-gradient(
             to bottom,
             #000 0,
@@ -781,7 +784,7 @@
           );
         }
 
-        &:empty {
+        &:not(:has(.chat-message)) {
           display: none !important;
 
           & ~ .ai-chat-input-group {
@@ -790,12 +793,18 @@
           }
         }
 
-        &:not(:empty) ~ .ai-chat-input-group {
+        &:has(.chat-message) ~ .ai-chat-input-group {
           border: none !important;
           margin: 5px !important;
           background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
           border-radius: 6px;
         }
+      }
+
+      /* Band appears only once content has actually scrolled under it. */
+      &[data-scrolled="true"] .ai-chat-top-fade::before,
+      &[data-scrolled="true"] .ai-chat-top-fade::after {
+        opacity: 1;
       }
 
       .chat-message {

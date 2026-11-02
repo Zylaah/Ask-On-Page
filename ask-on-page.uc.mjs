@@ -2273,7 +2273,10 @@ const askOnPageFindbar = {
       this.findbar.history = null;
     }
     const messages = this?.chatContainer?.querySelector("#chat-messages");
-    if (messages) messages.innerHTML = "";
+    if (messages) {
+      // Keep the sticky top-fade band; drop only the conversation.
+      messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
+    }
     this.chatContainer?.removeAttribute("data-scrolled");
     setTimeout(() => this._updateFindbarDimensions(), 1);
   },
@@ -2724,7 +2727,9 @@ const askOnPageFindbar = {
 
     const container = parseElement(`
         <div class="ask-on-page-chat">
-          <div class="ai-chat-messages" id="chat-messages"></div>
+          <div class="ai-chat-messages" id="chat-messages">
+            <div class="ai-chat-top-fade" aria-hidden="true"></div>
+          </div>
           ${chatInputGroup}
         </div>`);
 
