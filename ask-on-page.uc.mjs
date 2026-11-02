@@ -2274,6 +2274,7 @@ const askOnPageFindbar = {
     }
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) messages.innerHTML = "";
+    this.chatContainer?.removeAttribute("data-scrolled");
     setTimeout(() => this._updateFindbarDimensions(), 1);
   },
 
@@ -2731,6 +2732,18 @@ const askOnPageFindbar = {
     const promptInput = container.querySelector("#ai-prompt");
     const sendBtn = container.querySelector("#send-prompt");
     const stopBtn = container.querySelector("#stop-generation");
+
+    /* Top fade band (Grok-style): shown only once content has scrolled
+       under the top edge of the chat. CSS watches [data-scrolled]. */
+    const syncTopFade = () => {
+      const scrolled = chatMessages.scrollTop > 2;
+      if (scrolled) {
+        container.setAttribute("data-scrolled", "true");
+      } else {
+        container.removeAttribute("data-scrolled");
+      }
+    };
+    chatMessages.addEventListener("scroll", syncTopFade);
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();

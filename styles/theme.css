@@ -23,6 +23,8 @@
 
   --ask-on-page-dialog-bg: var(--ask-on-page-findbar-fill);
   --ask-on-page-dialog-backdrop-filter: blur(40px) saturate(1.6);
+  /* Grok-style chat top fade band; follows the active background mode. */
+  --ask-on-page-chat-top-tint: var(--ask-on-page-dialog-bg);
 
   --ask-on-page-primary-bg: color-mix(in srgb, var(--browser-primary-color) 70%, black 30%);
   --ask-on-page-primary: color-mix(in srgb, var(--browser-primary-color) 50%, white 50%);
@@ -52,5 +54,7 @@
   @media -moz-pref("extension.ask-on-page.findbar-ai.background-style", "pseudo") {
     --ask-on-page-dialog-bg: transparent !important;
     --ask-on-page-dialog-backdrop-filter: none;
+    /* No in-paint background: the faux rectangle behind the findbar is the fill. */
+    --ask-on-page-chat-top-tint: var(--ask-on-page-findbar-fill);
   }
 }
