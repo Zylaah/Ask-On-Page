@@ -2279,6 +2279,52 @@ const askOnPageFindbar = {
     setTimeout(() => this._updateFindbarDimensions(), 1);
   },
 
+  _teardownChatFrost() {
+    this._chatFrostObserver?.disconnect();
+    this._chatFrostObserver = null;
+    if (this._chatFrostRaf) {
+      cancelAnimationFrame(this._chatFrostRaf);
+      this._chatFrostRaf = 0;
+    }
+    this._chatFrostLive = null;
+    this._chatFrostSource = null;
+  },
+
+  _syncChatFrostScroll() {
+    const live = this._chatFrostLive;
+    const el = this._chatFrostSource;
+    if (!live || !el) return;
+    live.style.transform = `translateY(${-el.scrollTop}px)`;
+  },
+
+  _syncChatFrostCopy() {
+    const live = this._chatFrostLive;
+    const el = this._chatFrostSource;
+    if (!live || !el) return;
+    live.replaceChildren(...[...el.children].map((node) => node.cloneNode(true)));
+    this._syncChatFrostScroll();
+  },
+
+  _bindChatFrost(container, chatMessages) {
+    this._teardownChatFrost();
+    this._chatFrostLive = container.querySelector(".ai-chat-top-frost-live");
+    this._chatFrostSource = chatMessages;
+    if (!this._chatFrostLive || !chatMessages) return;
+    chatMessages.addEventListener("scroll", () => this._syncChatFrostScroll(), { passive: true });
+    this._chatFrostObserver = new MutationObserver(() => {
+      if (this._chatFrostRaf) return;
+      this._chatFrostRaf = requestAnimationFrame(() => {
+        this._chatFrostRaf = 0;
+        this._syncChatFrostCopy();
+      });
+    });
+    this._chatFrostObserver.observe(chatMessages, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  },
+
   _needsApiKeySetup() {
     const provider = askOnPageFindbarLLM.currentProvider;
     return provider.name !== "ollama" && !provider.apiKey;
@@ -2725,6 +2771,9 @@ const askOnPageFindbar = {
 
     const container = parseElement(`
         <div class="ask-on-page-chat">
+          <div class="ai-chat-top-frost" aria-hidden="true">
+            <div class="ai-chat-top-frost-live"></div>
+          </div>
           <div class="ai-chat-messages" id="chat-messages"></div>
           ${chatInputGroup}
         </div>`);
@@ -2733,6 +2782,8 @@ const askOnPageFindbar = {
     const promptInput = container.querySelector("#ai-prompt");
     const sendBtn = container.querySelector("#send-prompt");
     const stopBtn = container.querySelector("#stop-generation");
+
+    this._bindChatFrost(container, chatMessages);
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();
@@ -2882,6 +2933,7 @@ const askOnPageFindbar = {
       this.apiKeyContainer = null;
     }
     if (this.chatContainer) {
+      this._teardownChatFrost();
       this.chatContainer.remove();
       this.chatContainer = null;
     }
