@@ -675,7 +675,6 @@
 
     .ask-on-page-chat {
       gap: 0 !important;
-      position: relative;
 
       .markdown-body {
         overflow-wrap: anywhere;
@@ -713,80 +712,6 @@
         z-index: 2;
       }
 
-      /* Parchment roll: four clipped copies of the messages, each tilted a
-         little further back. Shown only once the list has scrolled. */
-      .ai-chat-roll {
-        display: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 36px;
-        z-index: 4;
-        pointer-events: none;
-        perspective: 160px;
-        perspective-origin: center bottom;
-      }
-
-      &[data-scrolled="true"]:has(.chat-message) .ai-chat-roll {
-        display: block;
-      }
-
-      .ai-chat-roll-slice {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 12px;
-        overflow: hidden;
-        transform-origin: center bottom;
-
-        &:nth-child(1) {
-          top: 0;
-          transform: rotateX(66deg);
-          filter: brightness(0.62);
-        }
-        &:nth-child(2) {
-          top: 7px;
-          transform: rotateX(46deg);
-          filter: brightness(0.76);
-        }
-        &:nth-child(3) {
-          top: 15px;
-          transform: rotateX(26deg);
-          filter: brightness(0.88);
-        }
-        &:nth-child(4) {
-          top: 23px;
-          transform: rotateX(10deg);
-        }
-      }
-
-      .ai-chat-roll::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 12px;
-        z-index: 1;
-        pointer-events: none;
-        background: linear-gradient(
-          to bottom,
-          transparent,
-          color-mix(in srgb, black 40%, transparent)
-        );
-      }
-
-      .ai-chat-roll-live {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-sizing: border-box;
-        width: 100%;
-        padding: 12px 12px 8px 12px;
-        will-change: transform;
-      }
-
       .ai-chat-messages {
         max-height: 320px;
         padding: 12px 12px 8px 12px !important;
@@ -811,8 +736,7 @@
           mask-image: linear-gradient(
             to bottom,
             transparent 0,
-            transparent 30px,
-            #000 46px,
+            #000 var(--ask-on-page-chat-top-fade-height, 40px),
             #000 calc(100% - 16px),
             transparent 100%
           );

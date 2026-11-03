@@ -2277,7 +2277,6 @@ const askOnPageFindbar = {
     if (messages) {
       messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
       messages.removeAttribute("data-scrolled");
-      messages.parentElement?.removeAttribute("data-scrolled");
     }
     setTimeout(() => this._updateFindbarDimensions(), 1);
   },
@@ -2285,67 +2284,8 @@ const askOnPageFindbar = {
   _syncChatTopFade(el) {
     const node = el || this.chatContainer?.querySelector("#chat-messages");
     if (!node) return;
-    const scrolled = node.scrollTop > 2;
-    if (scrolled) {
-      node.setAttribute("data-scrolled", "true");
-      node.parentElement?.setAttribute("data-scrolled", "true");
-    } else {
-      node.removeAttribute("data-scrolled");
-      node.parentElement?.removeAttribute("data-scrolled");
-    }
-    this._syncChatRollScroll();
-  },
-
-  _teardownChatRoll() {
-    this._chatRollObserver?.disconnect();
-    this._chatRollObserver = null;
-    if (this._chatRollRaf) {
-      cancelAnimationFrame(this._chatRollRaf);
-      this._chatRollRaf = 0;
-    }
-    this._chatRollLives = null;
-    this._chatRollSource = null;
-  },
-
-  _syncChatRollScroll() {
-    const src = this._chatRollSource;
-    const lives = this._chatRollLives;
-    if (!src || !lives?.length) return;
-    const scrollTop = src.scrollTop;
-    for (const live of lives) {
-      const top = Number(live.dataset.top) || 0;
-      live.style.transform = `translateY(${-(scrollTop + top)}px)`;
-    }
-  },
-
-  _syncChatRollCopy() {
-    const src = this._chatRollSource;
-    const lives = this._chatRollLives;
-    if (!src || !lives?.length) return;
-    const nodes = [...src.children];
-    for (const live of lives) {
-      live.replaceChildren(...nodes.map((node) => node.cloneNode(true)));
-    }
-    this._syncChatRollScroll();
-  },
-
-  _bindChatRoll(container, chatMessages) {
-    this._teardownChatRoll();
-    this._chatRollLives = [...container.querySelectorAll(".ai-chat-roll-live")];
-    this._chatRollSource = chatMessages;
-    if (!this._chatRollLives.length || !chatMessages) return;
-    this._chatRollObserver = new MutationObserver(() => {
-      if (this._chatRollRaf) return;
-      this._chatRollRaf = requestAnimationFrame(() => {
-        this._chatRollRaf = 0;
-        this._syncChatRollCopy();
-      });
-    });
-    this._chatRollObserver.observe(chatMessages, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
+    if (node.scrollTop > 2) node.setAttribute("data-scrolled", "true");
+    else node.removeAttribute("data-scrolled");
   },
 
   _needsApiKeySetup() {
@@ -2794,12 +2734,6 @@ const askOnPageFindbar = {
 
     const container = parseElement(`
         <div class="ask-on-page-chat">
-          <div class="ai-chat-roll" aria-hidden="true">
-            <div class="ai-chat-roll-slice"><div class="ai-chat-roll-live" data-top="0"></div></div>
-            <div class="ai-chat-roll-slice"><div class="ai-chat-roll-live" data-top="7"></div></div>
-            <div class="ai-chat-roll-slice"><div class="ai-chat-roll-live" data-top="15"></div></div>
-            <div class="ai-chat-roll-slice"><div class="ai-chat-roll-live" data-top="23"></div></div>
-          </div>
           <div class="ai-chat-messages" id="chat-messages"></div>
           ${chatInputGroup}
         </div>`);
@@ -2810,7 +2744,6 @@ const askOnPageFindbar = {
     const stopBtn = container.querySelector("#stop-generation");
 
     chatMessages.addEventListener("scroll", () => this._syncChatTopFade(chatMessages), { passive: true });
-    this._bindChatRoll(container, chatMessages);
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();
@@ -2961,7 +2894,6 @@ const askOnPageFindbar = {
       this.apiKeyContainer = null;
     }
     if (this.chatContainer) {
-      this._teardownChatRoll();
       this.chatContainer.remove();
       this.chatContainer = null;
     }
