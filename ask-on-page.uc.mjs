@@ -18,6 +18,8 @@ import {
   renderMarkdownToElement,
   createProviderFacades,
   resolveProvider,
+  listProviderModels,
+  invalidateProviderModels,
   buildChatMessages,
   streamChatText,
   completeChatText,
@@ -1031,22 +1033,15 @@ const SettingsModal = {
     }
 
     for (const [name, provider] of Object.entries(askOnPageFindbarLLM.AVAILABLE_PROVIDERS)) {
-      if (provider.customModel) continue;
-
       const modelPrefKey = provider.modelPref;
       const currentModel = provider.model;
 
-      const modelOptionsXUL = provider.AVAILABLE_MODELS.map(
-        (model) =>
-          `<menuitem
-              value="${model}"
-              label="${escapeXmlAttribute(provider.AVAILABLE_MODELS_LABELS[model] || model)}"
-              ${model === currentModel ? 'selected="true"' : ""}
-            />`
-      ).join("");
+      const modelOptionsXUL = currentModel
+        ? `<menuitem value="${escapeXmlAttribute(currentModel)}" label="${escapeXmlAttribute(currentModel)}" selected="true"/>`
+        : "";
 
       const modelMenulistXul = `
-          <menulist id="pref-${this._getSafeIdForProvider(name)}-model" data-pref="${modelPrefKey}" value="${currentModel}">
+          <menulist id="pref-${this._getSafeIdForProvider(name)}-model" data-pref="${modelPrefKey}" value="${escapeXmlAttribute(currentModel)}">
             <menupopup>
               ${modelOptionsXUL}
             </menupopup>
@@ -1256,6 +1251,7 @@ const SettingsModal = {
     this._updateProviderSpecificSettings(this._modalElement, PREFS.llmProvider);
 
     document.documentElement.appendChild(this._modalElement);
+    fillModelMenusIn(this._modalElement);
   },
 
   hide() {
@@ -1505,16 +1501,8 @@ const SettingsModal = {
           : "";
       }
 
-      // Model: free-form text for Ollama / OpenRouter, dropdown placeholder for others.
       const modelSelectPlaceholderHtml = modelPrefKey
-        ? provider.customModel
-          ? `
-        <div class="setting-item">
-          <label for="pref-${this._getSafeIdForProvider(name)}-model">Model</label>
-          <input type="text" id="pref-${this._getSafeIdForProvider(name)}-model" data-pref="${modelPrefKey}" placeholder="${escapeXmlAttribute(provider.modelPlaceholder || "")}" />
-        </div>
-      `
-          : `
+        ? `
         <div class="setting-item">
           <label for="pref-${this._getSafeIdForProvider(name)}-model">Model</label>
           <div id="llm-model-selector-placeholder-${this._getSafeIdForProvider(name)}"></div>
@@ -3480,6 +3468,232 @@ function setupShortcuts() {
   addPrefListener(PREFS.SHORTCUT_FINDBAR, (val) => registerFindbarShortcut(val.value));
 }
 
+const PROVIDER_MODEL_PREFS = {
+  mistral: "extension.ask-on-page.mistral-model",
+  openai: "extension.ask-on-page.openai-model",
+  gemini: "extension.ask-on-page.gemini-model",
+  ollama: "extension.ask-on-page.ollama-model",
+  claude: "extension.ask-on-page.claude-model",
+  openrouter: "extension.ask-on-page.openrouter-model",
+};
+
+const watchedModelDocuments = new WeakSet();
+
+function createXulMenuItem(doc, value, label) {
+  const item =
+    typeof doc.createXULElement === "function"
+      ? doc.createXULElement("menuitem")
+      : doc.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
+  item.setAttribute("value", value);
+  item.setAttribute("label", label);
+  return item;
+}
+
+function getMenuPopup(menulist) {
+  if (!menulist) return null;
+  return (
+    menulist.menupopup ||
+    menulist.querySelector("menupopup") ||
+    [...menulist.children].find((child) => child.localName === "menupopup") ||
+    null
+  );
+}
+
+function findModelMenulist(doc, providerKey) {
+  const pref = PROVIDER_MODEL_PREFS[providerKey];
+  if (!doc || !pref) return null;
+  const asMenulist = (el) => {
+    if (!el) return null;
+    if (el.localName === "menulist") return el;
+    return el.querySelector?.("menulist") || null;
+  };
+  return (
+    asMenulist(doc.getElementById?.(`${pref}-popup-menulist`)) ||
+    asMenulist(doc.getElementById?.(pref.replaceAll(".", "-"))) ||
+    asMenulist(doc.querySelector?.(`[tooltiptext="${pref}"]`)) ||
+    asMenulist(doc.querySelector?.(`[data-pref="${pref}"]`))
+  );
+}
+
+function populateModelMenulist(menulist, models, saved) {
+  if (!menulist || !models.length) return false;
+  const popup = getMenuPopup(menulist);
+  if (!popup) return false;
+
+  const items = models.slice();
+  if (saved && !items.some((m) => m.value === saved)) {
+    items.unshift({ value: saved, label: saved });
+  }
+  const stamp = items.map((m) => m.value).join("\n");
+  if (menulist.getAttribute("data-llm-models-stamp") === stamp) return true;
+
+  for (const child of [...popup.children]) child.remove();
+  const doc = popup.ownerDocument;
+  for (const model of items) popup.appendChild(createXulMenuItem(doc, model.value, model.label));
+
+  const selected = items.find((m) => m.value === saved) || items[0];
+  if (selected) {
+    menulist.setAttribute("value", selected.value);
+    menulist.setAttribute("label", selected.label);
+    try {
+      menulist.value = selected.value;
+    } catch {
+      /* some menulists only honor the attribute */
+    }
+  }
+  menulist.setAttribute("data-llm-models-stamp", stamp);
+  return true;
+}
+
+function menulistsIn(root, providerKey) {
+  if (!root) return [];
+  if (root.nodeType === 9) {
+    const found = findModelMenulist(root, providerKey);
+    return found ? [found] : [];
+  }
+  const pref = PROVIDER_MODEL_PREFS[providerKey];
+  return [...root.querySelectorAll("menulist")].filter(
+    (el) => el.id === `pref-${providerKey}-model` || el.getAttribute("data-pref") === pref
+  );
+}
+
+async function fillModelMenusIn(root) {
+  if (!root) return;
+  await Promise.all(
+    Object.keys(PROVIDER_MODEL_PREFS).map(async (providerKey) => {
+      const models = await listProviderModels(providerKey, PREFS);
+      const saved = getPref(PROVIDER_MODEL_PREFS[providerKey], "");
+      for (const menulist of menulistsIn(root, providerKey)) {
+        populateModelMenulist(menulist, models, saved);
+      }
+    })
+  );
+}
+
+function isAskOnPageSettingsDocument(doc) {
+  if (!doc) return false;
+  try {
+    const uri = doc.documentURI || doc.location?.href || "";
+    if (uri.startsWith("about:preferences") || /preferences\.xhtml/i.test(uri)) return true;
+  } catch {
+    /* ignore */
+  }
+  try {
+    return !!(
+      doc.getElementById("sineModsList") ||
+      doc.getElementById("sineInstalledGroup") ||
+      doc.getElementById("zenThemeMarketplaceList") ||
+      doc.querySelector("[data-category='paneSineMods']") ||
+      Object.keys(PROVIDER_MODEL_PREFS).some((key) => findModelMenulist(doc, key))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function watchModelSettingsDocument(doc) {
+  if (!doc || watchedModelDocuments.has(doc) || !isAskOnPageSettingsDocument(doc)) return;
+  watchedModelDocuments.add(doc);
+  let timer = 0;
+  const schedule = () => {
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = 0;
+      fillModelMenusIn(doc).catch((err) => {
+        console.debug("AskOnPage: failed to fill model menus", err);
+      });
+    }, 150);
+  };
+  schedule();
+  setTimeout(schedule, 600);
+  const root =
+    doc.getElementById("sineModsList") ||
+    doc.getElementById("sineInstalledGroup") ||
+    doc.getElementById("zenThemeMarketplaceList") ||
+    doc.getElementById("mainPrefPane") ||
+    doc.documentElement;
+  if (root) new MutationObserver(schedule).observe(root, { childList: true, subtree: true });
+}
+
+function scanModelSettingsDocuments() {
+  const docs = [];
+  const addWindow = (win) => {
+    if (!win) return;
+    try {
+      docs.push(win.document);
+    } catch {
+      /* ignore */
+    }
+    try {
+      for (const browser of win.gBrowser?.browsers || []) {
+        const spec = browser.currentURI?.spec || "";
+        if (spec.startsWith("about:preferences") || /preferences|settings/i.test(spec)) {
+          docs.push(browser.contentDocument);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+  addWindow(window);
+  try {
+    const enumerator = Services.wm.getEnumerator(null);
+    while (enumerator.hasMoreElements()) addWindow(enumerator.getNext());
+  } catch {
+    /* ignore */
+  }
+  for (const doc of docs) watchModelSettingsDocument(doc);
+}
+
+function providerKeyFromModelPref(name) {
+  for (const key of Object.keys(PROVIDER_MODEL_PREFS)) {
+    if (name.includes(`.${key}-`)) return key;
+  }
+  return null;
+}
+
+function setupModelCatalog() {
+  if (window._askOnPageModelCatalog) return;
+  window._askOnPageModelCatalog = true;
+
+  Services.prefs.addObserver("extension.ask-on-page.", {
+    observe(_subject, topic, data) {
+      if (topic !== "nsPref:changed") return;
+      const name = String(data || "");
+      const keyChanged =
+        name.endsWith("-api-key") || name.endsWith("ollama-base-url");
+      if (!keyChanged) return;
+      const key = name.endsWith("ollama-base-url") ? "ollama" : providerKeyFromModelPref(name);
+      invalidateProviderModels(key);
+      scanModelSettingsDocuments();
+      if (SettingsModal._modalElement?.isConnected) {
+        fillModelMenusIn(SettingsModal._modalElement).catch(() => {});
+      }
+    },
+  });
+
+  if (window.gBrowser?.addTabsProgressListener) {
+    gBrowser.addTabsProgressListener({
+      onLocationChange(browser, webProgress, _request, location) {
+        if (webProgress && !webProgress.isTopLevel) return;
+        const spec = location?.spec || browser?.currentURI?.spec || "";
+        if (!spec.startsWith("about:preferences")) return;
+        const attach = () => {
+          try {
+            watchModelSettingsDocument(browser.contentDocument);
+          } catch {
+            /* ignore */
+          }
+        };
+        setTimeout(attach, 200);
+        setTimeout(attach, 800);
+      },
+    });
+  }
+
+  scanModelSettingsDocuments();
+}
+
 function init() {
   askOnPageFindbar.init();
   addPrefListener(PREFS.ENABLED, (val) => {
@@ -3490,6 +3704,7 @@ function init() {
 
   setupShortcuts();
   setupCommandPaletteIntegration();
+  setupModelCatalog();
 }
 
 startupFinish(init);

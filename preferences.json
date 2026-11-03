@@ -65,7 +65,7 @@
     "label": "Claude Model",
     "type": "dropdown",
     "defaultValue": "claude-opus-4-1",
-    "description": "Select the Claude model to use.",
+    "description": "Claude models available for your API key. The list is loaded from Anthropic when a key is set.",
     "options": [
       {
         "value": "claude-haiku-4-5",
@@ -126,7 +126,7 @@
     "label": "Gemini Model",
     "type": "dropdown",
     "defaultValue": "gemini-2.5-flash",
-    "description": "Select the Gemini model to use for chat responses.",
+    "description": "Gemini models available for your API key. The list is loaded from Google when a key is set.",
     "options": [
       {
         "value": "gemini-3-pro-preview",
@@ -203,7 +203,7 @@
     "label": "Mistral Model",
     "type": "dropdown",
     "defaultValue": "mistral-medium-latest",
-    "description": "Select the Mistral model to use.",
+    "description": "Mistral models available for your API key. The list is loaded from Mistral when a key is set.",
     "options": [
       {
         "value": "pixtral-large-latest",
@@ -286,10 +286,15 @@
   {
     "property": "extension.ask-on-page.ollama-model",
     "label": "Ollama Model",
-    "type": "string",
-    "placeholder": "mistral",
+    "type": "dropdown",
     "defaultValue": "mistral",
-    "description": "The Ollama model name to use (e.g., mistral, llama3.2, qwen2.5). Must be installed locally.",
+    "description": "Models installed in your local Ollama instance. The list is loaded from Ollama when it is running.",
+    "options": [
+      {
+        "value": "mistral",
+        "label": "mistral"
+      }
+    ],
     "conditions": [
       {
         "if": {
@@ -320,7 +325,7 @@
     "label": "OpenAI Model",
     "type": "dropdown",
     "defaultValue": "gpt-5.2",
-    "description": "Select the OpenAI model to use.",
+    "description": "OpenAI models available for your API key. The list is loaded from OpenAI when a key is set.",
     "options": [
       {
         "value": "gpt-5.2-pro",
@@ -443,10 +448,15 @@
   {
     "property": "extension.ask-on-page.openrouter-model",
     "label": "OpenRouter Model",
-    "type": "string",
-    "placeholder": "google/gemini-2.5-flash",
+    "type": "dropdown",
     "defaultValue": "google/gemini-2.5-flash",
-    "description": "OpenRouter model ID (e.g., google/gemini-2.5-flash, anthropic/claude-sonnet-4). See openrouter.ai/models.",
+    "description": "OpenRouter models available for your API key. The list is loaded from OpenRouter when a key is set.",
+    "options": [
+      {
+        "value": "google/gemini-2.5-flash",
+        "label": "google/gemini-2.5-flash"
+      }
+    ],
     "conditions": [
       {
         "if": {

@@ -444,6 +444,179 @@ export function resolveProvider(key, prefs) {
   };
 }
 
+const MODEL_CATALOG_TTL_MS = 5 * 60 * 1000;
+const MODEL_CATALOG_FAILURE_TTL_MS = 60 * 1000;
+const MODEL_CATALOG_TIMEOUT_MS = 8000;
+const MODEL_CATALOG_MAX_PAGES = 10;
+
+/** @type {Map<string, { models: Array<{value: string, label: string}>, fetchedAt: number }>} */
+const modelCatalogCache = new Map();
+
+function normalizeModelId(id) {
+  if (!id || typeof id !== "string") return "";
+  return id.replace(/^models\//, "").replace(/^publishers\/[^/]+\/models\//, "");
+}
+
+function normalizeModelRows(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const row of rows || []) {
+    const id = normalizeModelId(row.id || row.name || "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const pretty = String(row.display_name || row.displayName || row.name || "").trim();
+    out.push({ value: id, label: pretty && pretty !== id ? pretty : id });
+  }
+  out.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
+  return out;
+}
+
+function modelsListUrl(provider) {
+  if (provider.kind === "ollama") {
+    try {
+      const u = new URL(provider.baseUrl);
+      return `${u.protocol}//${u.host}/api/tags`;
+    } catch {
+      return "http://localhost:11434/api/tags";
+    }
+  }
+  const base = String(provider.baseUrl || "").replace(/\/+$/, "");
+  if (base.endsWith("/chat/completions")) {
+    return base.slice(0, -"/chat/completions".length) + "/models";
+  }
+  if (base.endsWith("/messages")) {
+    return base.slice(0, -"/messages".length) + "/models";
+  }
+  return `${base}/models`;
+}
+
+function catalogHeaders(provider) {
+  const headers = { Accept: "application/json" };
+  if (provider.kind === "ollama" || provider.kind === "gemini") return headers;
+  if (provider.kind === "anthropic") {
+    headers["x-api-key"] = provider.apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+    return headers;
+  }
+  headers.Authorization = `Bearer ${provider.apiKey}`;
+  return headers;
+}
+
+async function fetchCatalogJson(url, headers) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MODEL_CATALOG_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { method: "GET", headers, signal: controller.signal });
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(
+        `API error: ${response.status} ${response.statusText}${text ? ` — ${text.slice(0, 200)}` : ""}`
+      );
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchOpenAIStyleRows(url, headers) {
+  const all = [];
+  let nextUrl = url;
+  for (let page = 0; page < MODEL_CATALOG_MAX_PAGES && nextUrl; page++) {
+    const data = await fetchCatalogJson(nextUrl, headers);
+    all.push(...(Array.isArray(data.data) ? data.data : []));
+    if (data.has_more && data.last_id) {
+      const u = new URL(url);
+      u.searchParams.set("after", data.last_id);
+      if (u.searchParams.get("after_id") !== null || url.includes("api.anthropic.com")) {
+        u.searchParams.delete("after");
+        u.searchParams.set("after_id", data.last_id);
+      }
+      nextUrl = u.toString();
+    } else {
+      nextUrl = null;
+    }
+  }
+  return all;
+}
+
+async function fetchGeminiNativeRows(apiKey, headers) {
+  const all = [];
+  const base =
+    "https://generativelanguage.googleapis.com/v1beta/models?pageSize=100&key=" +
+    encodeURIComponent(apiKey);
+  let pageUrl = base;
+  for (let page = 0; page < MODEL_CATALOG_MAX_PAGES && pageUrl; page++) {
+    const data = await fetchCatalogJson(pageUrl, headers);
+    all.push(...(data.models || []));
+    const token = data.nextPageToken;
+    pageUrl = token ? `${base}&pageToken=${encodeURIComponent(token)}` : null;
+  }
+  return all.map((m) => ({ id: m.name, displayName: m.displayName }));
+}
+
+async function fetchProviderModelRows(provider) {
+  const headers = catalogHeaders(provider);
+  if (provider.kind === "ollama") {
+    const data = await fetchCatalogJson(modelsListUrl(provider), headers);
+    return normalizeModelRows((data.models || []).map((m) => ({ id: m.name || m.model })));
+  }
+
+  let url = modelsListUrl(provider);
+  if (provider.kind === "gemini" && provider.apiKey) {
+    url += (url.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(provider.apiKey);
+  }
+  if (provider.kind === "anthropic") {
+    url += (url.includes("?") ? "&" : "?") + "limit=100";
+  }
+
+  if (provider.kind === "gemini") {
+    try {
+      const models = normalizeModelRows(await fetchOpenAIStyleRows(url, headers));
+      if (models.length) return models;
+    } catch (err) {
+      console.debug("AskOnPage: Gemini OpenAI model list failed, trying native API", err);
+    }
+    return normalizeModelRows(await fetchGeminiNativeRows(provider.apiKey, headers));
+  }
+
+  return normalizeModelRows(await fetchOpenAIStyleRows(url, headers));
+}
+
+export function invalidateProviderModels(providerKey) {
+  if (providerKey) modelCatalogCache.delete(providerKey);
+  else modelCatalogCache.clear();
+}
+
+/**
+ * Live model catalog for a provider. Ollama is listed from the local server.
+ * Cloud providers need an API key. Results are cached for a few minutes.
+ * @param {string} providerKey
+ * @param {object} prefs
+ * @returns {Promise<Array<{value: string, label: string}>>}
+ */
+export async function listProviderModels(providerKey, prefs) {
+  const provider = resolveProvider(providerKey, prefs);
+  if (!PROVIDER_REGISTRY[providerKey]) return [];
+  if (provider.kind !== "ollama" && !provider.apiKey) return [];
+
+  const cached = modelCatalogCache.get(providerKey);
+  if (cached) {
+    const ttl = cached.models.length ? MODEL_CATALOG_TTL_MS : MODEL_CATALOG_FAILURE_TTL_MS;
+    if (Date.now() - cached.fetchedAt < ttl) return cached.models;
+  }
+
+  let models = [];
+  try {
+    models = await fetchProviderModelRows(provider);
+  } catch (err) {
+    console.debug(`AskOnPage: could not list ${providerKey} models`, err);
+  }
+  if (!models.length && cached?.models.length) return cached.models;
+  modelCatalogCache.set(providerKey, { models, fetchedAt: Date.now() });
+  return models;
+}
+
 /**
  * UI-facing provider objects (compatible with existing settings/findbar code).
  * @param {object} prefs
