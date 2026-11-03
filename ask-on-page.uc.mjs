@@ -3430,7 +3430,7 @@ function setupCommandPaletteIntegration(retryCount = 0) {
       {
         key: "askonpage:settings",
         label: "Open Ask On Page Settings",
-        command: () => SettingsModal.show(),
+        command: () => showAskOnPageSettings(),
         icon: "chrome://global/skin/icons/settings.svg",
         tags: ["AI", "AskOnPage", "Settings"],
       },
@@ -3591,9 +3591,316 @@ function isAskOnPageSettingsDocument(doc) {
   }
 }
 
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
+let askOnPageSettingsList = null;
+
+function readSetting(entry) {
+  const fallback = entry.defaultValue ?? (entry.type === "checkbox" ? false : "");
+  const value = getPref(entry.property, fallback);
+  return value === undefined || value === null ? fallback : value;
+}
+
+function writeSetting(entry, raw) {
+  if (!entry?.property) return;
+  if (entry.type === "checkbox") {
+    setPref(entry.property, !!raw);
+    return;
+  }
+  const text = String(raw ?? "");
+  const type = Services.prefs.getPrefType(entry.property);
+  if (type === Services.prefs.PREF_INT) {
+    const n = Number(text);
+    if (Number.isFinite(n)) Services.prefs.setIntPref(entry.property, Math.round(n));
+    return;
+  }
+  if (type === Services.prefs.PREF_BOOL) {
+    Services.prefs.setBoolPref(entry.property, text === "true");
+    return;
+  }
+  Services.prefs.setStringPref(entry.property, text);
+}
+
+function settingConditionsHold(conditions, operator, values) {
+  const results = [conditions].flat().map((cond) => {
+    if (cond.if || cond.not) {
+      const test = cond.if || cond.not;
+      return (String(values[test.property]) === String(test.value)) === !cond.not;
+    }
+    return cond.conditions
+      ? settingConditionsHold(cond.conditions, cond.operator || "AND", values)
+      : false;
+  });
+  return operator === "OR" ? results.some(Boolean) : results.every(Boolean);
+}
+
+async function loadAskOnPageSettingsList() {
+  if (askOnPageSettingsList) return askOnPageSettingsList;
+  const response = await fetch("chrome://sine/content/ask-on-page/preferences.json");
+  askOnPageSettingsList = await response.json();
+  return askOnPageSettingsList;
+}
+
+function showAskOnPageSettings() {
+  const open = document.getElementById("ask-on-page-settings");
+  if (open && !open.hasAttribute("closing")) return;
+  open?.remove();
+
+  loadAskOnPageSettingsList()
+    .then((list) => mountAskOnPageSettings(list))
+    .catch((err) => console.warn("AskOnPage: could not open settings", err));
+}
+
+function mountAskOnPageSettings(list) {
+  const make = (tag, className, parent, text) => {
+    const el = document.createElementNS(XHTML_NS, tag);
+    if (className) el.className = className;
+    if (text != null) el.textContent = text;
+    parent?.append(el);
+    return el;
+  };
+  const providerForPref = Object.fromEntries(
+    Object.entries(PROVIDER_MODEL_PREFS).map(([key, pref]) => [pref, key])
+  );
+
+  const overlay = make("div");
+  overlay.id = "ask-on-page-settings";
+  overlay.setAttribute("popover", "manual");
+  const card = make("div", "aop-set-card", overlay);
+  card.setAttribute("role", "dialog");
+  card.setAttribute("aria-label", "Ask On Page settings");
+  const head = make("div", "aop-set-head", card);
+  make("div", "aop-set-title", head, "Ask On Page");
+  const searchBox = make("label", "aop-set-search", head);
+  const search = make("input", null, searchBox);
+  search.type = "search";
+  search.placeholder = "Search settings";
+  search.setAttribute("autocomplete", "off");
+  search.spellcheck = false;
+  const closeButton = make("button", "aop-set-close", head, "\u00d7");
+  closeButton.type = "button";
+  closeButton.setAttribute("aria-label", "Close");
+  const body = make("div", "aop-set-body", card);
+  const nav = make("div", "aop-set-nav", body);
+  const listEl = make("div", "aop-set-list", body);
+
+  const sections = [];
+  const rows = [];
+  let section = null;
+  const newSection = (label) => {
+    const el = make("div", "aop-set-section", listEl);
+    make("div", "aop-set-section-title", el, label);
+    const link = make("button", "aop-set-nav-item", nav, label);
+    link.type = "button";
+    link.addEventListener("click", () => el.scrollIntoView({ block: "start" }));
+    section = { el, link, rows: [] };
+    sections.push(section);
+  };
+
+  for (const entry of list) {
+    if (entry.type === "separator") {
+      newSection(entry.label || "Settings");
+      continue;
+    }
+    if (!entry.property) continue;
+    if (!section) newSection("General");
+    const multiline = entry.type === "textarea" || entry.property.includes("command-");
+    const row = make("div", "aop-set-row", section.el);
+    if (entry.conditions) row.classList.add("sub");
+    if (multiline) row.classList.add("block");
+    const text = make("div", "aop-set-text", row);
+    make("div", "aop-set-label", text, entry.label || entry.property);
+    if (entry.description) make("div", "aop-set-desc", text, entry.description);
+
+    let control;
+    if (entry.type === "checkbox") {
+      control = make("button", "aop-set-switch", row);
+      control.type = "button";
+      control.setAttribute("role", "switch");
+      control.addEventListener("click", (event) => {
+        event.stopPropagation();
+        writeSetting(entry, control.getAttribute("aria-checked") !== "true");
+      });
+    } else if (entry.type === "dropdown") {
+      control = make("select", "aop-set-select", row);
+      for (const option of entry.options || []) {
+        const node = make("option", null, control, option.label ?? String(option.value));
+        node.value = String(option.value);
+      }
+      control.addEventListener("change", () => writeSetting(entry, control.value));
+    } else if (multiline) {
+      control = make("textarea", "aop-set-area", row);
+      control.rows = entry.rows || 4;
+      control.spellcheck = false;
+      control.addEventListener("change", () => writeSetting(entry, control.value));
+    } else if (entry.type === "string") {
+      control = make("input", "aop-set-field", row);
+      control.type = /api-key/i.test(entry.property) ? "password" : "text";
+      control.placeholder = entry.placeholder || "";
+      control.spellcheck = false;
+      control.setAttribute("autocomplete", "off");
+      control.addEventListener("change", () => writeSetting(entry, control.value));
+    } else {
+      row.remove();
+      continue;
+    }
+    control.setAttribute("aria-label", entry.label || entry.property);
+    const words = `${entry.label || ""} ${entry.description || ""} ${section.el.querySelector(".aop-set-section-title")?.textContent || ""}`.toLowerCase();
+    const one = { entry, row, control, words, multiline };
+    rows.push(one);
+    section.rows.push(one);
+  }
+  make("div", "aop-set-none", listEl, "No settings match");
+
+  const valuesOf = () => {
+    const values = {};
+    for (const one of rows) values[one.entry.property] = readSetting(one.entry);
+    return values;
+  };
+
+  const applyVisibility = (values) => {
+    const query = search.value.trim().toLowerCase();
+    let any = false;
+    for (const one of rows) {
+      const allowed =
+        !one.entry.conditions ||
+        settingConditionsHold(one.entry.conditions, one.entry.operator || "OR", values);
+      one.row.hidden = query ? !query.split(/\s+/).every((word) => one.words.includes(word)) : !allowed;
+      one.row.classList.toggle("off", !!query && !allowed);
+    }
+    for (const part of sections) {
+      const visible = part.rows.some((one) => !one.row.hidden);
+      part.el.hidden = !visible;
+      part.link.hidden = !visible;
+      any = any || visible;
+    }
+    listEl.classList.toggle("empty", !any);
+  };
+
+  const fillModels = (values) => {
+    for (const one of rows) {
+      const providerKey = providerForPref[one.entry.property];
+      if (!providerKey || one.row.hidden || one.entry.type !== "dropdown") continue;
+      listProviderModels(providerKey, PREFS)
+        .then((models) => {
+          if (!models?.length || !one.control.isConnected || document.activeElement === one.control) return;
+          const current = String(values[one.entry.property] ?? "");
+          const items = models.slice();
+          if (current && !items.some((model) => model.value === current)) {
+            items.unshift({ value: current, label: current });
+          }
+          one.control.replaceChildren();
+          for (const model of items) {
+            const node = make("option", null, one.control, model.label);
+            node.value = model.value;
+          }
+          one.control.value = current;
+        })
+        .catch((err) => console.debug("AskOnPage: settings model list failed", err));
+    }
+  };
+
+  const fill = () => {
+    const values = valuesOf();
+    for (const one of rows) {
+      const value = values[one.entry.property];
+      if (one.entry.type === "checkbox") {
+        one.control.setAttribute("aria-checked", String(!!value));
+        continue;
+      }
+      if (document.activeElement === one.control) continue;
+      const text = String(value ?? "");
+      if (one.entry.type === "dropdown" && text && ![...one.control.options].some((option) => option.value === text)) {
+        const extra = make("option", null, one.control, text);
+        extra.value = text;
+      }
+      one.control.value = text;
+    }
+    applyVisibility(values);
+    fillModels(values);
+  };
+
+  fill();
+  search.addEventListener("input", () => {
+    applyVisibility(valuesOf());
+    listEl.scrollTop = 0;
+  });
+
+  const lit = new IntersectionObserver(
+    (seen) => {
+      for (const item of seen) {
+        if (!item.isIntersecting) continue;
+        for (const part of sections) part.link.classList.toggle("cur", part.el === item.target);
+      }
+    },
+    { root: listEl, rootMargin: "0px 0px -70% 0px" }
+  );
+  for (const part of sections) lit.observe(part.el);
+
+  let refresh = 0;
+  const onPref = () => {
+    refresh ||= requestAnimationFrame(() => {
+      refresh = 0;
+      if (overlay.isConnected) fill();
+    });
+  };
+  Services.prefs.addObserver("extension.ask-on-page.", onPref);
+
+  const onKey = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (search.value) {
+        search.value = "";
+        applyVisibility(valuesOf());
+      } else {
+        close();
+      }
+    } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f") {
+      event.preventDefault();
+      event.stopPropagation();
+      search.focus();
+    }
+  };
+
+  const close = () => {
+    if (overlay.hasAttribute("closing")) return;
+    overlay.setAttribute("closing", "");
+    window.removeEventListener("keydown", onKey, true);
+    Services.prefs.removeObserver("extension.ask-on-page.", onPref);
+    lit.disconnect();
+    setTimeout(() => overlay.remove(), 180);
+  };
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) close();
+  });
+  closeButton.addEventListener("click", close);
+  window.addEventListener("keydown", onKey, true);
+
+  document.documentElement.appendChild(overlay);
+  try {
+    overlay.showPopover();
+  } catch {
+    /* A fixed overlay still covers the window when popover is unavailable. */
+  }
+  requestAnimationFrame(() => overlay.setAttribute("shown", ""));
+}
+
 function watchModelSettingsDocument(doc) {
   if (!doc || watchedModelDocuments.has(doc) || !isAskOnPageSettingsDocument(doc)) return;
   watchedModelDocuments.add(doc);
+  doc.addEventListener(
+    "click",
+    (event) => {
+      const button = event.target?.closest?.(".sineItemConfigureButton");
+      const item = button?.closest?.("[mod-id='ask-on-page']");
+      if (!item) return;
+      event.preventDefault();
+      event.stopPropagation();
+      showAskOnPageSettings();
+    },
+    true
+  );
   let timer = 0;
   const schedule = () => {
     if (timer) return;
