@@ -245,7 +245,10 @@
     width: 36px;
     height: 20px;
     padding: 0;
-    border-radius: 10px;
+    border-radius: 10px !important;
+    /* Zen's superellipse squares off buttons. The track and knob stay round. */
+    corner-shape: round !important;
+    --zen-squircle-value: 1;
     cursor: pointer;
     background: color-mix(in srgb, var(--aop-set-fg) 18%, transparent);
 
@@ -256,7 +259,8 @@
       inset-inline-start: 2px;
       width: 16px;
       height: 16px;
-      border-radius: 50%;
+      border-radius: 50% !important;
+      corner-shape: round !important;
       background: color-mix(in srgb, var(--aop-set-fg) 80%, white);
       transition: translate 160ms ease;
     }
