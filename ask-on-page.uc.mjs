@@ -2020,6 +2020,7 @@ const askOnPageFindbar = {
       const messagesContainer = this?.chatContainer?.querySelector("#chat-messages");
       if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        this._syncChatTopFade(messagesContainer);
       }
     } else {
       if (this._isStreaming) {
@@ -2275,8 +2276,16 @@ const askOnPageFindbar = {
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) {
       messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
+      messages.removeAttribute("data-scrolled");
     }
     setTimeout(() => this._updateFindbarDimensions(), 1);
+  },
+
+  _syncChatTopFade(el) {
+    const node = el || this.chatContainer?.querySelector("#chat-messages");
+    if (!node) return;
+    if (node.scrollTop > 2) node.setAttribute("data-scrolled", "true");
+    else node.removeAttribute("data-scrolled");
   },
 
   _needsApiKeySetup() {
@@ -2734,6 +2743,8 @@ const askOnPageFindbar = {
     const sendBtn = container.querySelector("#send-prompt");
     const stopBtn = container.querySelector("#stop-generation");
 
+    chatMessages.addEventListener("scroll", () => this._syncChatTopFade(chatMessages), { passive: true });
+
     const handleSend = () => {
       const prompt = promptInput.value.trim();
       this.sendMessage(prompt);
@@ -2824,6 +2835,7 @@ const askOnPageFindbar = {
     messageDiv.appendChild(contentDiv);
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    this._syncChatTopFade(messagesContainer);
     setTimeout(() => this._updateFindbarDimensions(), 10);
   },
 

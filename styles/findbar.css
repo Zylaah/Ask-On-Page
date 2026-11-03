@@ -721,9 +721,18 @@
         gap: 10px;
         scrollbar-width: none;
 
-        /* Dissolve the glyphs (Grok): the scroller's own pixels go
-           transparent at the edges. No overlay, no tint. */
+        /* Bottom dissolve always. The top dissolve waits until content
+           has scrolled under the edge ([data-scrolled]). */
         &:has(.chat-message) {
+          mask-image: linear-gradient(
+            to bottom,
+            #000 0,
+            #000 calc(100% - 16px),
+            transparent 100%
+          );
+        }
+
+        &[data-scrolled="true"]:has(.chat-message) {
           mask-image: linear-gradient(
             to bottom,
             transparent 0,
