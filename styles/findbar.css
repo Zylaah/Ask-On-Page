@@ -982,9 +982,10 @@
         .ai-glimmer-bar {
           display: block;
           height: 10px;
-          border-radius: 4px;
-          corner-shape: round;
-          background-color: color-mix(in srgb, var(--ask-on-page-findbar-fill) 62%, black);
+          border-radius: 5px !important;
+          corner-shape: round !important;
+          --zen-squircle-value: 1;
+          background-color: color-mix(in srgb, var(--ask-on-page-findbar-fill) 80%, black);
           background-image: linear-gradient(
             90deg,
             transparent 0%,
