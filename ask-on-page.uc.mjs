@@ -32,8 +32,14 @@ function setPref(key, value) {
     const prefService = Services.prefs;
     if (typeof value === "boolean") {
       prefService.setBoolPref(key, value);
-    } else if (typeof value === "number") {
+    } else if (typeof value === "number" && Number.isInteger(value)) {
       prefService.setIntPref(key, value);
+    } else if (typeof value === "number") {
+      /* Firefox has no float pref. A previous int (0.7 stored as 0) has to be cleared first. */
+      if (prefService.prefHasUserValue(key) && prefService.getPrefType(key) === prefService.PREF_INT) {
+        prefService.clearUserPref(key);
+      }
+      prefService.setStringPref(key, String(value));
     } else {
       prefService.setStringPref(key, value);
     }
@@ -258,7 +264,22 @@ class AskOnPagePREFS extends PREFS$1 {
   static setInitialPrefs() {
     this.migratePrefs();
     this.migrateRemovedProviders();
+    this.migrateFractionalTemperature();
     super.setInitialPrefs();
+  }
+
+  /* 0.7 used to be written with setIntPref and became 0, which Mistral treats as greedy sampling. */
+  static migrateFractionalTemperature() {
+    const key = this.LLM_TEMPERATURE;
+    try {
+      if (Services.prefs.getPrefType(key) !== Services.prefs.PREF_INT) return;
+      if (!Services.prefs.prefHasUserValue(key)) return;
+      if (Services.prefs.getIntPref(key) !== 0) return;
+      Services.prefs.clearUserPref(key);
+      this.setPref(key, this.defaultValues[key]);
+    } catch (e) {
+      this.debugError("Could not migrate temperature pref:", e);
+    }
   }
 
   static migrateRemovedProviders() {
@@ -3224,9 +3245,11 @@ class AskOnPageLLM {
   }
 
   getSampling() {
+    const temperature = Number(PREFS.llmTemperature);
+    const maxTokens = Number(PREFS.llmMaxOutputTokens);
     return {
-      temperature: PREFS.llmTemperature,
-      maxTokens: PREFS.llmMaxOutputTokens,
+      temperature: Number.isFinite(temperature) ? temperature : 0.7,
+      maxTokens: Number.isFinite(maxTokens) ? maxTokens : 2048,
     };
   }
 
@@ -3607,6 +3630,10 @@ function writeSetting(entry, raw) {
     return;
   }
   const text = String(raw ?? "");
+  if (entry.type === "dropdown" && /^-?\d+(\.\d+)?$/.test(text.trim())) {
+    setPref(entry.property, Number(text));
+    return;
+  }
   const type = Services.prefs.getPrefType(entry.property);
   if (type === Services.prefs.PREF_INT) {
     const n = Number(text);

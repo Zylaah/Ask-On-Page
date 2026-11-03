@@ -714,8 +714,10 @@ function buildRequestHeaders(provider) {
 }
 
 function buildRequestBody(provider, messages, stream, sampling = {}) {
-  const temperature = sampling.temperature ?? 0.7;
-  const maxTokens = sampling.maxTokens ?? 2048;
+  const parsedTemperature = Number(sampling.temperature);
+  const temperature = Number.isFinite(parsedTemperature) ? parsedTemperature : 0.7;
+  const parsedMaxTokens = Number(sampling.maxTokens);
+  const maxTokens = Number.isFinite(parsedMaxTokens) ? parsedMaxTokens : 2048;
 
   if (provider.kind === "anthropic") {
     const system = messages.find((m) => m.role === "system")?.content || "";
@@ -729,13 +731,16 @@ function buildRequestBody(provider, messages, stream, sampling = {}) {
     };
   }
 
-  return {
+  const body = {
     model: provider.model,
     messages,
     stream,
     temperature,
     max_tokens: maxTokens,
   };
+  /* Temperature 0 is greedy sampling. Mistral rejects that unless top_p is exactly 1. */
+  if (temperature === 0) body.top_p = 1;
+  return body;
 }
 
 /**
