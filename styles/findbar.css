@@ -985,7 +985,7 @@
           border-radius: 5px !important;
           corner-shape: round !important;
           --zen-squircle-value: 1;
-          background-color: color-mix(in srgb, var(--ask-on-page-findbar-fill) 95%, black);
+          background-color: var(--ask-on-page-chat-input-shell-bg);
           background-image: linear-gradient(
             90deg,
             transparent 0%,
