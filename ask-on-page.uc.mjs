@@ -265,7 +265,18 @@ class AskOnPagePREFS extends PREFS$1 {
     this.migratePrefs();
     this.migrateRemovedProviders();
     this.migrateFractionalTemperature();
+    this.migrateRemovedBackgroundStyle();
     super.setInitialPrefs();
+  }
+
+  static migrateRemovedBackgroundStyle() {
+    const key = this.BACKGROUND_STYLE;
+    try {
+      if (this.getPref(key) !== "pseudo") return;
+      this.setPref(key, "solid");
+    } catch (e) {
+      this.debugError("Could not migrate background style pref:", e);
+    }
   }
 
   /* 0.7 used to be written with setIntPref and became 0, which Mistral treats as greedy sampling. */
@@ -400,10 +411,6 @@ class AskOnPagePREFS extends PREFS$1 {
 
   static get backgroundStyle() {
     return this.getPref(this.BACKGROUND_STYLE);
-  }
-
-  static get pseudoBg() {
-    return this.backgroundStyle === "pseudo";
   }
 
   static get ollamaBaseUrl() {
@@ -1396,7 +1403,6 @@ const SettingsModal = {
     const backgroundStyleOptions = {
       solid: "Solid",
       acrylic: "Acrylic",
-      pseudo: "Pseudo",
     };
     const backgroundStyleOptionsHTML = Object.entries(backgroundStyleOptions)
       .map(([value, label]) => `<option value="${value}">${escapeXmlAttribute(label)}</option>`)
@@ -1715,7 +1721,6 @@ const askOnPageFindbar = {
   _handleFindbarCloseEvent: null,
   _isExpanded: false,
   _updateContextMenuText: null,
-  _backgroundStylesListener: null,
   _contextMenuEnabledListener: null,
   _persistListener: null,
   contextMenuItem: null,
@@ -1771,18 +1776,10 @@ const askOnPageFindbar = {
   _updateFindbarDimensions() {
     if (!this.findbar) {
       document.documentElement.style.removeProperty("--findbar-width");
-      document.documentElement.style.removeProperty("--findbar-height");
-      document.documentElement.style.removeProperty("--findbar-x");
-      document.documentElement.style.removeProperty("--findbar-y");
       return;
     }
     const rect = this.findbar.getBoundingClientRect();
-    const _findbarDimension = { width: rect.width, height: rect.height };
-    const _findbarCoors = { x: rect.left, y: rect.top };
-    document.documentElement.style.setProperty("--findbar-width", `${_findbarDimension.width}px`);
-    document.documentElement.style.setProperty("--findbar-height", `${_findbarDimension.height}px`);
-    document.documentElement.style.setProperty("--findbar-x", `${_findbarCoors.x}px`);
-    document.documentElement.style.setProperty("--findbar-y", `${_findbarCoors.y}px`);
+    document.documentElement.style.setProperty("--findbar-width", `${rect.width}px`);
   },
 
   /**
@@ -3132,9 +3129,6 @@ const askOnPageFindbar = {
     this._addKeymaps = this.addKeymaps.bind(this);
     this._handleInputKeyPress = this.handleInputKeyPress.bind(this);
     const _handleContextMenuPrefChange = this.handleContextMenuPrefChange.bind(this);
-    const _handleBackgroundStyleChange = () => {
-      updateSidebarWidth();
-    };
 
     gBrowser.tabContainer.addEventListener("TabSelect", this._updateFindbar);
     this._tabsProgressListener = {
@@ -3148,10 +3142,6 @@ const askOnPageFindbar = {
     this._handleFindbarCloseEvent = this.handleFindbarCloseEvent.bind(this);
     window.addEventListener("findbaropen", this._handleFindbarOpenEvent);
     window.addEventListener("findbarclose", this._handleFindbarCloseEvent);
-    this._backgroundStylesListener = addPrefListener(
-      PREFS.BACKGROUND_STYLE,
-      _handleBackgroundStyleChange
-    );
     this._contextMenuEnabledListener = addPrefListener(
       PREFS.CONTEXT_MENU_ENABLED,
       _handleContextMenuPrefChange
@@ -3178,7 +3168,6 @@ const askOnPageFindbar = {
     document.removeEventListener("keydown", this._addKeymaps);
     window.removeEventListener("findbaropen", this._handleFindbarOpenEvent);
     window.removeEventListener("findbarclose", this._handleFindbarCloseEvent);
-    removePrefListener(this._backgroundStylesListener);
     removePrefListener(this._contextMenuEnabledListener);
     removePrefListener(this._persistListener);
     this._handleInputKeyPress = null;
@@ -3497,7 +3486,6 @@ const PROVIDER_MODEL_PREFS = {
   gemini: "extension.ask-on-page.gemini-model",
   ollama: "extension.ask-on-page.ollama-model",
   claude: "extension.ask-on-page.claude-model",
-  openrouter: "extension.ask-on-page.openrouter-model",
 };
 
 const watchedModelDocuments = new WeakSet();

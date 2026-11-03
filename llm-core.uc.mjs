@@ -677,10 +677,20 @@ export function buildChatMessages(systemPrompt, history) {
  * @param {unknown} content
  * @returns {string}
  */
+function textFromContentPart(part) {
+  if (part == null) return "";
+  if (typeof part === "string") return part;
+  if (typeof part.text === "string") return part.text;
+  if (typeof part.content === "string") return part.content;
+  return "";
+}
+
 function normalizeMessageContent(content) {
+  if (content == null) return "";
   if (typeof content === "string") return content;
-  if (Array.isArray(content)) return content.map((p) => p.text || "").join("");
-  return String(content ?? "");
+  if (Array.isArray(content)) return content.map(textFromContentPart).join("");
+  if (typeof content === "object") return textFromContentPart(content);
+  return String(content);
 }
 
 function buildRequestUrl(provider) {
@@ -774,10 +784,11 @@ function parseOpenAiSseData(data) {
     throw new Error(`API error: ${extractApiErrorMessage(json.error)}`);
   }
 
-  const text =
+  const raw =
     json.choices?.[0]?.delta?.content ??
     json.choices?.[0]?.message?.content ??
     json.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = normalizeMessageContent(raw);
 
   return { text: text || undefined };
 }

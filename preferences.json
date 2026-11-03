@@ -448,15 +448,10 @@
   {
     "property": "extension.ask-on-page.openrouter-model",
     "label": "OpenRouter Model",
-    "type": "dropdown",
+    "type": "string",
+    "placeholder": "google/gemini-2.5-flash",
     "defaultValue": "google/gemini-2.5-flash",
-    "description": "OpenRouter models available for your API key. The list is loaded from OpenRouter when a key is set.",
-    "options": [
-      {
-        "value": "google/gemini-2.5-flash",
-        "label": "google/gemini-2.5-flash"
-      }
-    ],
+    "description": "OpenRouter model id, for example google/gemini-2.5-flash or anthropic/claude-sonnet-4.",
     "conditions": [
       {
         "if": {
@@ -544,10 +539,6 @@
       {
         "value": "acrylic",
         "label": "Acrylic"
-      },
-      {
-        "value": "pseudo",
-        "label": "Pseudo"
       }
     ],
     "conditions": [
