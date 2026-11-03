@@ -2496,6 +2496,7 @@ const askOnPageFindbar = {
       </div>`
     );
     const contentDiv = aiMessageDiv.querySelector(".markdown-body");
+    this._mountReplyGlimmer(aiMessageDiv);
     if (messagesContainer) {
       messagesContainer.appendChild(aiMessageDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -2507,13 +2508,9 @@ const askOnPageFindbar = {
       const resultPromise = askOnPageFindbarLLM.sendMessage(prompt, this._abortController.signal);
 
       if (!PREFS.streamEnabled) {
-        const loadingIndicator = this.createLoadingIndicator();
-        messagesContainer.appendChild(loadingIndicator);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
         try {
           const result = await resultPromise;
-          if (loadingIndicator.parentNode) loadingIndicator.remove();
+          this._clearReplyGlimmer(aiMessageDiv);
 
           if (result.text.trim() === "") {
             aiMessageDiv.remove();
@@ -2521,15 +2518,20 @@ const askOnPageFindbar = {
             renderMarkdown(result.text, contentDiv);
           }
         } finally {
-          if (loadingIndicator.parentNode) loadingIndicator.remove();
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
           setTimeout(() => this._updateFindbarDimensions(), 0);
         }
       } else {
         const result = await resultPromise;
         let fullText = "";
+        let revealed = false;
         for await (const delta of result.textStream) {
           fullText += delta;
+          if (!revealed) {
+            if (!fullText.trim()) continue;
+            revealed = true;
+            this._clearReplyGlimmer(aiMessageDiv);
+          }
           try {
             renderMarkdown(fullText, contentDiv);
           } catch (e) {
@@ -2803,11 +2805,28 @@ const askOnPageFindbar = {
     return container;
   },
 
-  createLoadingIndicator() {
-    const messageDiv = parseElement(
-      `<div class="chat-message chat-message-loading"><div class="message-content">Loading...</div></div>`
+  _mountReplyGlimmer(message) {
+    if (!message) return;
+    message.classList.add("chat-message-loading");
+    message.setAttribute("aria-busy", "true");
+    const content = message.querySelector(".message-content");
+    if (!content || content.querySelector(".ai-glimmer")) return;
+    content.appendChild(
+      parseElement(
+        `<div class="ai-glimmer" aria-hidden="true">
+          <span class="ai-glimmer-bar"></span>
+          <span class="ai-glimmer-bar"></span>
+          <span class="ai-glimmer-bar"></span>
+        </div>`
+      )
     );
-    return messageDiv;
+  },
+
+  _clearReplyGlimmer(message) {
+    if (!message) return;
+    message.classList.remove("chat-message-loading");
+    message.removeAttribute("aria-busy");
+    message.querySelector(".ai-glimmer")?.remove();
   },
 
   addChatMessage(message) {

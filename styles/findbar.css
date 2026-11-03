@@ -963,20 +963,56 @@
 
       .chat-message-loading {
         align-self: flex-start;
+        max-width: 100% !important;
+        width: 100%;
         background: transparent;
-        color: transparent;
-        width: 85% !important;
 
-        .message-content {
-          animation: pulse 1.5s ease-in-out infinite;
-          background: linear-gradient(
+        .markdown-body {
+          display: none;
+        }
+
+        .ai-glimmer {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+          padding: 8px 0 4px;
+        }
+
+        .ai-glimmer-bar {
+          display: block;
+          height: 10px;
+          border-radius: 4px;
+          corner-shape: round;
+          background-image: linear-gradient(
             90deg,
-            transparent,
-            color-mix(in srgb, var(--ask-on-page-primary-bg) 20%, transparent 80%),
-            transparent
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 0%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 38%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 46%, transparent) 50%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 62%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 100%
           );
-          background-size: 200% 100%;
-          animation: shimmer 2s infinite;
+          background-size: 220% 100%;
+          background-repeat: no-repeat;
+          animation: shimmer 1.4s ease-in-out infinite;
+        }
+
+        .ai-glimmer-bar:nth-child(1) {
+          width: 92%;
+        }
+
+        .ai-glimmer-bar:nth-child(2) {
+          width: 74%;
+        }
+
+        .ai-glimmer-bar:nth-child(3) {
+          width: 46%;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .ai-glimmer-bar {
+            animation: none;
+          }
         }
       }
     }
