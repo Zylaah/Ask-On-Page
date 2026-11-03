@@ -986,11 +986,11 @@
           corner-shape: round;
           background-image: linear-gradient(
             90deg,
-            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 0%,
-            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 38%,
-            color-mix(in srgb, var(--ask-on-page-ai-message-color) 46%, transparent) 50%,
-            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 62%,
-            color-mix(in srgb, var(--ask-on-page-ai-message-color) 14%, transparent) 100%
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 28%, transparent) 0%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 28%, transparent) 38%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 52%, transparent) 50%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 28%, transparent) 62%,
+            color-mix(in srgb, var(--ask-on-page-ai-message-color) 28%, transparent) 100%
           );
           background-size: 220% 100%;
           background-repeat: no-repeat;
