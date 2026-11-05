@@ -849,7 +849,7 @@
 
           &::placeholder {
             color: var(--ask-on-page-chat-input-fg) !important;
-            opacity: 0.8;
+            opacity: 0.5;
             margin-bottom: 2px;
 			font-weight: 600;
           }
