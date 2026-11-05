@@ -32,7 +32,8 @@
   findbar {
     --ask-on-page-findbar-control-height: 28px;
     /* How far message pixels dissolve at the top of the scroller. */
-    --ask-on-page-chat-top-fade-height: 40px;
+    --ask-on-page-chat-top-fade-height: 64px;
+    --ask-on-page-chat-bottom-fade-height: 40px;
 
     padding-inline-start: 0px !important;
     padding-top: 0 !important;
@@ -727,7 +728,7 @@
           mask-image: linear-gradient(
             to bottom,
             #000 0,
-            #000 calc(100% - 16px),
+            #000 calc(100% - var(--ask-on-page-chat-bottom-fade-height, 40px)),
             transparent 100%
           );
         }
@@ -736,8 +737,8 @@
           mask-image: linear-gradient(
             to bottom,
             transparent 0,
-            #000 var(--ask-on-page-chat-top-fade-height, 40px),
-            #000 calc(100% - 16px),
+            #000 var(--ask-on-page-chat-top-fade-height, 64px),
+            #000 calc(100% - var(--ask-on-page-chat-bottom-fade-height, 40px)),
             transparent 100%
           );
         }
