@@ -2283,6 +2283,7 @@ const askOnPageFindbar = {
     if (messages) {
       messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
       messages.removeAttribute("data-scrolled");
+      messages.removeAttribute("data-more-below");
     }
     setTimeout(() => this._updateFindbarDimensions(), 1);
   },
@@ -2292,6 +2293,9 @@ const askOnPageFindbar = {
     if (!node) return;
     if (node.scrollTop > 2) node.setAttribute("data-scrolled", "true");
     else node.removeAttribute("data-scrolled");
+    const hiddenBelow = node.scrollHeight - node.scrollTop - node.clientHeight;
+    if (hiddenBelow > 4) node.setAttribute("data-more-below", "true");
+    else node.removeAttribute("data-more-below");
   },
 
   _needsApiKeySetup() {

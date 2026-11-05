@@ -722,9 +722,17 @@
         gap: 10px;
         scrollbar-width: none;
 
-        /* Bottom dissolve always. The top dissolve waits until content
-           has scrolled under the edge ([data-scrolled]). */
-        &:has(.chat-message) {
+        /* Each dissolve waits until messages sit past that edge. */
+        &[data-scrolled="true"]:has(.chat-message) {
+          mask-image: linear-gradient(
+            to bottom,
+            transparent 0,
+            #000 var(--ask-on-page-chat-top-fade-height, 64px),
+            #000 100%
+          );
+        }
+
+        &[data-more-below="true"]:has(.chat-message) {
           mask-image: linear-gradient(
             to bottom,
             #000 0,
@@ -733,7 +741,7 @@
           );
         }
 
-        &[data-scrolled="true"]:has(.chat-message) {
+        &[data-scrolled="true"][data-more-below="true"]:has(.chat-message) {
           mask-image: linear-gradient(
             to bottom,
             transparent 0,
