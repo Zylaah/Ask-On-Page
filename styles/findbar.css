@@ -762,7 +762,7 @@
 
         &:has(.chat-message) ~ .ai-chat-input-group {
           border: none !important;
-          margin: 5px !important;
+          margin: 0 5px 5px 5px !important;
           background: color-mix(in srgb,rgb(219, 219, 219) 7%, transparent) !important;
           border-radius: 6px;
         }
