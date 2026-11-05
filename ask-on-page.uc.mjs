@@ -2727,7 +2727,7 @@ const askOnPageFindbar = {
   createChatInterface() {
     const chatInputGroup = `<div class="ai-chat-input-group">
           <div class="ai-chat-input-shell">
-            <textarea id="ai-prompt" placeholder="Ask anything about this page…" rows="1"></textarea>
+            <textarea id="ai-prompt" placeholder="Ask a question…" rows="1"></textarea>
             <div class="ai-chat-input-actions">
               <button id="send-prompt" class="send-btn" type="button" title="Ask" aria-label="Ask">Ask</button>
               <button id="stop-generation" class="stop-btn" type="button" title="Stop" aria-label="Stop generation" hidden>
