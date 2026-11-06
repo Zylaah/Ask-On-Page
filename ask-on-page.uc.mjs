@@ -2292,7 +2292,7 @@ const askOnPageFindbar = {
     const node = el || this.chatContainer?.querySelector("#chat-messages");
     if (!node) return;
     const style = getComputedStyle(node);
-    const topCap = parseFloat(style.getPropertyValue("--ask-on-page-chat-top-fade-height")) || 64;
+    const topCap = parseFloat(style.getPropertyValue("--ask-on-page-chat-top-fade-height")) || 40;
     const bottomCap = parseFloat(style.getPropertyValue("--ask-on-page-chat-bottom-fade-height")) || 40;
     let top = Math.min(Math.max(node.scrollTop, 0), topCap);
     let bottom = Math.min(

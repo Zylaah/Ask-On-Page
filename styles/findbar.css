@@ -31,8 +31,8 @@
 
   findbar {
     --ask-on-page-findbar-control-height: 28px;
-    /* How far message pixels dissolve at the top of the scroller. */
-    --ask-on-page-chat-top-fade-height: 64px;
+    /* How far message pixels dissolve at each edge of the scroller. */
+    --ask-on-page-chat-top-fade-height: 40px;
     --ask-on-page-chat-bottom-fade-height: 40px;
     --ask-on-page-chat-top-fade: 0px;
     --ask-on-page-chat-bottom-fade: 0px;
