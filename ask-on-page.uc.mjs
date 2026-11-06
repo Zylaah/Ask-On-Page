@@ -2282,8 +2282,8 @@ const askOnPageFindbar = {
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) {
       messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
-      messages.removeAttribute("data-scrolled");
-      messages.removeAttribute("data-more-below");
+      messages.style.removeProperty("--ask-on-page-chat-top-fade");
+      messages.style.removeProperty("--ask-on-page-chat-bottom-fade");
     }
     setTimeout(() => this._updateFindbarDimensions(), 1);
   },
@@ -2291,11 +2291,24 @@ const askOnPageFindbar = {
   _syncChatTopFade(el) {
     const node = el || this.chatContainer?.querySelector("#chat-messages");
     if (!node) return;
-    if (node.scrollTop > 2) node.setAttribute("data-scrolled", "true");
-    else node.removeAttribute("data-scrolled");
-    const hiddenBelow = node.scrollHeight - node.scrollTop - node.clientHeight;
-    if (hiddenBelow > 4) node.setAttribute("data-more-below", "true");
-    else node.removeAttribute("data-more-below");
+    const style = getComputedStyle(node);
+    const topCap = parseFloat(style.getPropertyValue("--ask-on-page-chat-top-fade-height")) || 64;
+    const bottomCap = parseFloat(style.getPropertyValue("--ask-on-page-chat-bottom-fade-height")) || 40;
+    let top = Math.min(Math.max(node.scrollTop, 0), topCap);
+    let bottom = Math.min(
+      Math.max(node.scrollHeight - node.scrollTop - node.clientHeight, 0),
+      bottomCap
+    );
+    if (top < 0.5) top = 0;
+    if (bottom < 0.5) bottom = 0;
+    const room = node.clientHeight;
+    if (room > 0 && top + bottom > room) {
+      const scale = room / (top + bottom);
+      top *= scale;
+      bottom *= scale;
+    }
+    node.style.setProperty("--ask-on-page-chat-top-fade", `${top}px`);
+    node.style.setProperty("--ask-on-page-chat-bottom-fade", `${bottom}px`);
   },
 
   _needsApiKeySetup() {
