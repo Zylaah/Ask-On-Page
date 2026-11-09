@@ -717,7 +717,7 @@
 
       .ai-chat-messages {
         max-height: 320px;
-        padding: 12px 12px 8px 12px !important;
+        padding: 12px !important;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
