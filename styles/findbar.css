@@ -46,6 +46,10 @@
     box-sizing: border-box;
     position: fixed;
     top: 15px;
+    /* Little Zen keeps a 50px toolbar. Drop the bar so it clears that chrome. */
+    :root[zen-little-window]:not([zen-little-window-urlbar-only]) & {
+      top: calc(15px + 30px);
+    }
     left: calc(100% - 15px - var(--findbar-width, 400px));
     width: 400px !important;
     max-width: 400px !important;
