@@ -46,7 +46,7 @@
     box-sizing: border-box;
     position: fixed;
     top: 15px;
-    
+  
     left: calc(100% - 15px - var(--findbar-width, 400px));
     width: 400px !important;
     max-width: 400px !important;
@@ -1069,6 +1069,14 @@
     &[data-ask-flight] :is(#findbar-ask, #send-prompt, #stop-generation) {
       visibility: hidden !important;
     }
+  }
+
+  /* Stable's Motion leaves will-change: transform on the tab panel, so
+     position:fixed on the findbar is 15px inside that padded box. Twilight
+     does not, so the same 15px is against the window. Recreate that
+     containing block. Skip Glance overlays; they already transform. */
+  :is(.browserSidebarContainer.deck-selected):not(.zen-glance-overlay) {
+    transform: translateZ(0);
   }
 
   /* Glance's overlay is a transformed containing block. A hidden findbar
