@@ -1014,11 +1014,6 @@
       }
     }
 
-    /* Little Zen keeps a 50px toolbar. Drop the bar so it clears that chrome. */
-    :root[zen-little-window]:not([zen-little-window-urlbar-only]) & {
-      top: calc(15px + 50px);
-    };
-
     .page-excerpt {
       border-left: 3px solid var(--ask-on-page-user-message-color) !important;
       padding: 8px 12px !important;
