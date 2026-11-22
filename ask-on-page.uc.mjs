@@ -2183,6 +2183,67 @@ const askOnPageFindbar = {
     this._resetMinimalFindbarState();
   },
 
+  _releaseFindbarChatChrome() {
+    this._morphGen = (this._morphGen || 0) + 1;
+    this._applyingSession = true;
+    this._isExpanded = false;
+    const bar = this.findbar;
+    if (bar) {
+      bar.expanded = false;
+      bar.classList.remove("ai-expanded", "ai-collapsing");
+      bar.style.removeProperty("height");
+      bar.style.removeProperty("transition-duration");
+    }
+    this._applyingSession = false;
+  },
+
+  _parkChat(browser) {
+    const session = browser && tabChats.get(browser);
+    if (!session) return;
+    this._storeVisibleSession(browser);
+    if (this.chatContainer) {
+      session.view = this.chatContainer;
+      session.liveReply = this._currentAIMessageDiv;
+      this.chatContainer.remove();
+      this.chatContainer = null;
+    }
+    if (this.apiKeyContainer) {
+      session.setupView = this.apiKeyContainer;
+      this.apiKeyContainer.remove();
+      this.apiKeyContainer = null;
+    }
+    this._currentAIMessageDiv = null;
+  },
+
+  _attachParkedChat(session) {
+    if (!this.findbar || !session) return false;
+    const view = session.view || session.setupView;
+    if (!view) return false;
+    this._applyingSession = true;
+    this.chatContainer = session.view || null;
+    this.apiKeyContainer = session.setupView || null;
+    if (session.setupView && session.setupView.parentNode !== this.findbar) {
+      this.findbar.insertBefore(session.setupView, this.findbar.firstChild);
+    }
+    if (session.view && session.view.parentNode !== this.findbar) {
+      this.findbar.insertBefore(session.view, this.findbar.firstChild);
+    }
+    this._currentAIMessageDiv =
+      session.liveReply && session.view?.contains(session.liveReply) ? session.liveReply : null;
+    this._isExpanded = true;
+    this.findbar.expanded = true;
+    this.findbar.classList.remove("ai-collapsing");
+    this.findbar.classList.add("ai-expanded");
+    this.findbar.style.removeProperty("height");
+    this.findbar.style.removeProperty("transition-duration");
+    this.show();
+    this._applyingSession = false;
+    const messages = this.chatContainer?.querySelector("#chat-messages");
+    if (messages) this._syncChatTopFade(messages);
+    if (session.streaming) this._toggleStreamingControls(true);
+    return true;
+  },
+
   _presentSession(browser) {
     const session = this._ensureSession(browser);
     if (!session || gBrowser.selectedBrowser !== browser) return;
@@ -2192,6 +2253,7 @@ const askOnPageFindbar = {
     this._isStreaming = !!session.streaming;
     this._abortController = session.abortController;
     if (!session.expanded) return;
+    if (this._attachParkedChat(session)) return;
     this._applyingSession = true;
     if (this._isExpanded) this.showAIInterface();
     else this.expanded = true;
@@ -2253,7 +2315,12 @@ const askOnPageFindbar = {
     const prev = this._chatBrowser;
     if (prev && prev !== next) {
       this._storeVisibleSession(prev);
-      if (!PREFS.persistChat) this._dropSession(prev);
+      if (PREFS.persistChat) this._parkChat(prev);
+      else {
+        this.removeAIInterface();
+        this._dropSession(prev);
+      }
+      this._releaseFindbarChatChrome();
     }
     this._chatBrowser = next;
     const session = this._ensureSession(next);
@@ -2262,13 +2329,7 @@ const askOnPageFindbar = {
     SettingsModal.hide();
     this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
-    if (prev && prev !== next) {
-      this._applyingSession = true;
-      this.removeAIInterface();
-      this._isExpanded = false;
-      this.findbar?.classList.remove("ai-expanded", "ai-collapsing");
-      this._applyingSession = false;
-    }
+    if (session.expanded) this._attachParkedChat(session);
     const generation = (this._findbarBindGen = (this._findbarBindGen || 0) + 1);
     gBrowser.getFindBar().then((findbar) => {
       if (generation !== this._findbarBindGen || gBrowser.selectedBrowser !== next) return;
@@ -3721,7 +3782,24 @@ function setupCommandPaletteIntegration(retryCount = 0) {
 function registerFindbarShortcut(value = PREFS.shortcutFindbar) {
   if (!askOnPageFindbar.enabled) return;
   registerShortcut(value, "toggle-findbar-ai-bar", () => {
-    askOnPageFindbar.expanded = !askOnPageFindbar.expanded;
+    const bar = askOnPageFindbar;
+    if (bar.expanded) {
+      bar.expanded = false;
+      return;
+    }
+    const session = gBrowser.selectedBrowser && tabChats.get(gBrowser.selectedBrowser);
+    const hasChat =
+      session &&
+      (session.messages.length ||
+        session.partial ||
+        session.pendingPrompt ||
+        session.draft ||
+        session.view ||
+        session.setupView ||
+        session.streaming);
+    if (!hasChat) return;
+    session.expanded = true;
+    bar._presentSession(gBrowser.selectedBrowser);
   });
   initShortcutRegistry();
 }
