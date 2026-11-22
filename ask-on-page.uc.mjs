@@ -2313,6 +2313,11 @@ const askOnPageFindbar = {
     const next = gBrowser.selectedBrowser;
     if (!next) return;
     const prev = this._chatBrowser;
+    const prevWasOpen = !!(
+      prev &&
+      prev !== next &&
+      (this._isExpanded || tabChats.get(prev)?.expanded)
+    );
     if (prev && prev !== next) {
       this._storeVisibleSession(prev);
       if (PREFS.persistChat) this._parkChat(prev);
@@ -2330,7 +2335,17 @@ const askOnPageFindbar = {
     this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
     if (session.expanded) this._attachParkedChat(session);
-    else if (prev && prev !== next && tabChats.get(prev)?.expanded) this.hide();
+    else if (
+      prevWasOpen ||
+      this._isExpanded ||
+      this.chatContainer ||
+      this.apiKeyContainer ||
+      this.findbar?.classList.contains("ai-expanded")
+    ) {
+      this.removeAIInterface();
+      this._releaseFindbarChatChrome();
+      this.hide();
+    }
     const generation = (this._findbarBindGen = (this._findbarBindGen || 0) + 1);
     gBrowser.getFindBar().then((findbar) => {
       if (generation !== this._findbarBindGen || gBrowser.selectedBrowser !== next) return;
@@ -2360,6 +2375,7 @@ const askOnPageFindbar = {
       this._layoutMinimalFindbarRow();
       this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
       this._presentSession(next);
+      if (!session.expanded && prevWasOpen) this.hide();
     });
   },
 
@@ -3444,8 +3460,13 @@ const askOnPageFindbar = {
     this._handleTabClose = (event) => {
       const browser = event.target?.linkedBrowser;
       if (!browser) return;
+      if (this._chatBrowser === browser) {
+        this.removeAIInterface();
+        this._releaseFindbarChatChrome();
+        this.hide();
+        this._chatBrowser = null;
+      }
       this._dropSession(browser);
-      if (this._chatBrowser === browser) this._chatBrowser = null;
     };
     gBrowser.tabContainer.addEventListener("TabClose", this._handleTabClose);
     this._tabsProgressListener = {
