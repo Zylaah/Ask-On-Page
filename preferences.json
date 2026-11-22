@@ -515,7 +515,7 @@
     "label": "Persist Chat History per Tab",
     "type": "checkbox",
     "defaultValue": false,
-    "description": "Saves the chat history for each tab. History is lost when the browser is closed.",
+    "description": "Keeps a separate chat for each tab while you switch between them. The chat is dropped when that tab or the browser closes.",
     "conditions": [
       {
         "if": {

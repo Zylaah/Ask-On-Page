@@ -578,9 +578,25 @@ const updateMessageManager = () => {
 };
 
 const messageManagerAPI = {
-  send(cmd, data = {}) {
-    updateMessageManager();
-    if (!currentMessageManager) {
+  managerFor(browser) {
+    const target = browser || gBrowser.selectedBrowser;
+    const mm = target?.messageManager;
+    if (!mm) return null;
+    if (!target._findbarAIInjected) {
+      const scriptText = `(${frameScript})();`;
+      mm.loadFrameScript(
+        "data:application/javascript;charset=utf-8," + encodeURIComponent(scriptText),
+        false
+      );
+      target._findbarAIInjected = true;
+    }
+    if (!browser) currentMessageManager = mm;
+    return mm;
+  },
+
+  send(cmd, data = {}, browser = null) {
+    const mm = this.managerFor(browser);
+    if (!mm) {
       PREFS.debugError("No message manager available.");
       return Promise.reject(new Error("No message manager available."));
     }
@@ -588,7 +604,7 @@ const messageManagerAPI = {
     return new Promise((resolve, reject) => {
       const listener = (msg) => {
         if (msg.data.command === cmd) {
-          currentMessageManager.removeMessageListener("FindbarAI:Result", listener);
+          mm.removeMessageListener("FindbarAI:Result", listener);
           if (msg.data.result && msg.data.result.error) {
             reject(new Error(msg.data.result.error));
           } else {
@@ -596,15 +612,16 @@ const messageManagerAPI = {
           }
         }
       };
-      currentMessageManager.addMessageListener("FindbarAI:Result", listener);
-      currentMessageManager.sendAsyncMessage("FindbarAI:Command", { command: cmd, data });
+      mm.addMessageListener("FindbarAI:Result", listener);
+      mm.sendAsyncMessage("FindbarAI:Command", { command: cmd, data });
     });
   },
 
-  getUrlAndTitle() {
+  getUrlAndTitle(browser = null) {
+    const target = browser || gBrowser.selectedBrowser;
     return {
-      url: gBrowser.currentURI.spec,
-      title: gBrowser.selectedBrowser.contentTitle,
+      url: target?.currentURI?.spec || gBrowser.currentURI?.spec || "",
+      title: target?.contentTitle || "",
     };
   },
 
@@ -622,15 +639,15 @@ const messageManagerAPI = {
       });
   },
 
-  async getPageTextContent(trimWhiteSpace = true) {
-    return this.send("GetPageTextContent", { trimWhiteSpace }).catch((error) => {
+  async getPageTextContent(trimWhiteSpace = true, browser = null) {
+    return this.send("GetPageTextContent", { trimWhiteSpace }, browser).catch((error) => {
       PREFS.debugError("Failed to get page text content:", error);
-      return this.getUrlAndTitle();
+      return this.getUrlAndTitle(browser);
     });
   },
 
-  async getPageContext(trimWhiteSpace = false) {
-    const page = await this.getPageTextContent(trimWhiteSpace);
+  async getPageContext(trimWhiteSpace = false, browser = null) {
+    const page = await this.getPageTextContent(trimWhiteSpace, browser);
     const videoId = getYouTubeVideoId(page?.url);
 
     if (!videoId) {
@@ -737,6 +754,20 @@ function getYouTubeVideoId(input) {
   }
 
   return /^[\w-]{11}$/.test(trimmed) ? trimmed : null;
+}
+
+/** Same document keeps a thread. A new page, including another YouTube video, starts a fresh one. */
+function documentKeyFromSpec(spec) {
+  const videoId = getYouTubeVideoId(spec);
+  if (videoId) return `youtube:${videoId}`;
+  if (!spec) return "";
+  try {
+    const url = new URL(spec);
+    url.hash = "";
+    return url.href;
+  } catch {
+    return String(spec);
+  }
 }
 
 /**
@@ -1708,6 +1739,9 @@ installZenThemeSync();
 document.documentElement.style.setProperty("--ask-on-page-findbar-width", `${FINDBAR_WIDTH}px`);
 document.documentElement.style.setProperty("--ask-on-page-findbar-max-width", `${FINDBAR_WIDTH}px`);
 
+/** Per-tab chat. The findbar is only the view; the browser owns the transcript. */
+const tabChats = new WeakMap();
+
 const askOnPageFindbar = {
   findbar: null,
   askButton: null,
@@ -1732,7 +1766,6 @@ const askOnPageFindbar = {
   /** User question held while the API-key setup panel is shown. */
   _pendingPrompt: null,
   _youtubeContextKey: undefined,
-  _youtubeNavTimer: null,
   _tabsProgressListener: null,
 
   _placeholderObserver: null,
@@ -1988,6 +2021,8 @@ const askOnPageFindbar = {
   set expanded(value) {
     const isChanged = value !== this._isExpanded;
     this._isExpanded = value;
+    const visibleSession = this._chatBrowser && tabChats.get(this._chatBrowser);
+    if (visibleSession && !this._applyingSession) visibleSession.expanded = value;
     if (!this.findbar) return;
     this.findbar.expanded = value;
     if (isChanged) {
@@ -2029,7 +2064,7 @@ const askOnPageFindbar = {
         this._syncChatTopFade(messagesContainer);
       }
     } else {
-      if (this._isStreaming) {
+      if (this._isStreaming && !this._keepStreamOnCollapse) {
         this._abortController?.abort(); // Stop messsage if it is running
       }
       if (isChanged) {
@@ -2077,36 +2112,169 @@ const askOnPageFindbar = {
     return !!tab?.hasAttribute("zen-glance-tab");
   },
 
+  _blankSession(documentKey) {
+    return {
+      messages: [],
+      expanded: false,
+      draft: "",
+      pendingPrompt: null,
+      partial: "",
+      streaming: false,
+      abortController: null,
+      documentKey,
+    };
+  },
+
+  _ensureSession(browser) {
+    if (!browser) return null;
+    let session = tabChats.get(browser);
+    const documentKey = documentKeyFromSpec(browser.currentURI?.spec || "");
+    if (!session) {
+      session = this._blankSession(documentKey);
+      tabChats.set(browser, session);
+    }
+    return session;
+  },
+
+  _storeVisibleSession(browser) {
+    const session = browser && tabChats.get(browser);
+    if (!session || this._chatBrowser !== browser) return;
+    const draft = this.chatContainer?.querySelector("#ai-prompt");
+    if (draft) session.draft = draft.value;
+    session.pendingPrompt = this._pendingPrompt;
+    if (!this._applyingSession) session.expanded = this._isExpanded;
+  },
+
+  _dropSession(browser) {
+    const session = browser && tabChats.get(browser);
+    if (!session) return;
+    session.requestId = (session.requestId || 0) + 1;
+    session.abortController?.abort();
+    session.streaming = false;
+    session.abortController = null;
+    tabChats.delete(browser);
+  },
+
+  _resetSession(browser, documentKey) {
+    const session = browser && tabChats.get(browser);
+    if (!session) return;
+    session.requestId = (session.requestId || 0) + 1;
+    session.abortController?.abort();
+    session.streaming = false;
+    session.abortController = null;
+    session.messages = [];
+    session.partial = "";
+    session.draft = "";
+    session.pendingPrompt = null;
+    session.expanded = false;
+    session.documentKey = documentKey;
+    if (this._chatBrowser !== browser) return;
+    askOnPageFindbarLLM.history = session.messages;
+    this._pendingPrompt = null;
+    this._currentAIMessageDiv = null;
+    this._isStreaming = false;
+    this._abortController = null;
+    this._applyingSession = true;
+    this._keepStreamOnCollapse = true;
+    if (this._isExpanded) this.expanded = false;
+    else this.removeAIInterface();
+    this._keepStreamOnCollapse = false;
+    this._applyingSession = false;
+    this._resetMinimalFindbarState();
+  },
+
+  _presentSession(browser) {
+    const session = this._ensureSession(browser);
+    if (!session || gBrowser.selectedBrowser !== browser) return;
+    this._chatBrowser = browser;
+    askOnPageFindbarLLM.history = session.messages;
+    this._pendingPrompt = session.pendingPrompt;
+    this._isStreaming = !!session.streaming;
+    this._abortController = session.abortController;
+    if (!session.expanded) return;
+    this._applyingSession = true;
+    if (this._isExpanded) this.showAIInterface();
+    else this.expanded = true;
+    this._applyingSession = false;
+  },
+
+  _mountLiveReply(session) {
+    const messagesContainer = this.chatContainer?.querySelector("#chat-messages");
+    if (!messagesContainer || !session?.streaming) return;
+    const aiMessageDiv = parseElement(
+      `<div class="chat-message chat-message-ai">
+        <div class="message-content">
+          <div class="markdown-body"></div>
+        </div>
+      </div>`
+    );
+    messagesContainer.appendChild(aiMessageDiv);
+    this._currentAIMessageDiv = aiMessageDiv;
+    const text = session.partial || "";
+    if (text.trim()) {
+      const contentDiv = aiMessageDiv.querySelector(".markdown-body");
+      try {
+        renderMarkdown(text, contentDiv);
+      } catch (e) {
+        PREFS.debugError("Markdown render failed:", e.message);
+      }
+    } else {
+      this._mountReplyGlimmer(aiMessageDiv);
+    }
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    this._syncChatTopFade(messagesContainer);
+    this._toggleStreamingControls(true);
+  },
+
+  _paintStreamingReply(owner, text) {
+    if (this._chatBrowser !== owner) return;
+    const bubble = this._currentAIMessageDiv;
+    if (!bubble?.isConnected || !text.trim()) return;
+    this._clearReplyGlimmer(bubble);
+    const contentDiv = bubble.querySelector(".markdown-body");
+    if (!contentDiv) return;
+    try {
+      renderMarkdown(text, contentDiv);
+    } catch (e) {
+      PREFS.debugError("Markdown render failed:", e.message);
+    }
+    const messagesContainer = bubble.parentElement;
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      this._syncChatTopFade(messagesContainer);
+    }
+    setTimeout(() => this._updateFindbarDimensions(), 0);
+  },
+
   updateFindbar() {
     if (this._isGlanceTab()) return;
+    const next = gBrowser.selectedBrowser;
+    if (!next) return;
+    const prev = this._chatBrowser;
+    if (prev && prev !== next) {
+      this._storeVisibleSession(prev);
+      if (!PREFS.persistChat) this._dropSession(prev);
+    }
+    this._chatBrowser = next;
+    const session = this._ensureSession(next);
+    askOnPageFindbarLLM.history = session.messages;
     this._youtubeContextKey = getYouTubeVideoId(gBrowser.currentURI?.spec) || null;
     SettingsModal.hide();
     this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
-    this.removeAIInterface();
-    if (!PREFS.persistChat) {
-      this.hide();
-      this.expanded = false;
-      this.clear();
+    if (prev && prev !== next) {
+      this._applyingSession = true;
+      this.removeAIInterface();
+      this._isExpanded = false;
+      this.findbar?.classList.remove("ai-expanded", "ai-collapsing");
+      this._applyingSession = false;
     }
+    const generation = (this._findbarBindGen = (this._findbarBindGen || 0) + 1);
     gBrowser.getFindBar().then((findbar) => {
+      if (generation !== this._findbarBindGen || gBrowser.selectedBrowser !== next) return;
       this._attachFindbar(findbar);
       this._applyFindbarDimensions();
       this.addAskButton();
-      if (PREFS.persistChat) {
-        if (this?.findbar?.history) {
-          askOnPageFindbarLLM.history = this.findbar.history;
-        } else askOnPageFindbarLLM.history = [];
-        if (this?.findbar?.expanded && !this?.findbar?.hidden) {
-          setTimeout(() => (this.expanded = true), 200);
-        } else {
-          this.hide();
-          this.expanded = false;
-        }
-      } else {
-        this.hide();
-        this.expanded = false;
-      }
       setTimeout(() => this._updateFindbarDimensions(), 0);
 
       const matches =
@@ -2129,6 +2297,7 @@ const askOnPageFindbar = {
 
       this._layoutMinimalFindbarRow();
       this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
+      this._presentSession(next);
     });
   },
 
@@ -2274,11 +2443,17 @@ const askOnPageFindbar = {
   },
 
   clear() {
-    askOnPageFindbarLLM.clearData();
-    this._pendingPrompt = null;
-    if (this.findbar) {
-      this.findbar.history = null;
+    const session = this._chatBrowser && tabChats.get(this._chatBrowser);
+    if (session) {
+      session.messages.splice(0, session.messages.length);
+      session.partial = "";
+      session.draft = "";
+      session.pendingPrompt = null;
+      askOnPageFindbarLLM.history = session.messages;
+    } else {
+      askOnPageFindbarLLM.clearData();
     }
+    this._pendingPrompt = null;
     const messages = this?.chatContainer?.querySelector("#chat-messages");
     if (messages) {
       messages.querySelectorAll(".chat-message").forEach((message) => message.remove());
@@ -2470,8 +2645,18 @@ const askOnPageFindbar = {
     return container;
   },
 
+  _noteReplyError(session, owner, message) {
+    const content = `**Error**: ${message}`;
+    session.messages.push({ role: "error", content });
+    if (this._chatBrowser === owner) this.addChatMessage({ role: "error", content });
+  },
+
   async sendMessage(prompt) {
-    if (!prompt || this._isStreaming) return;
+    const browser = this._chatBrowser || gBrowser.selectedBrowser;
+    const session = this._ensureSession(browser);
+    if (!prompt || !session || session.streaming) return;
+    this._chatBrowser = browser;
+    askOnPageFindbarLLM.history = session.messages;
 
     this.show();
     if (!this.expanded) {
@@ -2483,6 +2668,7 @@ const askOnPageFindbar = {
 
     if (this._needsApiKeySetup()) {
       this._askFlightFrom = null;
+      session.pendingPrompt = prompt;
       this._pendingPrompt = prompt;
       if (!this.apiKeyContainer) {
         this.showAIInterface();
@@ -2492,6 +2678,8 @@ const askOnPageFindbar = {
       return;
     }
 
+    session.pendingPrompt = null;
+    session.draft = "";
     this._pendingPrompt = null;
 
     this.addChatMessage({ role: "user", content: prompt });
@@ -2502,7 +2690,12 @@ const askOnPageFindbar = {
       return;
     }
 
-    this._abortController = new AbortController();
+    const owner = browser;
+    const requestId = (session.requestId = (session.requestId || 0) + 1);
+    session.abortController = new AbortController();
+    session.streaming = true;
+    session.partial = "";
+    this._abortController = session.abortController;
     this._toggleStreamingControls(true);
 
     const aiMessageDiv = parseElement(
@@ -2514,73 +2707,76 @@ const askOnPageFindbar = {
     );
     const contentDiv = aiMessageDiv.querySelector(".markdown-body");
     this._mountReplyGlimmer(aiMessageDiv);
-    if (messagesContainer) {
-      messagesContainer.appendChild(aiMessageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    messagesContainer.appendChild(aiMessageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
     this._currentAIMessageDiv = aiMessageDiv;
     this._finishDeferredAskFlight();
 
+    const showing = () => this._chatBrowser === owner && aiMessageDiv.isConnected;
+
     try {
-      const resultPromise = askOnPageFindbarLLM.sendMessage(prompt, this._abortController.signal);
+      const resultPromise = askOnPageFindbarLLM.sendMessage(
+        prompt,
+        session.abortController.signal,
+        owner
+      );
 
       if (!PREFS.streamEnabled) {
-        try {
-          const result = await resultPromise;
+        const result = await resultPromise;
+        if (showing()) {
           this._clearReplyGlimmer(aiMessageDiv);
-
           if (result.text.trim() === "") {
             aiMessageDiv.remove();
+            this._noteReplyError(
+              session,
+              owner,
+              "The model returned an empty response. Check your API key, model, and page size."
+            );
           } else {
             renderMarkdown(result.text, contentDiv);
           }
-        } finally {
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
           setTimeout(() => this._updateFindbarDimensions(), 0);
         }
       } else {
         const result = await resultPromise;
         let fullText = "";
-        let revealed = false;
         for await (const delta of result.textStream) {
           fullText += delta;
-          if (!revealed) {
-            if (!fullText.trim()) continue;
-            revealed = true;
-            this._clearReplyGlimmer(aiMessageDiv);
-          }
-          try {
-            renderMarkdown(fullText, contentDiv);
-          } catch (e) {
-            PREFS.debugError("Markdown render failed:", e.message);
-          }
-          setTimeout(() => this._updateFindbarDimensions(), 0);
-          if (messagesContainer) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          }
+          session.partial = fullText;
+          this._paintStreamingReply(owner, fullText);
         }
+        session.partial = "";
         if (fullText.trim() === "") {
-          aiMessageDiv.remove();
-          this.addChatMessage({
-            role: "error",
-            content: "**Error**: The model returned an empty response. Check your API key, model, and page size.",
-          });
+          if (showing()) aiMessageDiv.remove();
+          this._noteReplyError(
+            session,
+            owner,
+            "The model returned an empty response. Check your API key, model, and page size."
+          );
         }
       }
     } catch (e) {
+      session.partial = "";
       if (e.name !== "AbortError") {
         PREFS.debugError("Error sending message:", e);
-        if (aiMessageDiv) aiMessageDiv.remove();
-        const errMsg = formatLlmError(e);
-        this.addChatMessage({ role: "error", content: `**Error**: ${errMsg}` });
+        if (showing()) aiMessageDiv.remove();
+        this._noteReplyError(session, owner, formatLlmError(e));
       } else {
         PREFS.debugLog("Streaming aborted by user.");
-        if (aiMessageDiv) aiMessageDiv.remove();
+        if (showing()) aiMessageDiv.remove();
       }
     } finally {
-      this._toggleStreamingControls(false);
-      this._abortController = null;
-      this._currentAIMessageDiv = null;
+      if (session.requestId === requestId) {
+        session.streaming = false;
+        session.abortController = null;
+        session.partial = "";
+        if (this._chatBrowser === owner) {
+          this._toggleStreamingControls(false);
+          this._abortController = null;
+          this._currentAIMessageDiv = null;
+        }
+      }
     }
   },
 
@@ -2772,9 +2968,16 @@ const askOnPageFindbar = {
 
     const handleSend = () => {
       const prompt = promptInput.value.trim();
+      promptInput.value = "";
+      const session = this._chatBrowser && tabChats.get(this._chatBrowser);
+      if (session) session.draft = "";
       this.sendMessage(prompt);
-      promptInput.value = ""; // Clear input after sending
     };
+
+    promptInput.addEventListener("input", () => {
+      const session = this._chatBrowser && tabChats.get(this._chatBrowser);
+      if (session) session.draft = promptInput.value;
+    });
 
     sendBtn.addEventListener("click", handleSend);
     stopBtn.addEventListener("click", () => {
@@ -2902,6 +3105,10 @@ const askOnPageFindbar = {
       }
 
       this.findbar.insertBefore(this.chatContainer, this.findbar.firstChild);
+      const session = this._chatBrowser && tabChats.get(this._chatBrowser);
+      const draft = this.chatContainer.querySelector("#ai-prompt");
+      if (draft && session?.draft) draft.value = session.draft;
+      if (session?.streaming) this._mountLiveReply(session);
     }
     this._applyFindbarDimensions();
     setTimeout(() => this._updateFindbarDimensions(), 10);
@@ -3124,40 +3331,45 @@ const askOnPageFindbar = {
     }
   },
 
-  _resetForYouTubeContextChange() {
-    _youtubeTranscriptCache = { url: null, videoId: null, transcript: null };
-    this._pendingPrompt = null;
+  _onDocumentKey(browser, key) {
+    const session = tabChats.get(browser);
+    const previous = session?.documentKey;
+    if (browser === gBrowser.selectedBrowser) {
+      const videoId = key.startsWith("youtube:") ? key.slice("youtube:".length) : null;
+      if (videoId !== this._youtubeContextKey) {
+        _youtubeTranscriptCache = { url: null, videoId: null, transcript: null };
+        this._youtubeContextKey = videoId;
+      }
+    }
+    if (!session || previous === key) return;
+    this._pendingPrompt = this._chatBrowser === browser ? null : this._pendingPrompt;
     this._deferAskFlight = false;
     this._askFlightFrom = null;
     this._clearAskFlight();
-    askOnPageFindbarLLM.clearData();
-    if (this.findbar) {
-      this.findbar.history = PREFS.persistChat ? [] : null;
-    }
-    if (this.expanded) {
-      this.expanded = false;
-    } else if (this._isStreaming) {
-      this._abortController?.abort();
-    }
-    this._resetMinimalFindbarState();
+    this._resetSession(browser, key);
   },
 
-  _applyYouTubeContext(spec) {
-    const videoId = getYouTubeVideoId(spec) || null;
-    const prev = this._youtubeContextKey;
-    if (videoId === prev) return;
-    this._youtubeContextKey = videoId;
-    if (prev === undefined && !videoId) return;
-    this._resetForYouTubeContextChange();
-  },
-
-  _handleLocationChange(browser, locationURI) {
-    if (!this.enabled) return;
-    if (this._isGlanceTab()) return;
-    if (browser !== gBrowser.selectedBrowser) return;
+  _handleLocationChange(browser, webProgress, locationURI) {
+    if (!this.enabled || !browser) return;
+    if (webProgress && webProgress.isTopLevel === false) return;
     const spec = typeof locationURI === "string" ? locationURI : locationURI?.spec || "";
-    clearTimeout(this._youtubeNavTimer);
-    this._youtubeNavTimer = setTimeout(() => this._applyYouTubeContext(spec), 80);
+    const key = documentKeyFromSpec(spec);
+    if (!this._navTimers) this._navTimers = new WeakMap();
+    clearTimeout(this._navTimers.get(browser));
+    this._navTimers.set(
+      browser,
+      setTimeout(() => {
+        this._navTimers.delete(browser);
+        let current = "";
+        try {
+          current = browser.currentURI?.spec || "";
+        } catch {
+          return;
+        }
+        if (documentKeyFromSpec(current) !== key) return;
+        this._onDocumentKey(browser, key);
+      }, 80)
+    );
   },
 
   addListeners() {
@@ -3167,9 +3379,16 @@ const askOnPageFindbar = {
     const _handleContextMenuPrefChange = this.handleContextMenuPrefChange.bind(this);
 
     gBrowser.tabContainer.addEventListener("TabSelect", this._updateFindbar);
+    this._handleTabClose = (event) => {
+      const browser = event.target?.linkedBrowser;
+      if (!browser) return;
+      this._dropSession(browser);
+      if (this._chatBrowser === browser) this._chatBrowser = null;
+    };
+    gBrowser.tabContainer.addEventListener("TabClose", this._handleTabClose);
     this._tabsProgressListener = {
-      onLocationChange: (browser, _webProgress, _request, locationURI) => {
-        this._handleLocationChange(browser, locationURI);
+      onLocationChange: (browser, webProgress, _request, locationURI) => {
+        this._handleLocationChange(browser, webProgress, locationURI);
       },
     };
     gBrowser.addTabsProgressListener(this._tabsProgressListener);
@@ -3183,9 +3402,8 @@ const askOnPageFindbar = {
       _handleContextMenuPrefChange
     );
     this._persistListener = addPrefListener(PREFS.PERSIST, (pref) => {
-      if (!this.findbar) return;
-      if (pref.value) this.findbar.history = askOnPageFindbarLLM.history;
-      else this.findbar.history = null;
+      if (!this._chatBrowser) return;
+      if (pref.value) this._storeVisibleSession(this._chatBrowser);
     });
   },
 
@@ -3195,12 +3413,14 @@ const askOnPageFindbar = {
       this.findbar._findField.removeEventListener("input", this._handleFindFieldInput);
     }
     gBrowser.tabContainer.removeEventListener("TabSelect", this._updateFindbar);
+    if (this._handleTabClose) {
+      gBrowser.tabContainer.removeEventListener("TabClose", this._handleTabClose);
+      this._handleTabClose = null;
+    }
     if (this._tabsProgressListener) {
       gBrowser.removeTabsProgressListener(this._tabsProgressListener);
       this._tabsProgressListener = null;
     }
-    clearTimeout(this._youtubeNavTimer);
-    this._youtubeNavTimer = null;
     document.removeEventListener("keydown", this._addKeymaps);
     window.removeEventListener("findbaropen", this._handleFindbarOpenEvent);
     window.removeEventListener("findbarclose", this._handleFindbarCloseEvent);
@@ -3371,14 +3591,14 @@ VIDEO TRANSCRIPT CONTEXT FOR OUR DIALOGUE:
 ${pageContextBlock}`;
   }
 
-  async getSystemPrompt() {
+  async getSystemPrompt(browser = null) {
     let systemPrompt = "";
 
     if (PREFS.customSystemPrompt) {
       systemPrompt = PREFS.customSystemPrompt + "\n\n";
     }
 
-    const pageContext = await messageManagerAPI.getPageContext(false);
+    const pageContext = await messageManagerAPI.getPageContext(false, browser);
     const pageContextBlock = this.formatPageContextBlock(pageContext);
     const locale = this.getUserLocale();
 
@@ -3396,11 +3616,11 @@ ${pageContextBlock}`;
 
   clearData() {
     PREFS.debugLog("Clearing LLM history.");
-    this.history = [];
+    this.history.splice(0, this.history.length);
     this.systemInstruction = "";
   }
 
-  async sendMessage(prompt, abortSignal) {
+  async sendMessage(prompt, abortSignal, browser = null) {
     PREFS.debugLog("Sending message via fetch-based LLM");
 
     const provider = this.resolveActiveProvider();
@@ -3408,9 +3628,10 @@ ${pageContextBlock}`;
       throw new Error(`Missing API key for ${provider.label}. Add it in AskOnPage settings.`);
     }
 
-    this.history.push({ role: "user", content: prompt });
-    const systemPrompt = await this.getSystemPrompt();
-    const messages = buildChatMessages(systemPrompt, this.history);
+    const history = this.history;
+    history.push({ role: "user", content: prompt });
+    const systemPrompt = await this.getSystemPrompt(browser);
+    const messages = buildChatMessages(systemPrompt, history);
     const sampling = this.getSampling();
 
     if (this.streamEnabled) {
@@ -3423,10 +3644,7 @@ ${pageContextBlock}`;
           accumulated += chunk;
           yield chunk;
         }
-        self.history.push({ role: "assistant", content: accumulated });
-        if (askOnPageFindbar?.findbar) {
-          askOnPageFindbar.findbar.history = self.getHistory();
-        }
+        history.push({ role: "assistant", content: accumulated });
       })();
 
       return {
@@ -3442,10 +3660,7 @@ ${pageContextBlock}`;
     }
 
     const text = await completeChatText(provider, messages, abortSignal, sampling);
-    this.history.push({ role: "assistant", content: text });
-    if (askOnPageFindbar?.findbar) {
-      askOnPageFindbar.findbar.history = this.getHistory();
-    }
+    history.push({ role: "assistant", content: text });
     return { text };
   }
 }
