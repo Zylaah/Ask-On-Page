@@ -3530,12 +3530,16 @@ const askOnPageFindbar = {
   },
 
   handleFindbarCloseEvent: function () {
-    if (this.enabled) {
-      PREFS.debugLog("Findbar is being closed");
-      if (this._isStreaming) {
-        this._abortController?.abort();
-      }
-    }
+    if (!this.enabled) return;
+    const browser = this._chatBrowser;
+    if (!browser || browser !== gBrowser.selectedBrowser) return;
+    if (!this._isExpanded && !this.chatContainer && !this.apiKeyContainer) return;
+    const session = tabChats.get(browser);
+    this._releaseFindbarChatChrome();
+    if (session) session.expanded = false;
+    if (PREFS.persistChat) this._parkChat(browser);
+    else this.removeAIInterface();
+    if (session?.streaming) session.abortController?.abort();
   },
 };
 
