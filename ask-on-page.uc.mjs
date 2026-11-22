@@ -2021,10 +2021,7 @@ const askOnPageFindbar = {
   set expanded(value) {
     const isChanged = value !== this._isExpanded;
     this._isExpanded = value;
-    if (value) {
-      this._cancelChatCloseSettle();
-      this._chatDismissed = false;
-    }
+    if (value) this._cancelChatCloseSettle();
     const visibleSession = this._chatBrowser && tabChats.get(this._chatBrowser);
     if (visibleSession && !this._applyingSession) visibleSession.expanded = value;
     if (!this.findbar) return;
@@ -2187,30 +2184,20 @@ const askOnPageFindbar = {
     this._resetMinimalFindbarState();
   },
 
+  _stripChatChrome(bar) {
+    if (!bar) return;
+    bar.expanded = false;
+    bar.classList.remove("ai-expanded", "ai-collapsing");
+    bar.style.removeProperty("height");
+    bar.style.removeProperty("transition-duration");
+  },
+
   _releaseFindbarChatChrome() {
     this._morphGen = (this._morphGen || 0) + 1;
     this._applyingSession = true;
     this._isExpanded = false;
-    const bar = this.findbar;
-    if (bar) {
-      bar.expanded = false;
-      bar.classList.remove("ai-expanded", "ai-collapsing");
-      bar.style.removeProperty("height");
-      bar.style.removeProperty("transition-duration");
-    }
+    this._stripChatChrome(this.findbar);
     this._applyingSession = false;
-  },
-
-  _findbarIsOpen() {
-    const bar = this.findbar;
-    return !!bar && !bar.hidden && !bar.hasAttribute("hidden");
-  },
-
-  _markChatClosed(browser) {
-    this._isExpanded = false;
-    const session = browser && tabChats.get(browser);
-    if (session) session.expanded = false;
-    this._chatDismissed = true;
   },
 
   _cancelChatCloseSettle() {
@@ -2218,36 +2205,41 @@ const askOnPageFindbar = {
   },
 
   /**
-   * The chat bar is already hidden, or about to be. Drop chat mode only once
-   * the bar is off screen so the find row never flashes in its place.
+   * Leave chat mode on `bar` only once it is off screen, so the find row
+   * never flashes in place of the closing chat. Bound to that tab's own bar.
    */
-  _settleHiddenChat(browser, park) {
+  _settleHiddenChat(bar, browser) {
     const gen = (this._chatCloseGen = (this._chatCloseGen || 0) + 1);
     const step = (triesLeft) => {
-      if (this._chatCloseGen !== gen) return;
-      if (this._isExpanded) return;
+      if (this._chatCloseGen !== gen || !bar) return;
       const session = browser && tabChats.get(browser);
       if (session?.expanded) return;
-      if (this._findbarIsOpen()) {
-        if (!this._chatDismissed || triesLeft <= 0) return;
-        this.hide();
-        setTimeout(() => step(triesLeft - 1), 160);
+      if (!bar.hidden && !bar.hasAttribute("hidden")) {
+        if (triesLeft > 0) setTimeout(() => step(triesLeft - 1), 160);
         return;
       }
-      if (park && browser && this._chatBrowser === browser) {
-        if (PREFS.persistChat) this._parkChat(browser);
-        else this.removeAIInterface();
+      const views = [session?.view, session?.setupView];
+      if (bar === this.findbar) views.push(this.chatContainer, this.apiKeyContainer);
+      for (const view of views) {
+        if (view?.parentNode === bar) view.remove();
       }
-      this._releaseFindbarChatChrome();
+      if (!PREFS.persistChat && session) {
+        session.view = null;
+        session.setupView = null;
+        session.liveReply = null;
+      }
+      if (bar === this.findbar) {
+        if (this.chatContainer && !this.chatContainer.isConnected) this.chatContainer = null;
+        if (this.apiKeyContainer && !this.apiKeyContainer.isConnected) this.apiKeyContainer = null;
+        this._releaseFindbarChatChrome();
+      } else {
+        this._stripChatChrome(bar);
+      }
     };
-    setTimeout(() => step(2), 160);
+    setTimeout(() => step(3), 160);
   },
 
-  _dismissFindbar() {
-    this.hide();
-    this._settleHiddenChat(this._chatBrowser, false);
-  },
-
+  /** Keep this tab's chat inside its own findbar; only drop the live references. */
   _parkChat(browser) {
     const session = browser && tabChats.get(browser);
     if (!session) return;
@@ -2255,21 +2247,19 @@ const askOnPageFindbar = {
     if (this.chatContainer) {
       session.view = this.chatContainer;
       session.liveReply = this._currentAIMessageDiv;
-      this.chatContainer.remove();
       this.chatContainer = null;
     }
     if (this.apiKeyContainer) {
       session.setupView = this.apiKeyContainer;
-      this.apiKeyContainer.remove();
       this.apiKeyContainer = null;
     }
     this._currentAIMessageDiv = null;
+    this._isExpanded = false;
   },
 
   _attachParkedChat(session) {
     if (!this.findbar || !session) return false;
     this._cancelChatCloseSettle();
-    this._chatDismissed = false;
     const view = session.view || session.setupView;
     if (!view) return false;
     this._applyingSession = true;
@@ -2289,7 +2279,7 @@ const askOnPageFindbar = {
     this.findbar.classList.add("ai-expanded");
     this.findbar.style.removeProperty("height");
     this.findbar.style.removeProperty("transition-duration");
-    this.show();
+    if (this.findbar.hidden || this.findbar.hasAttribute("hidden")) this.show();
     this._applyingSession = false;
     const messages = this.chatContainer?.querySelector("#chat-messages");
     if (messages) this._syncChatTopFade(messages);
@@ -2365,18 +2355,16 @@ const askOnPageFindbar = {
     if (this._isGlanceTab()) return;
     const next = gBrowser.selectedBrowser;
     if (!next) return;
-    this._switchingTabs = true;
     const prev = this._chatBrowser;
-    const prevWasOpen = !!(
-      prev &&
-      prev !== next &&
-      (this._isExpanded || tabChats.get(prev)?.expanded)
-    );
     if (prev && prev !== next) {
+      const prevWasOpen = this._isExpanded || !!tabChats.get(prev)?.expanded;
       this._storeVisibleSession(prev);
       if (PREFS.persistChat) this._parkChat(prev);
       else {
+        /* `this.findbar` is still the previous tab's own bar here. */
         this.removeAIInterface();
+        this._releaseFindbarChatChrome();
+        if (prevWasOpen) this.hide();
         this._dropSession(prev);
       }
       this._isExpanded = false;
@@ -2388,22 +2376,9 @@ const askOnPageFindbar = {
     SettingsModal.hide();
     this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
-    const chatLeftover = !!(
-      prevWasOpen ||
-      this._chatDismissed ||
-      this.chatContainer ||
-      this.apiKeyContainer ||
-      this.findbar?.classList.contains("ai-expanded")
-    );
-    if (session.expanded) this._attachParkedChat(session);
-    else if (chatLeftover) this._dismissFindbar();
     const generation = (this._findbarBindGen = (this._findbarBindGen || 0) + 1);
     gBrowser.getFindBar().then((findbar) => {
-      const current = generation === this._findbarBindGen && gBrowser.selectedBrowser === next;
-      if (!current) {
-        if (generation === this._findbarBindGen) this._switchingTabs = false;
-        return;
-      }
+      if (generation !== this._findbarBindGen || gBrowser.selectedBrowser !== next) return;
       this._attachFindbar(findbar);
       this._applyFindbarDimensions();
       this.addAskButton();
@@ -2430,8 +2405,6 @@ const askOnPageFindbar = {
       this._layoutMinimalFindbarRow();
       this._updateAskButtonVisibility(this.findbar, { searchString: "", total: 1 });
       this._presentSession(next);
-      if (!session.expanded && (chatLeftover || this._chatDismissed)) this._dismissFindbar();
-      this._switchingTabs = false;
     });
   },
 
@@ -3522,11 +3495,12 @@ const askOnPageFindbar = {
       const browser = event.target?.linkedBrowser;
       if (!browser) return;
       if (this._chatBrowser === browser) {
-        this.removeAIInterface();
+        this._cancelChatCloseSettle();
+        this.chatContainer = null;
+        this.apiKeyContainer = null;
+        this._currentAIMessageDiv = null;
         this._isExpanded = false;
-        this.hide();
         this._chatBrowser = null;
-        this._settleHiddenChat(null, false);
       }
       this._dropSession(browser);
     };
@@ -3581,7 +3555,6 @@ const askOnPageFindbar = {
 
   handleFindbarOpenEvent: function () {
     if (!this.enabled) return;
-    if (!this._switchingTabs && !this._isExpanded && !this._hidingFindbar) this._chatDismissed = false;
     if (this._isGlanceTab()) return;
     PREFS.debugLog("Findbar is being opened");
     void gBrowser.getFindBar().then((findbar) => {
@@ -3592,20 +3565,21 @@ const askOnPageFindbar = {
     });
   },
 
-  handleFindbarCloseEvent: function () {
+  handleFindbarCloseEvent: function (event) {
     if (!this.enabled || this._hidingFindbar) return;
+    const bar = event?.target?.localName === "findbar" ? event.target : this.findbar;
+    if (!bar || bar !== this.findbar) return;
     const browser = this._chatBrowser;
     if (!browser || browser !== gBrowser.selectedBrowser) return;
-    const session = tabChats.get(browser);
-    const chatOpen =
-      this._isExpanded ||
-      this.chatContainer ||
-      this.apiKeyContainer ||
-      this.findbar?.classList.contains("ai-expanded");
+    const chatOpen = this._isExpanded || bar.classList.contains("ai-expanded");
     if (!chatOpen) return;
-    this._markChatClosed(browser);
+    const session = tabChats.get(browser);
+    if (PREFS.persistChat) this._parkChat(browser);
+    else this._storeVisibleSession(browser);
+    this._isExpanded = false;
+    if (session) session.expanded = false;
     if (session?.streaming) session.abortController?.abort();
-    this._settleHiddenChat(browser, true);
+    this._settleHiddenChat(bar, browser);
   },
 };
 
