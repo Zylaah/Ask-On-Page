@@ -384,7 +384,9 @@
           padding: 0 !important;
           border-radius: 4px !important;
           font-weight: 600 !important;
-          transition: scale 0.2s ease !important;
+          transition:
+            scale 0.2s ease,
+            background-color 0.15s ease !important;
           opacity: 1 !important;
           color: var(--ask-on-page-fg) !important;
           -moz-context-properties: fill !important;
@@ -429,18 +431,32 @@
 
       .findbar-find-previous,
       .findbar-find-next {
-        background-color: var(--ask-on-page-fg) !important;
+        background-color: transparent !important;
         background-image: none !important;
-        mask-repeat: no-repeat;
-        mask-position: center;
-        mask-size: 16px 16px;
+        corner-shape: round !important;
+
+        &:hover {
+          background-color: rgba(194, 194, 194, 0.2) !important;
+        }
+
+        &::after {
+          content: "" !important;
+          display: block !important;
+          width: 16px !important;
+          height: 16px !important;
+          background-color: var(--ask-on-page-fg) !important;
+          pointer-events: none !important;
+          mask-repeat: no-repeat;
+          mask-position: center;
+          mask-size: 16px 16px;
+        }
       }
 
-      .findbar-find-previous {
+      .findbar-find-previous::after {
         mask-image: var(--ask-on-page-findbar-arrow-up);
       }
 
-      .findbar-find-next {
+      .findbar-find-next::after {
         mask-image: var(--ask-on-page-findbar-arrow-down);
       }
 
