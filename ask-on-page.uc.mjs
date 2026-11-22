@@ -2330,6 +2330,7 @@ const askOnPageFindbar = {
     this._removeFindFieldPlaceholderGuard();
     this.removeAskButton();
     if (session.expanded) this._attachParkedChat(session);
+    else if (prev && prev !== next && tabChats.get(prev)?.expanded) this.hide();
     const generation = (this._findbarBindGen = (this._findbarBindGen || 0) + 1);
     gBrowser.getFindBar().then((findbar) => {
       if (generation !== this._findbarBindGen || gBrowser.selectedBrowser !== next) return;
